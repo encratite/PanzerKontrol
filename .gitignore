@@ -1,0 +1,6 @@
+Data
+bin
+obj
+*.suo
+*.user
+AssemblyInfo.cs
