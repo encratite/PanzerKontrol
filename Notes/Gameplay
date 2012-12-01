@@ -1,0 +1,49 @@
+"We, Who Die Like Cattle" is a crude open source turn-based strategy game inspired by games like Panzer General 2, Hearts of Iron 3 and Unity of Command. Currently only PvP is planned, no single player.
+Its title is a reference to a World War 1 poem called "Anthem for Doomed Youth" by Wilfred Owen.
+
+Each match requires two opposing players.
+In the beginning each player chooses a faction to play.
+Both players may even choose the same faction.
+A match consists of two wars.
+In the first war, player A is attacking and player B is defending.
+In the second war their roles are reversed, so player B is attacking player A is defending.
+This process of playing each role once is a result of the asymmetric design of the game.
+It is required to prevent stalemates in which neither player would benefit from attacking the other.
+
+Each war starts with a picking phase during which players choose the composition of their army.
+Each player is given the same amount of points that are used to purchase units.
+The picking phase is subdivided into two steps.
+In the first step, known as "open picking", each player may use up to 75% of their points to purchase units.
+These picks are made visible to the opponent after the completion of this step.
+Half the points that are not spent in this step are lost and may not be used in the next step.
+In the second step, known as "hidden picking", each player may use the remaining 25% of their points to purchase units.
+These picks can be made to counter the majority of the enemy army.
+
+After the completion of the picks, the war commences.
+The same map is used for both wars.
+Each map has two deployment zones, one of which is that of the attacker while the other one is that of the defender.
+Players may place their units in their own deployment zones in parallel.
+These unit placements are not visible to the enemy until later, once the game has started and units are not concealed by the fog of war.
+The defender has to protect one or multiple cities from enemy attacks.
+The location and number of these cities is defined by the map.
+The attacker then tries to kill all of the civilians in these cities.
+
+This can be achieved in three different ways:
+1. occupation by ground forces (most certain way)
+2. artillery fire from the distance
+3. bombing runs (can be denied by anti-aircraft systems)
+
+An attacker wins in the following cases:
+1. all enemy units have been destroyed
+2. the entire civilian population has been exterminated
+3. the defender surrenders
+
+An attacker loses in the following cases:
+1. the maximum number of tuns to win is exceeded (as defined by the map)
+2. all allied units have been destroyed
+3. the attacker surrenders
+
+If one player wins both the offensive and the defensive war, they win the match.
+If each player both won and lost one of the wars, the tie is resolved by examining the sum of their scores from each war.
+The player score of a war is based on the worth (in unit points, see picking phase) of the enemy units destroyed.
+Bonus points are awarded for enemy civilian casualties.
