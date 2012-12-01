@@ -5,13 +5,13 @@ Its title is a reference to a World War 1 poem called "Anthem for Doomed Youth" 
 Each match requires two opposing players.
 In the beginning each player chooses a faction to play.
 Both players may even choose the same faction.
-A match consists of two wars.
-In the first war, player A is attacking and player B is defending.
-In the second war their roles are reversed, so player B is attacking player A is defending.
+A match consists of two separate battles.
+In the first battle, player A is attacking and player B is defending.
+In the second battle their roles are reversed, so player B is attacking player A is defending.
 This process of playing each role once is a result of the asymmetric design of the game.
 It is required to prevent stalemates in which neither player would benefit from attacking the other.
 
-Each war starts with a picking phase during which players choose the composition of their army.
+Each battle starts with a picking phase during which players choose the composition of their army.
 Each player is given the same amount of points that are used to purchase units.
 The picking phase is subdivided into two steps.
 In the first step, known as "open picking", each player may use up to 75% of their points to purchase units.
@@ -20,8 +20,8 @@ Half the points that are not spent in this step are lost and may not be used in 
 In the second step, known as "hidden picking", each player may use the remaining 25% of their points to purchase units.
 These picks can be made to counter the majority of the enemy army.
 
-After the completion of the picks, the war commences.
-The same map is used for both wars.
+After the completion of the picks, the battle commences.
+The same map is used for both battles.
 Each map has two deployment zones, one of which is that of the attacker while the other one is that of the defender.
 Players may place their units in their own deployment zones in parallel.
 These unit placements are not visible to the enemy until later, once the game has started and units are not concealed by the fog of war.
@@ -44,9 +44,9 @@ An attacker loses in the following cases:
 2. all allied units have been destroyed
 3. the attacker surrenders
 
-If one player wins both the offensive and the defensive war, they win the match.
-If each player both won and lost one of the wars, the tie is resolved by examining the sum of their scores from each war.
-The player score of a war is based on the worth (in unit points, see picking phase) of the enemy units destroyed.
+If one player wins both the offensive and the defensive battle, they win the match.
+If each player both won and lost one of the battles, the tie is resolved by examining the sum of their scores from each battle.
+The player score of a battle is based on the worth (in unit points, see picking phase) of the enemy units destroyed.
 Bonus points are awarded for enemy civilian casualties.
 
 Now, usually Panzer General style games permit each player to use all their units in one go once it's their turn.
