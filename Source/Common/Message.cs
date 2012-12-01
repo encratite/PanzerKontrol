@@ -2,6 +2,7 @@
 
 namespace WeWhoDieLikeCattle
 {
+	// This is used for both requests from the client and replies from the server.
 	enum MessageType
 	{
 		Welcome = 0,
@@ -17,6 +18,14 @@ namespace WeWhoDieLikeCattle
 		RegistrationDisabled = 3,
 	}
 
+	enum LoginReplyType
+	{
+		Success = 0,
+		NoSuchAccount = 1,
+		InvalidPassword = 2,
+		GuestLoginsNotPermitted = 3,
+	}
+
 	[ProtoContract]
 	class ClientToServerMessage
 	{
@@ -24,7 +33,10 @@ namespace WeWhoDieLikeCattle
 		public MessageType Type { get; set; }
 
 		[ProtoMember(2, IsRequired = false)]
-		public Login Login { get; set; }
+		public RegistrationRequest Registration { get; set; }
+
+		[ProtoMember(3, IsRequired = false)]
+		public LoginRequest Login { get; set; }
 	}
 
 	[ProtoContract]
@@ -35,6 +47,12 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(2, IsRequired = false)]
 		public ServerWelcome ServerWelcome { get; set; }
+
+		[ProtoMember(3, IsRequired = false)]
+		public RegistrationReplyType RegistrationReply  { get; set; }
+
+		[ProtoMember(4, IsRequired = false)]
+		public LoginReplyType LoginReply { get; set; }
 	}
 
 	[ProtoContract]
@@ -42,24 +60,32 @@ namespace WeWhoDieLikeCattle
 	{
 		[ProtoMember(1)]
 		public int Revision { get; set; }
+
 		[ProtoMember(2)]
 		public byte[] Salt { get; set; }
 	}
 
 	[ProtoContract]
-	class RegistrationReply
-	{
-		[ProtoMember(1)]
-		public RegistrationReplyType Type { get; set; }
-	}
-
-	// Used for both registration and login.
-	[ProtoContract]
-	class Login
+	class RegistrationRequest
 	{
 		[ProtoMember(1)]
 		public string Account { get; set; }
+
+		[ProtoMember(2, IsRequired = false)]
+		public byte[] KeyHash { get; set; }
+	}
+
+	[ProtoContract]
+	class LoginRequest
+	{
+		[ProtoMember(1)]
+		public string Account { get; set; }
+
+		// This flag is set to true if no password is provided and the user attempts to log in as a guest without having access to the persistent statistics of a registered account.
 		[ProtoMember(2)]
-		public byte[] PasswordHash { get; set; }
+		public bool IsGuestLogin { get; set; }
+
+		[ProtoMember(3, IsRequired = false)]
+		public byte[] KeyHash { get; set; }
 	}
 }
