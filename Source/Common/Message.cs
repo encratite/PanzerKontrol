@@ -43,7 +43,7 @@ namespace WeWhoDieLikeCattle
 		[ProtoMember(1)]
 		public int Revision { get; set; }
 		[ProtoMember(2)]
-		public string Salt { get; set; }
+		public byte[] Salt { get; set; }
 	}
 
 	[ProtoContract]
