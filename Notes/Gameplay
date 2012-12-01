@@ -48,3 +48,10 @@ If one player wins both the offensive and the defensive war, they win the match.
 If each player both won and lost one of the wars, the tie is resolved by examining the sum of their scores from each war.
 The player score of a war is based on the worth (in unit points, see picking phase) of the enemy units destroyed.
 Bonus points are awarded for enemy civilian casualties.
+
+Now, usually Panzer General style games permit each player to use all their units in one go once it's their turn.
+The problem with this approach is that it leads to considerable "downtime" for the other player who is then forced to wait.
+This is probably boring and makes the game less enjoyable for the players.
+To work around this issue I propose a system in which each turn is subdivided into microturns during which only n units may be used.
+n = 3 might just do the job.
+This would enable players to interact at a greater granularity and also prevents excessive sequential "hit and run" style attacks from five or more units attacking a single target.
