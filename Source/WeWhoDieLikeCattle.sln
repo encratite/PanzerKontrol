@@ -4,8 +4,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{CFB59CA8-903A-4E26-AD96-510771A7E351}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{A06B8085-B47B-4F00-A1F2-97BE75255E6F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CFB59CA8-903A-4E26-AD96-510771A7E351} = {CFB59CA8-903A-4E26-AD96-510771A7E351}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleClient", "SimpleClient\SimpleClient.csproj", "{190713F5-1180-47AD-92E4-D9A115C867C9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CFB59CA8-903A-4E26-AD96-510771A7E351} = {CFB59CA8-903A-4E26-AD96-510771A7E351}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
