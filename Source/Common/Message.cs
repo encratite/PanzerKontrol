@@ -1,4 +1,6 @@
-﻿using ProtoBuf;
+﻿using System.Collections.Generic;
+
+using ProtoBuf;
 
 namespace WeWhoDieLikeCattle
 {
@@ -8,6 +10,9 @@ namespace WeWhoDieLikeCattle
 		Welcome = 0,
 		Register = 1,
 		Login = 2,
+		CustomGames = 3,
+		CreateGame = 4,
+		JoinGame = 5,
 	}
 
 	enum RegistrationReplyType
@@ -26,6 +31,22 @@ namespace WeWhoDieLikeCattle
 		GuestLoginsNotPermitted = 3,
 	}
 
+	enum CreateGameReplyType
+	{
+		Success = 0,
+		NameTaken = 1,
+		InvalidName = 2,
+	}
+
+	enum JoinGameReplyType
+	{
+		Success = 0,
+		GameIsFull = 1,
+		GameDoesNotExist = 2,
+		PasswordRequired = 3,
+		WrongPassword = 4,
+	}
+
 	[ProtoContract]
 	class ClientToServerMessage
 	{
@@ -37,6 +58,9 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(3, IsRequired = false)]
 		public LoginRequest Login { get; set; }
+
+		[ProtoMember(4, IsRequired = false)]
+		public CreateGameRequest CreateGame { get; set; }
 	}
 
 	[ProtoContract]
@@ -49,10 +73,19 @@ namespace WeWhoDieLikeCattle
 		public ServerWelcome ServerWelcome { get; set; }
 
 		[ProtoMember(3, IsRequired = false)]
-		public RegistrationReplyType RegistrationReply  { get; set; }
+		public RegistrationReplyType? RegistrationReply  { get; set; }
 
 		[ProtoMember(4, IsRequired = false)]
-		public LoginReplyType LoginReply { get; set; }
+		public LoginReplyType? LoginReply { get; set; }
+
+		[ProtoMember(5, IsRequired = false)]
+		public CustomGamesReply CustomGames { get; set; }
+
+		[ProtoMember(6, IsRequired = false)]
+		public CreateGameReplyType? CreateGameReply { get; set; }
+
+		[ProtoMember(7, IsRequired = false)]
+		public JoinGameReply JoinGameReply { get; set; }
 	}
 
 	[ProtoContract]
@@ -87,5 +120,77 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(3, IsRequired = false)]
 		public byte[] KeyHash { get; set; }
+	}
+
+	[ProtoContract]
+	class CustomGamesReply
+	{
+		[ProtoMember(1)]
+		public List<CustomGameEntry> Games { get; set; }
+	}
+
+	[ProtoContract]
+	class CustomGameEntry
+	{
+		[ProtoMember(1)]
+		public int GameId { get; set; }
+
+		[ProtoMember(2)]
+		public string Description { get; set; }
+
+		[ProtoMember(3)]
+		public bool HasPassword { get; set; }
+
+		[ProtoMember(4)]
+		public string CreatorName { get; set; }
+	}
+
+	[ProtoContract]
+	class CreateGameRequest
+	{
+		[ProtoMember(1)]
+		public string Description { get; set; }
+
+		[ProtoMember(2)]
+		public bool HasPassword { get; set; }
+
+		[ProtoMember(3, IsRequired = false)]
+		public byte[] KeyHash { get; set; }
+	}
+
+	[ProtoContract]
+	class JoinGameRequest
+	{
+		[ProtoMember(1)]
+		public int GameId { get; set; }
+
+		[ProtoMember(2)]
+		public bool HasPassword { get; set; }
+
+		[ProtoMember(3, IsRequired = false)]
+		public byte[] KeyHash { get; set; }
+	}
+
+	[ProtoContract]
+	class JoinGameReply
+	{
+		[ProtoMember(1)]
+		public JoinGameReplyType Type { get; set; }
+
+		[ProtoMember(2)]
+		public List<PlayerInformation> Team1 { get; set; }
+
+		[ProtoMember(3)]
+		public List<PlayerInformation> Team2 { get; set; }
+	}
+
+	[ProtoContract]
+	class PlayerInformation
+	{
+		[ProtoMember(1)]
+		public int PlayerId { get; set; }
+
+		[ProtoMember(2)]
+		public string Name { get; set; }
 	}
 }
