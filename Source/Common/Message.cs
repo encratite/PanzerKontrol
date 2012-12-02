@@ -192,5 +192,8 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(2)]
 		public string Name { get; set; }
+
+		[ProtoMember(3, IsRequired = false)]
+		public int? FactionId { get; set; }
 	}
 }
