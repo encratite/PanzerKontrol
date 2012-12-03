@@ -4,54 +4,83 @@ using ProtoBuf;
 
 namespace WeWhoDieLikeCattle
 {
-	// This is used for both requests from the client and replies from the server.
-	enum MessageType
+	enum ClientToServerMessageType
 	{
-		Welcome = 0,
-		Register = 1,
-		Login = 2,
-		CustomGames = 3,
-		CreateGame = 4,
-		JoinGame = 5,
+		WelcomeRequest,
+		RegistrationRequest,
+		LoginRequest,
+		CustomGamesRequest,
+		CreateGameRequest,
+		JoinGameRequest,
+		ChangeTeamRequest,
+		StartGameRequest,
+		PlayerInitialisationResult,
+	}
+
+	enum ServerToClientMessageType
+	{
+		WelcomeReply,
+		RegistrationReply,
+		LoginReply,
+		CustomGamesReply,
+		CreateGameReply,
+		JoinGameReply,
+		UpdateGameInformation,
+		GameStart,
+		GameInitialisationResult,
 	}
 
 	enum RegistrationReplyType
 	{
-		Success = 0,
-		NameTaken = 1,
-		InvalidName = 2,
-		RegistrationDisabled = 3,
+		Success,
+		NameTaken,
+		InvalidName,
+		RegistrationDisabled,
 	}
 
 	enum LoginReplyType
 	{
-		Success = 0,
-		NoSuchAccount = 1,
-		InvalidPassword = 2,
-		GuestLoginsNotPermitted = 3,
+		Success,
+		NoSuchAccount,
+		InvalidPassword,
+		GuestLoginNotPermitted,
 	}
 
 	enum CreateGameReplyType
 	{
-		Success = 0,
-		NameTaken = 1,
-		InvalidName = 2,
+		Success,
+		NameTaken,
+		InvalidName,
 	}
 
 	enum JoinGameReplyType
 	{
-		Success = 0,
-		GameIsFull = 1,
-		GameDoesNotExist = 2,
-		PasswordRequired = 3,
-		WrongPassword = 4,
+		Success,
+		GameIsFull,
+		GameDoesNotExist,
+		PasswordRequired,
+		WrongPassword,
+	}
+
+	enum PlayerInitialisationResultType
+	{
+		Success,
+		MapNotFound,
+		Error,
+	}
+
+	enum GameInitialisationResultType
+	{
+		Success,
+		PlayerError,
+		ServerError,
 	}
 
 	[ProtoContract]
 	class ClientToServerMessage
 	{
 		[ProtoMember(1)]
-		public MessageType Type { get; set; }
+		public ClientToServerMessageType Type { get; set; }
 
 		[ProtoMember(2, IsRequired = false)]
 		public RegistrationRequest Registration { get; set; }
@@ -61,13 +90,22 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(4, IsRequired = false)]
 		public CreateGameRequest CreateGame { get; set; }
+
+		[ProtoMember(5, IsRequired = false)]
+		public ChangeTeamRequest ChangeTeam { get; set; }
+
+		[ProtoMember(6, IsRequired = false)]
+		public PlayerInitialisationResultType? PlayerInitialisationResult { get; set; }
+
+		[ProtoMember(7, IsRequired = false)]
+		public GameInitialisationResultType? GameInitialisationResult { get; set; }
 	}
 
 	[ProtoContract]
 	class ServerToClientMessage
 	{
 		[ProtoMember(1)]
-		public MessageType Type { get; set; }
+		public ServerToClientMessageType Type { get; set; }
 
 		[ProtoMember(2, IsRequired = false)]
 		public ServerWelcome ServerWelcome { get; set; }
@@ -86,6 +124,12 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(7, IsRequired = false)]
 		public JoinGameReply JoinGameReply { get; set; }
+
+		[ProtoMember(8, IsRequired = false)]
+		public GameInformation GameInformationUpdate { get; set; }
+
+		[ProtoMember(9, IsRequired = false)]
+		public GameStart Start { get; set; }
 	}
 
 	[ProtoContract]
@@ -178,10 +222,7 @@ namespace WeWhoDieLikeCattle
 		public JoinGameReplyType Type { get; set; }
 
 		[ProtoMember(2)]
-		public List<PlayerInformation> Team1 { get; set; }
-
-		[ProtoMember(3)]
-		public List<PlayerInformation> Team2 { get; set; }
+		public GameInformation Game { get; set; }
 	}
 
 	[ProtoContract]
@@ -193,7 +234,56 @@ namespace WeWhoDieLikeCattle
 		[ProtoMember(2)]
 		public string Name { get; set; }
 
-		[ProtoMember(3, IsRequired = false)]
+		// This flag is set to true if the player created the lobby and has privileges, including changing the map, kicking players, rearranging teams
+		[ProtoMember(3)]
+		public bool IsPrivileged { get; set; }
+
+		[ProtoMember(4, IsRequired = false)]
 		public int? FactionId { get; set; }
+	}
+
+	[ProtoContract]
+	class GameInformation
+	{
+		[ProtoMember(1)]
+		public List<TeamInformation> Teams { get; set; }
+
+		[ProtoMember(2)]
+		public string Map { get; set; }
+
+		[ProtoMember(3)]
+		public int Points { get; set; }
+	}
+
+	[ProtoContract]
+	class TeamInformation
+	{
+		[ProtoMember(1)]
+		public List<PlayerInformation> Players { get; set; }
+	}
+
+	// The change team request contains a player ID because this class is actually also used to move other players forcefully (given sufficient privileges)
+	[ProtoContract]
+	class ChangeTeamRequest
+	{
+		[ProtoMember(1)]
+		public int PlayerId { get; set; }
+
+		[ProtoMember(2)]
+		public int NewTeamId { get; set; }
+	}
+
+	[ProtoContract]
+	class GameStart
+	{
+		[ProtoMember(1)]
+		public int GameId { get; set; }
+
+		[ProtoMember(2)]
+		public GameInformation Game { get; set; }
+	}
+
+	class GameInitialisationResult
+	{
 	}
 }
