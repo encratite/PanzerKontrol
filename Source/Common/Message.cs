@@ -282,8 +282,4 @@ namespace WeWhoDieLikeCattle
 		[ProtoMember(2)]
 		public GameInformation Game { get; set; }
 	}
-
-	class GameInitialisationResult
-	{
-	}
 }
