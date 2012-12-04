@@ -99,6 +99,16 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(7, IsRequired = false)]
 		public GameInitialisationResultType? GameInitialisationResult { get; set; }
+
+		public ClientToServerMessage(ClientToServerMessageType type)
+		{
+			Type = type;
+		}
+
+		public static ClientToServerMessage WelcomeRequest()
+		{
+			return new ClientToServerMessage(ClientToServerMessageType.WelcomeRequest);
+		}
 	}
 
 	[ProtoContract]
@@ -130,16 +140,28 @@ namespace WeWhoDieLikeCattle
 
 		[ProtoMember(9, IsRequired = false)]
 		public GameStart Start { get; set; }
+
+		public ServerToClientMessage(ServerWelcome serverWelcome)
+		{
+			Type = ServerToClientMessageType.WelcomeReply;
+			ServerWelcome = serverWelcome;
+		}
 	}
 
 	[ProtoContract]
 	class ServerWelcome
 	{
 		[ProtoMember(1)]
-		public int Revision { get; set; }
+		public int Version { get; set; }
 
 		[ProtoMember(2)]
 		public byte[] Salt { get; set; }
+
+		public ServerWelcome(int version, byte[] salt)
+		{
+			Version = version;
+			Salt = salt;
+		}
 	}
 
 	[ProtoContract]
