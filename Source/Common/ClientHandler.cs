@@ -5,7 +5,7 @@ using System.Threading;
 
 using ProtoBuf;
 
-namespace WeWhoDieLikeCattle
+namespace Panzer
 {
 	enum ClientState
 	{

@@ -7,7 +7,7 @@
     <ProjectGuid>{CFB59CA8-903A-4E26-AD96-510771A7E351}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WeWhoDieLikeCattle</RootNamespace>
+    <RootNamespace>Panzer</RootNamespace>
     <AssemblyName>Common</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

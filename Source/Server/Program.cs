@@ -1,4 +1,4 @@
-﻿namespace WeWhoDieLikeCattle
+﻿namespace Panzer
 {
 	class Program
 	{

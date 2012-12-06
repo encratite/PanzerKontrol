@@ -5,7 +5,7 @@ using System.Reflection;
 
 using ProtoBuf;
 
-namespace WeWhoDieLikeCattle
+namespace Panzer
 {
 	class GameServer
 	{

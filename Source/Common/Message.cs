@@ -2,7 +2,7 @@
 
 using ProtoBuf;
 
-namespace WeWhoDieLikeCattle
+namespace Panzer
 {
 	enum ClientToServerMessageType
 	{

@@ -1,17 +1,9 @@
-"We, Who Die Like Cattle" is a crude open source turn-based strategy game inspired by games like Panzer General 2 and Unity of Command.
+This is a crude open source turn-based strategy game inspired by games like Panzer General 2 and Unity of Command.
 Currently only a player vs. player mode is planned, no single player.
-Its title is a reference to a World War 1 poem called "Anthem for Doomed Youth" by Wilfred Owen.
+The name of the game and the themes of the playable factions are undecided at this point.
 
-Each match requires two opposing players.
-In the beginning each player chooses a faction to play.
-Both players may even choose the same faction.
-A match consists of two separate battles.
-In the first battle, player A is attacking and player B is defending.
-In the second battle their roles are reversed, so player B is attacking player A is defending.
-This process of playing each role once is a result of the asymmetric design of the game.
-It is required to prevent stalemates in which neither player would benefit from attacking the other.
-
-Each battle starts with a picking phase during which players choose the composition of their army.
+Each match is played by two opposing players.
+It starts with a picking phase during which players choose the composition of their army.
 Each player is given the same amount of points that are used to purchase units.
 The picking phase is subdivided into two steps.
 In the first step, known as "open picking", each player may use up to 75% of their points to purchase units.
@@ -20,38 +12,24 @@ Half the points that are not spent in this step are lost and may not be used in 
 In the second step, known as "hidden picking", each player may use the remaining 25% of their points to purchase units.
 These picks can be made to counter the majority of the enemy army.
 
-After the completion of the picks, the battle commences.
-The same map is used for both battles.
-Each map has two deployment zones, one of which is that of the attacker while the other one is that of the defender.
+After the completion of the picks, deployment commences.
 Players may place their units in their own deployment zones in parallel.
-These unit placements are not visible to the enemy until later, once the game has started and units are not concealed by the fog of war.
-The defender has to protect one or multiple cities from enemy attacks.
-The location and number of these cities is defined by the map.
-The attacker then tries to kill all of the civilians in these cities.
+These unit placements are not visible to the enemy until the game has started (there is no fog of war).
 
-This can be achieved in three different ways:
-1. occupation by ground forces (most certain way)
-2. artillery fire from the distance
-3. bombing runs (can be denied by anti-aircraft systems)
-
-An attacker wins in the following cases:
-1. all enemy units have been destroyed
-2. the entire civilian population has been exterminated
-3. the defender surrenders
-
-An attacker loses in the following cases:
-1. the maximum number of tuns to win is exceeded (as defined by the map)
-2. all allied units have been destroyed
-3. the attacker surrenders
-
-If one player wins both the offensive and the defensive battle, they win the match.
-If each player both won and lost one of the battles, the tie is resolved by examining the sum of their scores from each battle.
-The player score of a battle is based on the worth (in unit points, see picking phase) of the enemy units destroyed.
-Bonus points are awarded for enemy civilian casualties.
+Once deployment is complete, the battle commences.
+As units move on the map, their area of influence causes hex grids to be captured until they encounter the enemy line of defence.
+Each map defines a certain maximum number of turns the game may last.
+There are three different ways to win a match:
+1. all enemy forces have been destroyed
+2. the maximum number of turns have been played and the player controls more grids than their opponent
+3. the enemy surrenders
+A match can also result in a draw.
+This occurs when the maximum number of turns has been played and both players control an equal number of grids on the map.
 
 Now, usually Panzer General style games permit each player to use all their units in one go once it's their turn.
 The problem with this approach is that it leads to considerable "downtime" for the other player who is then forced to wait.
 This is probably boring and makes the game less enjoyable for the players.
-To work around this issue I propose a system in which each turn is subdivided into microturns during which only n units may be used.
+Maps are symmetrical and the only way in which a match is asymmetrical is that one player has the privilege of making the first moves.
+To work around these two issues I propose a system in which each turn is subdivided into "microturns" during which only n units may be used.
 n = 3 might just do the job.
-This would enable players to interact at a greater granularity and also prevents excessive sequential "hit and run" style attacks from five or more units attacking a single target.
+This would enable players to interact at a greater granularity and also prevents excessive sequential "hit and run" style attacks from four or more units attacking a single target.

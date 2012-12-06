@@ -7,7 +7,7 @@
     <ProjectGuid>{190713F5-1180-47AD-92E4-D9A115C867C9}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WeWhoDieLikeCattle</RootNamespace>
+    <RootNamespace>Panzer</RootNamespace>
     <AssemblyName>SimpleClient</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

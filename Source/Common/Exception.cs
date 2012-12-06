@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WeWhoDieLikeCattle
+namespace Panzer
 {
 	class ClientException : Exception
 	{
