@@ -1,4 +1,4 @@
-﻿namespace Panzer
+﻿namespace PanzerKontrol
 {
 	class Program
 	{

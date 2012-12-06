@@ -5,7 +5,7 @@ using System.Threading;
 
 using ProtoBuf;
 
-namespace Panzer
+namespace PanzerKontrol
 {
 	enum ClientState
 	{

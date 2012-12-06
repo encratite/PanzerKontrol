@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Panzer
+namespace PanzerKontrol
 {
 	class ClientException : Exception
 	{

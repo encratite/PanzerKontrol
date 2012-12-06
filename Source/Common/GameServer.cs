@@ -5,7 +5,7 @@ using System.Reflection;
 
 using ProtoBuf;
 
-namespace Panzer
+namespace PanzerKontrol
 {
 	class GameServer
 	{

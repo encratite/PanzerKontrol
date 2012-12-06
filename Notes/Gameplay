@@ -1,6 +1,6 @@
 This is a crude open source turn-based strategy game inspired by games like Panzer General 2 and Unity of Command.
 Currently only a player vs. player mode is planned, no single player.
-The name of the game and the themes of the playable factions are undecided at this point.
+I'm not sure about the details of the playable factions yet.
 
 Each match is played by two opposing players.
 It starts with a picking phase during which players choose the composition of their army.

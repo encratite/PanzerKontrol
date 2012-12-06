@@ -2,7 +2,7 @@
 
 using ProtoBuf;
 
-namespace Panzer
+namespace PanzerKontrol
 {
 	enum ClientToServerMessageType
 	{

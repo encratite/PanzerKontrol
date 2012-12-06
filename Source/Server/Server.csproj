@@ -7,7 +7,7 @@
     <ProjectGuid>{A06B8085-B47B-4F00-A1F2-97BE75255E6F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Panzer</RootNamespace>
+    <RootNamespace>PanzerKontrol</RootNamespace>
     <AssemblyName>Server</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
