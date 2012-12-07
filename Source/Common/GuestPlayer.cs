@@ -8,7 +8,7 @@ namespace PanzerKontrol
 
 		public GuestPlayer(string name)
 		{
-			Name = name;
+			PlayerName = name;
 			LoginTime = DateTime.UtcNow;
 		}
 	}

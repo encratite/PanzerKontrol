@@ -4,7 +4,23 @@ namespace PanzerKontrol
 {
 	class Player
 	{
-		protected long Id { get; set; }
-		protected string Name { get; set; }
+		protected long PlayerId { get; set; }
+		protected string PlayerName { get; set; }
+
+		public long Id
+		{
+			get
+			{
+				return PlayerId;
+			}
+		}
+
+		public string Name
+		{
+			get
+			{
+				return PlayerName;
+			}
+		}
 	}
 }

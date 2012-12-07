@@ -41,10 +41,12 @@ namespace PanzerKontrol
 	enum LoginReplyType
 	{
 		Success,
-		NoSuchAccount,
+		NotFound,
 		InvalidPassword,
 		GuestLoginNotPermitted,
-		InvalidGuestName,
+		GuestNameTooLong,
+		GuestNameTaken,
+		AlreadyLoggedIn,
 	}
 
 	enum CreateGameReplyType

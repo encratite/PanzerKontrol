@@ -42,7 +42,15 @@ namespace PanzerKontrol
 		ClientToServerMessageType[] ExpectedMessageTypes;
 		Dictionary<ClientToServerMessageType, MessageHandler> MessageHandlerMap;
 
-		Player Player;
+		Player ClientPlayer;
+
+		public Player Player
+		{
+			get
+			{
+				return ClientPlayer;
+			}
+		}
 
 		public ClientHandler(Socket socket, GameServer server)
 		{
@@ -54,7 +62,7 @@ namespace PanzerKontrol
 			ExpectedMessageTypes = null;
 			MessageHandlerMap = new Dictionary<ClientToServerMessageType, MessageHandler>();
 
-			Player = null;
+			ClientPlayer = null;
 
 			InitialiseMessageHandlerMap();
 		}
@@ -112,6 +120,13 @@ namespace PanzerKontrol
 			SendMessage(new ServerToClientMessage(welcome));
 		}
 
+		void LogIn(Player player)
+		{
+			ClientState = ClientState.LoggedIn;
+			ClientPlayer = player;
+			SetExpectedMessageTypes(ClientToServerMessageType.CustomGamesRequest, ClientToServerMessageType.CreateGameRequest, ClientToServerMessageType.JoinGameRequest);
+		}
+
 		void OnLoginRequest(ClientToServerMessage message)
 		{
 			if (message.Login == null)
@@ -122,22 +137,51 @@ namespace PanzerKontrol
 			{
 				if (Server.EnableGuestLogin)
 				{
-					if (Server.IsLegalName(login.Name))
+					if (Server.NameHasValidLength(login.Name))
 					{
-						reply = new ServerToClientMessage(LoginReplyType.Success);
-						ClientState = ClientState.LoggedIn;
-						Player = new GuestPlayer(login.Name);
-						SetExpectedMessageTypes(ClientToServerMessageType.CustomGamesRequest, ClientToServerMessageType.CreateGameRequest, ClientToServerMessageType.JoinGameRequest);
+						if(Server.NameIsInUse(login.Name))
+							reply = new ServerToClientMessage(LoginReplyType.GuestNameTaken);
+						else
+						{
+							reply = new ServerToClientMessage(LoginReplyType.Success);
+							LogIn(new GuestPlayer(login.Name));
+						}
 					}
 					else
-						reply = new ServerToClientMessage(LoginReplyType.InvalidGuestName);
+						reply = new ServerToClientMessage(LoginReplyType.GuestNameTooLong);
 				}
 				else
 					reply = new ServerToClientMessage(LoginReplyType.GuestLoginNotPermitted);
 			}
 			else
 			{
-				throw new NotImplementedException();
+				LoginReplyType type;
+				RegisteredPlayer player;
+				PlayerLoginResult result = Server.PlayerLogin(login.Name, login.KeyHash, out player);
+
+				switch (result)
+				{
+					case PlayerLoginResult.Success:
+						LogIn(player);
+						type = LoginReplyType.Success;
+						break;
+
+					case PlayerLoginResult.NotFound:
+						type = LoginReplyType.NotFound;
+						break;
+
+					case PlayerLoginResult.InvalidPassword:
+						type = LoginReplyType.InvalidPassword;
+						break;
+
+					case PlayerLoginResult.AlreadyLoggedIn:
+						type = LoginReplyType.AlreadyLoggedIn;
+						break;
+
+					default:
+						throw new Exception("Unkonwn login result");
+				}
+				reply = new ServerToClientMessage(type);
 			}
 			SendMessage(reply);
 		}
