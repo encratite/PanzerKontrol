@@ -6,9 +6,9 @@ namespace PanzerKontrol
 	{
 		DateTime LoginTime;
 
-		public GuestPlayer(string name)
+		public GuestPlayer(long id, string name)
+			: base(id, name)
 		{
-			PlayerName = name;
 			LoginTime = DateTime.UtcNow;
 		}
 	}

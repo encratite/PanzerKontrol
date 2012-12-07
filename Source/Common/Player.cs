@@ -22,5 +22,11 @@ namespace PanzerKontrol
 				return PlayerName;
 			}
 		}
+
+		public Player(long id, string name)
+		{
+			PlayerId = id;
+			PlayerName = name;
+		}
 	}
 }

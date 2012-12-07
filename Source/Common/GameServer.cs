@@ -135,5 +135,36 @@ namespace PanzerKontrol
 					return PlayerLoginResult.InvalidPassword;
 			}
 		}
+
+		bool PlayerIdIsInUse(long id)
+		{
+			lock (Clients)
+			{
+				var activePlayers =
+					from x in Clients
+					where x.Player != null && x.Player.Id == id
+					select x.Player;
+				if (activePlayers.Count() > 0)
+					return true;
+				var registeredPlayers = Database.Query<RegisteredPlayer>(delegate(RegisteredPlayer player)
+				{
+					return player.Id == id;
+				});
+				return registeredPlayers.Count > 0;
+			}
+		}
+
+		public long GeneratePlayerId()
+		{
+			while (true)
+			{
+				long id = State.GetPlayerId();
+				if (!PlayerIdIsInUse(id))
+				{
+					Database.Store(State);
+					return id;
+				}
+			}
+		}
 	}
 }

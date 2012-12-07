@@ -15,7 +15,8 @@ namespace PanzerKontrol
 			}
 		}
 
-		public RegisteredPlayer(string name, byte[] passwordHash)
+		public RegisteredPlayer(long id, string name, byte[] passwordHash)
+			: base(id, name)
 		{
 			PlayerName = name;
 			PlayerPasswordHash = passwordHash;

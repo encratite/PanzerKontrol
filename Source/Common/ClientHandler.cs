@@ -144,7 +144,8 @@ namespace PanzerKontrol
 						else
 						{
 							reply = new ServerToClientMessage(LoginReplyType.Success);
-							LogIn(new GuestPlayer(login.Name));
+							GuestPlayer player = new GuestPlayer(Server.GeneratePlayerId(), login.Name);
+							LogIn(player);
 						}
 					}
 					else
@@ -179,7 +180,7 @@ namespace PanzerKontrol
 						break;
 
 					default:
-						throw new Exception("Unkonwn login result");
+						throw new Exception("Unknown login result");
 				}
 				reply = new ServerToClientMessage(type);
 			}
