@@ -42,6 +42,8 @@ namespace PanzerKontrol
 		ClientToServerMessageType[] ExpectedMessageTypes;
 		Dictionary<ClientToServerMessageType, MessageHandler> MessageHandlerMap;
 
+		Player Player;
+
 		public ClientHandler(Socket socket, GameServer server)
 		{
 			Socket = socket;
@@ -51,6 +53,8 @@ namespace PanzerKontrol
 
 			ExpectedMessageTypes = null;
 			MessageHandlerMap = new Dictionary<ClientToServerMessageType, MessageHandler>();
+
+			Player = null;
 
 			InitialiseMessageHandlerMap();
 		}
@@ -112,7 +116,30 @@ namespace PanzerKontrol
 		{
 			if (message.Login == null)
 				throw new ClientException("Invalid login request");
-			throw new MissingFeatureException();
+			LoginRequest login = message.Login;
+			ServerToClientMessage reply = null;
+			if (login.IsGuestLogin)
+			{
+				if (Server.EnableGuestLogin)
+				{
+					if (Server.IsLegalName(login.Name))
+					{
+						reply = new ServerToClientMessage(LoginReplyType.Success);
+						ClientState = ClientState.LoggedIn;
+						Player = new GuestPlayer(login.Name);
+						SetExpectedMessageTypes(ClientToServerMessageType.CustomGamesRequest, ClientToServerMessageType.CreateGameRequest, ClientToServerMessageType.JoinGameRequest);
+					}
+					else
+						reply = new ServerToClientMessage(LoginReplyType.InvalidGuestName);
+				}
+				else
+					reply = new ServerToClientMessage(LoginReplyType.GuestLoginNotPermitted);
+			}
+			else
+			{
+				throw new NotImplementedException();
+			}
+			SendMessage(reply);
 		}
 	}
 }

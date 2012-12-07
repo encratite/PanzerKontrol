@@ -44,6 +44,7 @@ namespace PanzerKontrol
 		NoSuchAccount,
 		InvalidPassword,
 		GuestLoginNotPermitted,
+		InvalidGuestName,
 	}
 
 	enum CreateGameReplyType
@@ -146,6 +147,12 @@ namespace PanzerKontrol
 			Type = ServerToClientMessageType.WelcomeReply;
 			ServerWelcome = serverWelcome;
 		}
+
+		public ServerToClientMessage(LoginReplyType loginReply)
+		{
+			Type = ServerToClientMessageType.LoginReply;
+			LoginReply = loginReply;
+		}
 	}
 
 	[ProtoContract]
@@ -178,7 +185,7 @@ namespace PanzerKontrol
 	class LoginRequest
 	{
 		[ProtoMember(1)]
-		public string Account { get; set; }
+		public string Name { get; set; }
 
 		// This flag is set to true if no password is provided and the user attempts to log in as a guest without having access to the persistent statistics of a registered account.
 		[ProtoMember(2)]
@@ -199,7 +206,7 @@ namespace PanzerKontrol
 	class CustomGameEntry
 	{
 		[ProtoMember(1)]
-		public int GameId { get; set; }
+		public long GameId { get; set; }
 
 		[ProtoMember(2)]
 		public string Description { get; set; }
@@ -221,20 +228,20 @@ namespace PanzerKontrol
 		public bool HasPassword { get; set; }
 
 		[ProtoMember(3, IsRequired = false)]
-		public byte[] KeyHash { get; set; }
+		public byte[] PasswordHash { get; set; }
 	}
 
 	[ProtoContract]
 	class JoinGameRequest
 	{
 		[ProtoMember(1)]
-		public int GameId { get; set; }
+		public long GameId { get; set; }
 
 		[ProtoMember(2)]
 		public bool HasPassword { get; set; }
 
 		[ProtoMember(3, IsRequired = false)]
-		public byte[] KeyHash { get; set; }
+		public byte[] PasswordHash { get; set; }
 	}
 
 	[ProtoContract]
@@ -251,16 +258,19 @@ namespace PanzerKontrol
 	class PlayerInformation
 	{
 		[ProtoMember(1)]
-		public int PlayerId { get; set; }
+		public long PlayerId { get; set; }
 
 		[ProtoMember(2)]
+		public bool IsGuest { get; set; }
+
+		[ProtoMember(3)]
 		public string Name { get; set; }
 
 		// This flag is set to true if the player created the lobby and has privileges, including changing the map, kicking players, rearranging teams
-		[ProtoMember(3)]
+		[ProtoMember(4)]
 		public bool IsPrivileged { get; set; }
 
-		[ProtoMember(4, IsRequired = false)]
+		[ProtoMember(5, IsRequired = false)]
 		public int? FactionId { get; set; }
 	}
 
@@ -289,7 +299,7 @@ namespace PanzerKontrol
 	class ChangeTeamRequest
 	{
 		[ProtoMember(1)]
-		public int PlayerId { get; set; }
+		public long PlayerId { get; set; }
 
 		[ProtoMember(2)]
 		public int NewTeamId { get; set; }
@@ -299,7 +309,7 @@ namespace PanzerKontrol
 	class GameStart
 	{
 		[ProtoMember(1)]
-		public int GameId { get; set; }
+		public long GameId { get; set; }
 
 		[ProtoMember(2)]
 		public GameInformation Game { get; set; }

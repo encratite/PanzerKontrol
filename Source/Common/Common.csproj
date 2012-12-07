@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Db4objects.Db4o">
+      <HintPath>..\References\Db4objects.Db4o.dll</HintPath>
+    </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\References\protobuf-net.dll</HintPath>
     </Reference>
@@ -45,8 +48,13 @@
     <Compile Include="ClientHandler.cs" />
     <Compile Include="Exception.cs" />
     <Compile Include="GameServer.cs" />
+    <Compile Include="GameServerConfiguration.cs" />
+    <Compile Include="GuestPlayer.cs" />
     <Compile Include="Message.cs" />
+    <Compile Include="Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RegisteredPlayer.cs" />
+    <Compile Include="GameServerState.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
