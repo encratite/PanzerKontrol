@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 using Db4objects.Db4o;
 using ProtoBuf;
@@ -12,7 +15,7 @@ namespace PanzerKontrol
 	class GameServer
 	{
 		public const PrefixStyle Prefix = PrefixStyle.Fixed32BigEndian;
-		// SHA-512
+		// SHA-2, 512 bits
 		const int KeyHashSize = 512 / 8;
 
 		public readonly int Version;
@@ -33,10 +36,11 @@ namespace PanzerKontrol
 			}
 		}
 
-		IObjectContainer Database;
 		GameServerConfiguration Configuration;
+		IObjectContainer Database;
  
 		TcpListener Listener;
+		X509Certificate Certificate;
 		bool ShuttingDown;
 		List<ClientHandler> Clients;
 
@@ -50,6 +54,7 @@ namespace PanzerKontrol
 			Version = Assembly.GetEntryAssembly().GetName().Version.Revision;
 
 			Listener = new TcpListener(Configuration.ServerEndpoint);
+			Certificate = new X509Certificate(configuration.CertificatePath);
 			ShuttingDown = false;
 			Clients = new List<ClientHandler>();
 
@@ -73,10 +78,18 @@ namespace PanzerKontrol
 			while (!ShuttingDown)
 			{
 				Socket socket = Listener.AcceptSocket();
-				ClientHandler client = new ClientHandler(socket, this);
+				NetworkStream stream = new NetworkStream(socket);
+				SslStream secureStream = new SslStream(stream, false, AcceptAnyCertificate, null);
+				secureStream.AuthenticateAsServer(Certificate, false, SslProtocols.Tls12, false);
+				ClientHandler client = new ClientHandler(secureStream, this);
 				lock (Clients)
 					Clients.Add(client);
 			}
+		}
+
+		bool AcceptAnyCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+		{
+			return true;
 		}
 
 		public bool NameHasValidLength(string name)

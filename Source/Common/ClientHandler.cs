@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -32,8 +33,7 @@ namespace PanzerKontrol
 	class ClientHandler
 	{
 		GameServer Server;
-		Socket Socket;
-		NetworkStream Stream;
+		SslStream Stream;
 		Thread Thread;
 
 		ClientState ClientState;
@@ -52,11 +52,10 @@ namespace PanzerKontrol
 			}
 		}
 
-		public ClientHandler(Socket socket, GameServer server)
+		public ClientHandler(SslStream stream, GameServer server)
 		{
-			Socket = socket;
+			Stream = stream;
 			Server = server;
-			Stream = new NetworkStream(Socket);
 			ClientState = ClientState.Connected;
 
 			ExpectedMessageTypes = null;
