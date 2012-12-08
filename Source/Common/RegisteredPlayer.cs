@@ -4,22 +4,22 @@ namespace PanzerKontrol
 {
 	class RegisteredPlayer : Player
 	{
-		byte[] PlayerPasswordHash;
+		byte[] PlayerKeyHash;
 		DateTime CreationTime;
 
-		public byte[] PasswordHash
+		public byte[] KeyHash
 		{
 			get
 			{
-				return PlayerPasswordHash;
+				return PlayerKeyHash;
 			}
 		}
 
-		public RegisteredPlayer(long id, string name, byte[] passwordHash)
+		public RegisteredPlayer(long id, string name, byte[] keyHash)
 			: base(id, name)
 		{
 			PlayerName = name;
-			PlayerPasswordHash = passwordHash;
+			PlayerKeyHash = keyHash;
 			CreationTime = DateTime.UtcNow;
 		}
 	}

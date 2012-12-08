@@ -9,17 +9,11 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
-	enum PlayerLoginResult
-	{
-		Success,
-		NotFound,
-		InvalidPassword,
-		AlreadyLoggedIn,
-	}
-
 	class GameServer
 	{
 		public const PrefixStyle Prefix = PrefixStyle.Fixed32BigEndian;
+		// SHA-512
+		const int KeyHashSize = 512 / 8;
 
 		public readonly int Version;
 
@@ -108,31 +102,54 @@ namespace PanzerKontrol
 			}
 		}
 
-		public PlayerLoginResult PlayerLogin(string name, byte[] keyHash, out RegisteredPlayer playerOutput)
+		public LoginReplyType ProcessGuestPlayerLoginRequest(LoginRequest login, out GuestPlayer player)
+		{
+			player = null;
+
+			if (EnableGuestLogin)
+			{
+				if (NameHasValidLength(login.Name))
+				{
+					if (NameIsInUse(login.Name))
+						return LoginReplyType.GuestNameTaken;
+					else
+					{
+						player = new GuestPlayer(GeneratePlayerId(), login.Name);
+						return LoginReplyType.Success;
+					}
+				}
+				else
+					return LoginReplyType.GuestNameTooLong;
+			}
+			else
+				return LoginReplyType.GuestLoginNotPermitted;
+		}
+
+		public LoginReplyType ProcessRegisteredPlayerLoginRequest(LoginRequest login, out RegisteredPlayer playerOutput)
 		{
 			lock (Clients)
 			{
 				playerOutput = null;
-				var registeredPlayers = Database.Query<RegisteredPlayer>(delegate(RegisteredPlayer player)
+				var registeredPlayers = Database.Query<RegisteredPlayer>(delegate(RegisteredPlayer registeredPlayer)
 				{
-					return player.Name == name;
+					return registeredPlayer.Name == login.Name;
 				});
 				if (registeredPlayers.Count == 0)
-					return PlayerLoginResult.NotFound;
+					return LoginReplyType.NotFound;
 				var loggedInPlayers =
 					from x in Clients
-					where x.Player != null && x.Player.Name == name
+					where x.Player != null && x.Player.Name == login.Name
 					select x.Player;
 				if (loggedInPlayers.Count() != 0)
-					return PlayerLoginResult.AlreadyLoggedIn;
-				RegisteredPlayer registeredPlayer = registeredPlayers[0];
-				if (keyHash == registeredPlayer.PasswordHash)
+					return LoginReplyType.AlreadyLoggedIn;
+				RegisteredPlayer player = registeredPlayers[0];
+				if (login.KeyHash == player.KeyHash)
 				{
-					playerOutput = registeredPlayer;
-					return PlayerLoginResult.Success;
+					playerOutput = player;
+					return LoginReplyType.Success;
 				}
 				else
-					return PlayerLoginResult.InvalidPassword;
+					return LoginReplyType.InvalidPassword;
 			}
 		}
 
@@ -154,7 +171,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public long GeneratePlayerId()
+		long GeneratePlayerId()
 		{
 			while (true)
 			{
@@ -165,6 +182,19 @@ namespace PanzerKontrol
 					return id;
 				}
 			}
+		}
+
+		public RegistrationReplyType RegisterPlayer(RegistrationRequest request)
+		{
+			if (!Configuration.EnableUserRegistration)
+				return RegistrationReplyType.RegistrationDisabled;
+			if (NameIsInUse(request.Name))
+				return RegistrationReplyType.NameTaken;
+			if (request.KeyHash.Length != KeyHashSize)
+				return RegistrationReplyType.WrongKeyHashSize;
+			RegisteredPlayer player = new RegisteredPlayer(GeneratePlayerId(), request.Name, request.KeyHash);
+			Database.Store(player);
+			return RegistrationReplyType.Success;
 		}
 	}
 }

@@ -34,7 +34,8 @@ namespace PanzerKontrol
 	{
 		Success,
 		NameTaken,
-		InvalidName,
+		NameTooLong,
+		WrongKeyHashSize,
 		RegistrationDisabled,
 	}
 
@@ -61,8 +62,7 @@ namespace PanzerKontrol
 		Success,
 		GameIsFull,
 		GameDoesNotExist,
-		PasswordRequired,
-		WrongPassword,
+		NeedInvitation,
 	}
 
 	enum PlayerInitialisationResultType
@@ -155,6 +155,12 @@ namespace PanzerKontrol
 			Type = ServerToClientMessageType.LoginReply;
 			LoginReply = loginReply;
 		}
+
+		public ServerToClientMessage(RegistrationReplyType registrationReply)
+		{
+			Type = ServerToClientMessageType.RegistrationReply;
+			RegistrationReply = registrationReply;
+		}
 	}
 
 	[ProtoContract]
@@ -177,9 +183,9 @@ namespace PanzerKontrol
 	class RegistrationRequest
 	{
 		[ProtoMember(1)]
-		public string Account { get; set; }
+		public string Name { get; set; }
 
-		[ProtoMember(2, IsRequired = false)]
+		[ProtoMember(2)]
 		public byte[] KeyHash { get; set; }
 	}
 
@@ -214,9 +220,6 @@ namespace PanzerKontrol
 		public string Description { get; set; }
 
 		[ProtoMember(3)]
-		public bool HasPassword { get; set; }
-
-		[ProtoMember(4)]
 		public string CreatorName { get; set; }
 	}
 
@@ -227,10 +230,7 @@ namespace PanzerKontrol
 		public string Description { get; set; }
 
 		[ProtoMember(2)]
-		public bool HasPassword { get; set; }
-
-		[ProtoMember(3, IsRequired = false)]
-		public byte[] PasswordHash { get; set; }
+		public bool IsPrivate { get; set; }
 	}
 
 	[ProtoContract]
@@ -238,12 +238,6 @@ namespace PanzerKontrol
 	{
 		[ProtoMember(1)]
 		public long GameId { get; set; }
-
-		[ProtoMember(2)]
-		public bool HasPassword { get; set; }
-
-		[ProtoMember(3, IsRequired = false)]
-		public byte[] PasswordHash { get; set; }
 	}
 
 	[ProtoContract]

@@ -76,6 +76,8 @@ namespace PanzerKontrol
 		void InitialiseMessageHandlerMap()
 		{
 			MessageHandlerMap[ClientToServerMessageType.WelcomeRequest] = OnWelcomeRequest;
+			MessageHandlerMap[ClientToServerMessageType.LoginRequest] = OnLoginRequest;
+			MessageHandlerMap[ClientToServerMessageType.RegistrationRequest] = OnRegistrationRequest;
 		}
 
 		void SetExpectedMessageTypes(params ClientToServerMessageType[] expectedMessageTypes)
@@ -132,59 +134,31 @@ namespace PanzerKontrol
 			if (message.Login == null)
 				throw new ClientException("Invalid login request");
 			LoginRequest login = message.Login;
-			ServerToClientMessage reply = null;
+			LoginReplyType result;
+			Player player;
 			if (login.IsGuestLogin)
 			{
-				if (Server.EnableGuestLogin)
-				{
-					if (Server.NameHasValidLength(login.Name))
-					{
-						if(Server.NameIsInUse(login.Name))
-							reply = new ServerToClientMessage(LoginReplyType.GuestNameTaken);
-						else
-						{
-							reply = new ServerToClientMessage(LoginReplyType.Success);
-							GuestPlayer player = new GuestPlayer(Server.GeneratePlayerId(), login.Name);
-							LogIn(player);
-						}
-					}
-					else
-						reply = new ServerToClientMessage(LoginReplyType.GuestNameTooLong);
-				}
-				else
-					reply = new ServerToClientMessage(LoginReplyType.GuestLoginNotPermitted);
+				GuestPlayer guestPlayer;
+				result = Server.ProcessGuestPlayerLoginRequest(login, out guestPlayer);
+				player = guestPlayer;
 			}
 			else
 			{
-				LoginReplyType type;
-				RegisteredPlayer player;
-				PlayerLoginResult result = Server.PlayerLogin(login.Name, login.KeyHash, out player);
-
-				switch (result)
-				{
-					case PlayerLoginResult.Success:
-						LogIn(player);
-						type = LoginReplyType.Success;
-						break;
-
-					case PlayerLoginResult.NotFound:
-						type = LoginReplyType.NotFound;
-						break;
-
-					case PlayerLoginResult.InvalidPassword:
-						type = LoginReplyType.InvalidPassword;
-						break;
-
-					case PlayerLoginResult.AlreadyLoggedIn:
-						type = LoginReplyType.AlreadyLoggedIn;
-						break;
-
-					default:
-						throw new Exception("Unknown login result");
-				}
-				reply = new ServerToClientMessage(type);
+				RegisteredPlayer registeredPlayer;
+				result = Server.ProcessRegisteredPlayerLoginRequest(login, out registeredPlayer);
+				player = registeredPlayer;
 			}
-			SendMessage(reply);
+			if (result == LoginReplyType.Success)
+				LogIn(player);
+			SendMessage(new ServerToClientMessage(result));
+		}
+
+		void OnRegistrationRequest(ClientToServerMessage message)
+		{
+			if (message.Registration == null)
+				throw new ClientException("Invalid login request");
+			RegistrationReplyType result = Server.RegisterPlayer(message.Registration);
+			SendMessage(new ServerToClientMessage(result));
 		}
 	}
 }
