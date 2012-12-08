@@ -29,7 +29,7 @@ namespace PanzerKontrol
 		public int? HardDefence { get; set; }
 
 		// Attack value against air units.
-		// Only anti air units have this.
+		// Only anti-air units have this.
 		public int? AirAttack { get; set; }
 		// Defence value against attacks by air units.
 		// Air units don't have this.
