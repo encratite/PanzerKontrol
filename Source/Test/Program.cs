@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 
 using PanzerKontrol;
@@ -17,8 +18,6 @@ namespace Test
 			configuration.Salt = new byte[GameServer.SaltSize];
 			Random random = new Random();
 			random.NextBytes(configuration.Salt);
-			//for(int i = 0; i < GameServer.SaltSize; i++)
-				//configuration.Salt[i] = 
 			configuration.EnableUserRegistration = true;
 			configuration.EnableGuestLogin = true;
 			configuration.MaximumNameLength = 50;
@@ -26,9 +25,51 @@ namespace Test
 			serialiser.Store(configuration);
 		}
 
+		static void GenerateFactions()
+		{
+			UnitStats stats = new UnitStats();
+			stats.SoftAttack = 6;
+			stats.SoftDefence = 5;
+			stats.HardAttack = 3;
+			stats.HardDefence = 3;
+			stats.AirDefence = 5;
+			stats.Movement = 3;
+			stats.Range = 1;
+
+			UnitStats bonus = new UnitStats();
+			bonus.HardAttack = 1;
+			bonus.HardDefence = 1;
+
+			UnitUpgrade upgrade = new UnitUpgrade();
+			upgrade.Name = "Upgrade";
+			upgrade.Description = "Description";
+			upgrade.Price = 5;
+
+			UnitType unit = new UnitType();
+			unit.Name = "Name";
+			unit.Price = 20;
+			unit.Hardness = 0.0;
+			unit.Stats = stats;
+			unit.Flags.Add(UnitFlag.Engineer);
+			unit.UpgradesAvailable.Add(upgrade);
+			unit.UpgradeLimit = 0;
+
+			Faction faction = new Faction();
+			faction.Name = "Faction";
+			faction.Description = "Description";
+			faction.Units.Add(unit);
+
+			UnitConfiguration factions = new UnitConfiguration();
+			factions.Factions.Add(faction);
+
+			var serialiser = new Nil.Serialiser<UnitConfiguration>("Factions.xml");
+			serialiser.Store(factions);
+		}
+
 		static void Main(string[] arguments)
 		{
-			GenerateConfiguration();
+			//GenerateConfiguration();
+			GenerateFactions();
 		}
 	}
 }

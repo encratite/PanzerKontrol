@@ -28,5 +28,12 @@ namespace PanzerKontrol
 
 		// The maximum number of upgrades that may be purchased.
 		public int UpgradeLimit { get; set; }
+
+		public UnitType()
+		{
+			Stats = new UnitStats();
+			Flags = new List<UnitFlag>();
+			UpgradesAvailable = new List<UnitUpgrade>();
+		}
 	}
 }

@@ -226,7 +226,8 @@ namespace PanzerKontrol
 	[ProtoContract]
 	class CreateGameRequest
 	{
-		[ProtoMember(1)]
+		// The description is only specified for public games
+		[ProtoMember(1, IsRequired = false)]
 		public string Description { get; set; }
 
 		[ProtoMember(2)]
