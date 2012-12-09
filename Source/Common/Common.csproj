@@ -57,7 +57,9 @@
     <Compile Include="RegisteredPlayer.cs" />
     <Compile Include="GameServerState.cs" />
     <Compile Include="UnitFlag.cs" />
+    <Compile Include="UnitStats.cs" />
     <Compile Include="UnitType.cs" />
+    <Compile Include="UnitUpgrade.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
