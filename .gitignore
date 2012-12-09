@@ -4,4 +4,6 @@ bin
 obj
 *.suo
 *.user
-AssemblyInfo.cs
+Source/Common/Properties/AssemblyInfo.cs
+Source/Server/Properties/AssemblyInfo.cs
+Source/SimpleClient/Properties/AssemblyInfo.cs
