@@ -2,7 +2,7 @@
 
 namespace PanzerKontrol
 {
-	class UnitType
+	public class UnitType
 	{
 		// The name of this unit.
 		public string Name { get; set; }

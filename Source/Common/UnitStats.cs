@@ -1,6 +1,6 @@
 ﻿namespace PanzerKontrol
 {
-	class UnitStats
+	public class UnitStats
 	{
 		// Attack value against unarmoured/soft targets such as infantry.
 		public int? SoftAttack { get; set; }

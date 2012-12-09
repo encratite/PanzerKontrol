@@ -2,7 +2,7 @@
 
 namespace PanzerKontrol
 {
-	class Player
+	public class Player
 	{
 		protected long PlayerId { get; set; }
 		protected string PlayerName { get; set; }

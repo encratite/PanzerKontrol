@@ -2,7 +2,7 @@
 
 namespace PanzerKontrol
 {
-	class RegisteredPlayer : Player
+	public class RegisteredPlayer : Player
 	{
 		byte[] PlayerKeyHash;
 		DateTime CreationTime;

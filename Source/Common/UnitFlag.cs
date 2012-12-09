@@ -1,6 +1,6 @@
 ﻿namespace PanzerKontrol
 {
-	enum UnitFlag
+	public enum UnitFlag
 	{
 		// Air units don't occupy hexes on the map like regular units.
 		// They are capable of attacking any ground target in every round.

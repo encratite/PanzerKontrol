@@ -30,7 +30,7 @@ namespace PanzerKontrol
 		GameInitialisationResult,
 	}
 
-	enum RegistrationReplyType
+	public enum RegistrationReplyType
 	{
 		Success,
 		NameTaken,
@@ -39,7 +39,7 @@ namespace PanzerKontrol
 		RegistrationDisabled,
 	}
 
-	enum LoginReplyType
+	public enum LoginReplyType
 	{
 		Success,
 		NotFound,
@@ -180,7 +180,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class RegistrationRequest
+	public class RegistrationRequest
 	{
 		[ProtoMember(1)]
 		public string Name { get; set; }
@@ -190,7 +190,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class LoginRequest
+	public class LoginRequest
 	{
 		[ProtoMember(1)]
 		public string Name { get; set; }

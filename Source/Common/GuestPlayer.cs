@@ -2,7 +2,7 @@
 
 namespace PanzerKontrol
 {
-	class GuestPlayer : Player
+	public class GuestPlayer : Player
 	{
 		DateTime LoginTime;
 

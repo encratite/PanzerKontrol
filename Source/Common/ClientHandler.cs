@@ -37,7 +37,7 @@ namespace PanzerKontrol
 		Thread Thread;
 
 		ClientState ClientState;
-		InGameState InGameState;
+		//InGameState InGameState;
 
 		ClientToServerMessageType[] ExpectedMessageTypes;
 		Dictionary<ClientToServerMessageType, MessageHandler> MessageHandlerMap;

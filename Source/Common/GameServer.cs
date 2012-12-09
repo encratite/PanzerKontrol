@@ -12,9 +12,10 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
-	class GameServer
+	public class GameServer
 	{
 		public const PrefixStyle Prefix = PrefixStyle.Fixed32BigEndian;
+		public const int SaltSize = KeyHashSize;
 		// SHA-2, 512 bits
 		const int KeyHashSize = 512 / 8;
 
@@ -53,7 +54,8 @@ namespace PanzerKontrol
 
 			Version = Assembly.GetEntryAssembly().GetName().Version.Revision;
 
-			Listener = new TcpListener(Configuration.ServerEndpoint);
+			IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(configuration.Address), configuration.Port);
+			Listener = new TcpListener(endpoint);
 			Certificate = new X509Certificate(configuration.CertificatePath);
 			ShuttingDown = false;
 			Clients = new List<ClientHandler>();

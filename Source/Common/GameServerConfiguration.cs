@@ -2,9 +2,10 @@
 
 namespace PanzerKontrol
 {
-	class GameServerConfiguration
+	public class GameServerConfiguration
 	{
-		public IPEndPoint ServerEndpoint { get; set; }
+		public string Address { get; set; }
+		public int Port { get; set; }
 		public string DatabasePath { get; set; }
 		public string CertificatePath { get; set; }
 		public byte[] Salt { get; set; }

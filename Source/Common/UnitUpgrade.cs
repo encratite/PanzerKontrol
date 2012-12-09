@@ -1,6 +1,6 @@
 ﻿namespace PanzerKontrol
 {
-	class UnitUpgrade
+	public class UnitUpgrade
 	{
 		// The name of the upgrade.
 		public string Name { get; set; }
