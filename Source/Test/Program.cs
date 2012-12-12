@@ -28,13 +28,12 @@ namespace Test
 		static void GenerateFactions()
 		{
 			UnitStats stats = new UnitStats();
-			stats.SoftAttack = 6;
-			stats.SoftDefence = 5;
+			stats.SoftAttack = 4;
+			stats.SoftDefence = 4;
 			stats.HardAttack = 3;
 			stats.HardDefence = 3;
-			stats.AirDefence = 5;
+			stats.BombardmentDefence = 3;
 			stats.Movement = 3;
-			stats.Range = 1;
 
 			UnitStats bonus = new UnitStats();
 			bonus.HardAttack = 1;

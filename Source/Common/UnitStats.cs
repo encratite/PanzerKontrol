@@ -14,13 +14,13 @@
 		// Air units don't have this.
 		public int? HardDefence { get; set; }
 
+		// Defence value against artillery bombardments or aerial bombardments.
+		// Air units don't have this.
+		public int? BombardmentDefence { get; set; }
+
 		// Attack value against air units.
 		// Only anti-air units have this.
 		public int? AirAttack { get; set; }
-		// Defence value against attacks by air units.
-		// Air units don't have this.
-		public int? AirDefence { get; set; }
-
 		// Defence value against anti-air attacks.
 		// Only air units have this.
 		public int? AntiAirDefence { get; set; }
@@ -30,7 +30,7 @@
 		public int? Movement { get; set; }
 
 		// The range of hexes of the ground attack of this unit.
-		// Only artillery has a range exceeding 1.
+		// Only artillery has a range.
 		// Optional, as air units don't have this.
 		public int? Range { get; set; }
 

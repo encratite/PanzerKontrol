@@ -11,7 +11,8 @@
 		Amphibious,
 		// Anti-air units possess the ability to automatically fire at air units attacking nearby targets.
 		AntiAir,
-		// Artillery units are unable to perform attacks after having moved in a round.
+		// Once artillery units have moved, they are unable to perform attacks for the rest of the turn.
+		// Units can't defend themselves against artillery attacks.
 		Artillery,
 		// Engineers ignore entrenchment defence bonuses when attacking entrenched enemy units.
 		Engineer,
