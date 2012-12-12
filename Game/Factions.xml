@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UnitConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Factions>
+    <Faction>
+      <Name>Nomads</Name>
+      <Description>Hostile steppes gave birth to these nomadic predators. Originally governed by local warlords who were constantly fighting each other, the Nomads formed a fragile alliance in pursuit of more land, cattle, and wives. Their equipment may be crude and some of them are even said to ride into battle on horses, facing machine guns and artillery fire. Yet their greed and especially their cruelty against civilians are widely feared.</Description>
+      <Units>
+        <Unit>
+          <Name>Looters</Name>
+          <Description>Infantry</Description>
+          <Price>16</Price>
+          <Hardness>0.0</Hardness>
+          <Morale>3</Morale>
+          <Stats>
+            <SoftAttack>4</SoftAttack>
+            <SoftDefence>3</SoftDefence>
+            <HardAttack>3</HardAttack>
+            <HardDefence>3</HardDefence>
+            <BombardmentDefence>3</BombardmentDefence>
+            <Movement>3</Movement>
+          </Stats>
+          <Flags />
+          <UpgradesAvailable>
+            <UnitUpgrade>
+              <Name>Grenade launchers</Name>
+              <Price>5</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <SoftAttack>2</SoftAttack>
+              </Bonus>
+            </UnitUpgrade>
+          </UpgradesAvailable>
+        </Unit>
+        <Unit>
+          <Name>Marauders</Name>
+          <Description>Heavy infantry</Description>
+          <Price>23</Price>
+          <Hardness>0.15</Hardness>
+          <Morale>4</Morale>
+          <Stats>
+            <SoftAttack>5</SoftAttack>
+            <SoftDefence>4</SoftDefence>
+            <HardAttack>3</HardAttack>
+            <HardDefence>4</HardDefence>
+            <BombardmentDefence>3</BombardmentDefence>
+            <Movement>3</Movement>
+          </Stats>
+          <Flags />
+          <UpgradesAvailable>
+            <UnitUpgrade>
+              <Name>Recoilless rifles</Name>
+              <Price>3</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <HardAttack>1</HardAttack>
+                <HardDefence>1</HardDefence>
+              </Bonus>
+            </UnitUpgrade>
+            <UnitUpgrade>
+              <Name>Flack jackets</Name>
+              <Price>2</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <BombardmentDefence>2</BombardmentDefence>
+              </Bonus>
+            </UnitUpgrade>
+          </UpgradesAvailable>
+        </Unit>
+        <Unit>
+          <Name>Raiders</Name>
+          <Description>Cavalry</Description>
+          <Price>18</Price>
+          <Hardness>0.0</Hardness>
+          <Morale>3</Morale>
+          <Stats>
+            <SoftAttack>4</SoftAttack>
+            <SoftDefence>3</SoftDefence>
+            <HardAttack>2</HardAttack>
+            <HardDefence>3</HardDefence>
+            <BombardmentDefence>2</BombardmentDefence>
+            <Movement>5</Movement>
+          </Stats>
+          <Flags />
+          <UpgradesAvailable />
+        </Unit>
+        <Unit>
+          <Name>Darga</Name>
+          <Description>Artillery</Description>
+          <Price>28</Price>
+          <Hardness>0.3</Hardness>
+          <Morale>3</Morale>
+          <Stats>
+            <SoftAttack>5</SoftAttack>
+            <SoftDefence>2</SoftDefence>
+            <HardAttack>5</HardAttack>
+            <HardDefence>2</HardDefence>
+            <BombardmentDefence>3</BombardmentDefence>
+            <Range>3</Range>
+            <Movement>3</Movement>
+          </Stats>
+          <Flags>
+            <UnitFlag>Artillery</UnitFlag>
+          </Flags>
+          <UpgradesAvailable />
+        </Unit>
+        <Unit>
+          <Name>Noyan</Name>
+          <Description>Self-propelled autocannon</Description>
+          <Price>42</Price>
+          <Hardness>0.9</Hardness>
+          <Morale>4</Morale>
+          <Stats>
+            <SoftAttack>7</SoftAttack>
+            <SoftDefence>5</SoftDefence>
+            <HardAttack>5</HardAttack>
+            <HardDefence>5</HardDefence>
+            <BombardmentDefence>5</BombardmentDefence>
+            <AntiAirRange>3</AntiAirRange>
+            <Movement>5</Movement>
+          </Stats>
+          <Flags />
+          <UpgradesAvailable />
+        </Unit>
+      </Units>
+    </Faction>
+  </Factions>
+</UnitConfiguration>

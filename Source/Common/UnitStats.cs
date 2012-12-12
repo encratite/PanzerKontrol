@@ -25,10 +25,6 @@
 		// Only air units have this.
 		public int? AntiAirDefence { get; set; }
 
-		// The number of hexes this unit can move per turn.
-		// Air units have no movement.
-		public int? Movement { get; set; }
-
 		// The range of hexes of the ground attack of this unit.
 		// Only artillery has a range.
 		// Optional, as air units don't have this.
@@ -37,5 +33,9 @@
 		// The range of the anti-air attack of this unit.
 		// Optional, as only anti-air units have this.
 		public int? AntiAirRange { get; set; }
+
+		// The number of hexes this unit can move per turn.
+		// Air units have no movement.
+		public int? Movement { get; set; }
 	}
 }

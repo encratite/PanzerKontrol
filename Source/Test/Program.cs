@@ -41,11 +41,10 @@ namespace Test
 
 			UnitUpgrade upgrade = new UnitUpgrade();
 			upgrade.Name = "Upgrade";
-			upgrade.Description = "Description";
 			upgrade.Price = 5;
 			upgrade.Slot = 0;
 
-			UnitType unit = new UnitType();
+			Unit unit = new Unit();
 			unit.Name = "Name";
 			unit.Price = 20;
 			unit.Hardness = 0.0;

@@ -11,11 +11,11 @@ namespace PanzerKontrol
 		public string Description { get; set; }
 
 		// Units that may be purchased during the picking phase when playing this faction.
-		public List<UnitType> Units { get; set; }
+		public List<Unit> Units { get; set; }
 
 		public Faction()
 		{
-			Units = new List<UnitType>();
+			Units = new List<Unit>();
 		}
 	}
 }

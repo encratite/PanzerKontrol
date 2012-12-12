@@ -2,10 +2,13 @@
 
 namespace PanzerKontrol
 {
-	public class UnitType
+	public class Unit
 	{
 		// The name of this unit.
 		public string Name { get; set; }
+
+		// A brief description of the purpose/type of this unit.
+		public string Description { get; set; }
 
 		// The cost of points of this unit during the picking phase.
 		public int Price { get; set; }
@@ -30,7 +33,7 @@ namespace PanzerKontrol
 		// Upgrades available for this type of unit.
 		public List<UnitUpgrade> UpgradesAvailable { get; set; }
 
-		public UnitType()
+		public Unit()
 		{
 			Stats = new UnitStats();
 			Flags = new List<UnitFlag>();
