@@ -13,8 +13,12 @@ namespace PanzerKontrol
 		// Particularly powerful units might have a limit per army.
 		public int? Limit { get; set; }
 
-		// Air units have no hardness
+		// Air units have no hardness.
 		public double? Hardness { get; set; }
+
+		// Morale represents a unit's ability to suffer losses without retreating.
+		// Air units have no morale.
+		public int? Morale { get; set; }
 
 		// The stats of this unit.
 		// They are separated in this way because they are also used for upgrades.
@@ -25,9 +29,6 @@ namespace PanzerKontrol
 
 		// Upgrades available for this type of unit.
 		public List<UnitUpgrade> UpgradesAvailable { get; set; }
-
-		// The maximum number of upgrades that may be purchased.
-		public int UpgradeLimit { get; set; }
 
 		public UnitType()
 		{

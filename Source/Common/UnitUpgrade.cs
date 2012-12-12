@@ -11,7 +11,12 @@
 		// The number of points this upgrade costs.
 		public int Price { get; set; }
 
+		// This numerically identifies the virtual slot occupied by the upgrade.
+		// This is used to mark upgrades that are incompatible with each other.
+		public int Slot { get; set; }
+
 		// Additive bonuses to the unit that is upgraded.
+		// They don't have to be positive!
 		public UnitStats Bonus { get; set; }
 	}
 }

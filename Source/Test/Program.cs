@@ -43,15 +43,16 @@ namespace Test
 			upgrade.Name = "Upgrade";
 			upgrade.Description = "Description";
 			upgrade.Price = 5;
+			upgrade.Slot = 0;
 
 			UnitType unit = new UnitType();
 			unit.Name = "Name";
 			unit.Price = 20;
 			unit.Hardness = 0.0;
+			unit.Morale = 5;
 			unit.Stats = stats;
 			unit.Flags.Add(UnitFlag.Engineer);
 			unit.UpgradesAvailable.Add(upgrade);
-			unit.UpgradeLimit = 0;
 
 			Faction faction = new Faction();
 			faction.Name = "Faction";
