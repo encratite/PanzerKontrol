@@ -35,7 +35,7 @@
           <Name>Marauders</Name>
           <Description>Heavy infantry</Description>
           <Price>23</Price>
-          <Hardness>0.15</Hardness>
+          <Hardness>0.2</Hardness>
           <Morale>4</Morale>
           <Stats>
             <SoftAttack>5</SoftAttack>
@@ -69,7 +69,7 @@
         <Unit>
           <Name>Raiders</Name>
           <Description>Cavalry</Description>
-          <Price>18</Price>
+          <Price>20</Price>
           <Hardness>0.0</Hardness>
           <Morale>3</Morale>
           <Stats>
@@ -78,7 +78,7 @@
             <HardAttack>2</HardAttack>
             <HardDefence>3</HardDefence>
             <BombardmentDefence>2</BombardmentDefence>
-            <Movement>5</Movement>
+            <Movement>6</Movement>
           </Stats>
           <Flags />
           <UpgradesAvailable />
@@ -107,18 +107,157 @@
           <Name>Noyan</Name>
           <Description>Self-propelled autocannon</Description>
           <Price>42</Price>
-          <Hardness>0.9</Hardness>
+          <Hardness>0.8</Hardness>
           <Morale>4</Morale>
           <Stats>
             <SoftAttack>7</SoftAttack>
             <SoftDefence>5</SoftDefence>
-            <HardAttack>5</HardAttack>
-            <HardDefence>5</HardDefence>
-            <BombardmentDefence>5</BombardmentDefence>
+            <HardAttack>4</HardAttack>
+            <HardDefence>4</HardDefence>
+            <BombardmentDefence>4</BombardmentDefence>
+            <AirAttack>5</AirAttack>
             <AntiAirRange>3</AntiAirRange>
             <Movement>5</Movement>
           </Stats>
           <Flags />
+          <UpgradesAvailable>
+            <UnitUpgrade>
+              <Name>Advanced search radar</Name>
+              <Price>4</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <AntiAirRange>1</AntiAirRange>
+              </Bonus>
+            </UnitUpgrade>
+          </UpgradesAvailable>
+        </Unit>
+      </Units>
+    </Faction>
+    <Faction>
+      <Name>The Brotherhood</Name>
+      <Description>The Brotherhood is an ethnoreligious group ruled by a powerful elite of clerics. After the death of the great prophet many charismatic leaders attempted to take his place and the community was torn apart by internal strife. The civil war that followed lasted nearly half a century and created generations born into violence and suffering. Reunited and driven by religious zeal, these men endure great hardships and gladly lay down their lives in service of their god.</Description>
+      <Units>
+        <Unit>
+          <Name>Zealots</Name>
+          <Description>Infantry</Description>
+          <Price>21</Price>
+          <Hardness>0.0</Hardness>
+          <Morale>5</Morale>
+          <Stats>
+            <SoftAttack>4</SoftAttack>
+            <SoftDefence>4</SoftDefence>
+            <HardAttack>3</HardAttack>
+            <HardDefence>3</HardDefence>
+            <BombardmentDefence>3</BombardmentDefence>
+            <Movement>3</Movement>
+          </Stats>
+          <Flags />
+          <UpgradesAvailable>
+            <UnitUpgrade>
+              <Name>Machine guns</Name>
+              <Price>4</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <SoftAttack>1</SoftAttack>
+                <SoftDefence>1</SoftDefence>
+              </Bonus>
+            </UnitUpgrade>
+            <UnitUpgrade>
+              <Name>Towed anti-tank gun</Name>
+              <Price>3</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <HardDefence>2</HardDefence>
+              </Bonus>
+            </UnitUpgrade>
+          </UpgradesAvailable>
+        </Unit>
+        <Unit>
+          <Name>Clerics</Name>
+          <Description>Engineers</Description>
+          <Price>25</Price>
+          <Hardness>0.1</Hardness>
+          <Morale>5</Morale>
+          <Stats>
+            <SoftAttack>4</SoftAttack>
+            <SoftDefence>4</SoftDefence>
+            <HardAttack>3</HardAttack>
+            <HardDefence>4</HardDefence>
+            <BombardmentDefence>4</BombardmentDefence>
+            <Movement>3</Movement>
+          </Stats>
+          <Flags>
+            <UnitFlag>Engineers</UnitFlag>
+          </Flags>
+          <UpgradesAvailable>
+            <UnitUpgrade>
+              <Name>Portable surface-to-air missile system</Name>
+              <Price>3</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <AirAttack>4</AirAttack>
+                <AntiAirRange>2</AntiAirRange>
+              </Bonus>
+            </UnitUpgrade>
+          </UpgradesAvailable>
+        </Unit>
+        <Unit>
+          <Name>Martyrs</Name>
+          <Description>Mechanised infantry</Description>
+          <Price>36</Price>
+          <Hardness>0.4</Hardness>
+          <Morale>5</Morale>
+          <Stats>
+            <SoftAttack>6</SoftAttack>
+            <SoftDefence>5</SoftDefence>
+            <HardAttack>4</HardAttack>
+            <HardDefence>4</HardDefence>
+            <BombardmentDefence>4</BombardmentDefence>
+            <Movement>6</Movement>
+          </Stats>
+          <Flags />
+          <UpgradesAvailable />
+        </Unit>
+        <Unit>
+          <Name>Salaam</Name>
+          <Description>Main battle tank</Description>
+          <Price>45</Price>
+          <Hardness>1.0</Hardness>
+          <Morale>5</Morale>
+          <Stats>
+            <SoftAttack>5</SoftAttack>
+            <SoftDefence>6</SoftDefence>
+            <HardAttack>6</HardAttack>
+            <HardDefence>6</HardDefence>
+            <BombardmentDefence>5</BombardmentDefence>
+            <Movement>5</Movement>
+          </Stats>
+          <Flags />
+          <UpgradesAvailable>
+            <UnitUpgrade>
+              <Name>Flamethrowers</Name>
+              <Price>6</Price>
+              <Slot>0</Slot>
+              <Bonus>
+                <SoftAttack>2</SoftAttack>
+                <HardAttack>-2</HardAttack>
+                <HardDefence>-1</HardDefence>
+              </Bonus>
+            </UnitUpgrade>
+          </UpgradesAvailable>
+        </Unit>
+        <Unit>
+          <Name>Adhaan</Name>
+          <Description>Attack aircraft</Description>
+          <Price>55</Price>
+          <Stats>
+            <SoftAttack>5</SoftAttack>
+            <HardAttack>4</HardAttack>
+            <AntiAirDefence>3</AntiAirDefence>
+          </Stats>
+          <Flags>
+            <UnitFlag>Air</UnitFlag>
+          </Flags>
           <UpgradesAvailable />
         </Unit>
       </Units>

@@ -15,6 +15,6 @@
 		// Units can't defend themselves against artillery attacks.
 		Artillery,
 		// Engineers ignore entrenchment defence bonuses when attacking entrenched enemy units.
-		Engineer,
+		Engineers,
 	}
 }
