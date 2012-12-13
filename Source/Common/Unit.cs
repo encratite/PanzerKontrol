@@ -19,10 +19,6 @@ namespace PanzerKontrol
 		// Air units have no hardness.
 		public double? Hardness { get; set; }
 
-		// Morale represents a unit's ability to suffer losses without retreating.
-		// Air units have no morale.
-		public int? Morale { get; set; }
-
 		// The stats of this unit.
 		// They are separated in this way because they are also used for upgrades.
 		public UnitStats Stats { get; set; }

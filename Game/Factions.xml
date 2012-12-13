@@ -10,7 +10,6 @@
           <Description>Infantry</Description>
           <Price>16</Price>
           <Hardness>0.0</Hardness>
-          <Morale>3</Morale>
           <Stats>
             <SoftAttack>4</SoftAttack>
             <SoftDefence>3</SoftDefence>
@@ -18,6 +17,7 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
+            <Morale>3</Morale>
           </Stats>
           <Flags />
           <UpgradesAvailable>
@@ -36,7 +36,6 @@
           <Description>Heavy infantry</Description>
           <Price>23</Price>
           <Hardness>0.2</Hardness>
-          <Morale>4</Morale>
           <Stats>
             <SoftAttack>5</SoftAttack>
             <SoftDefence>4</SoftDefence>
@@ -44,6 +43,7 @@
             <HardDefence>4</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
+            <Morale>4</Morale>
           </Stats>
           <Flags />
           <UpgradesAvailable>
@@ -71,7 +71,6 @@
           <Description>Cavalry</Description>
           <Price>20</Price>
           <Hardness>0.0</Hardness>
-          <Morale>3</Morale>
           <Stats>
             <SoftAttack>4</SoftAttack>
             <SoftDefence>3</SoftDefence>
@@ -79,6 +78,7 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>2</BombardmentDefence>
             <Movement>6</Movement>
+            <Morale>3</Morale>
           </Stats>
           <Flags />
           <UpgradesAvailable />
@@ -88,7 +88,6 @@
           <Description>Artillery</Description>
           <Price>28</Price>
           <Hardness>0.3</Hardness>
-          <Morale>3</Morale>
           <Stats>
             <SoftAttack>5</SoftAttack>
             <SoftDefence>2</SoftDefence>
@@ -97,6 +96,7 @@
             <BombardmentDefence>3</BombardmentDefence>
             <Range>3</Range>
             <Movement>3</Movement>
+            <Morale>3</Morale>
           </Stats>
           <Flags>
             <UnitFlag>Artillery</UnitFlag>
@@ -108,7 +108,6 @@
           <Description>Self-propelled autocannon</Description>
           <Price>42</Price>
           <Hardness>0.8</Hardness>
-          <Morale>4</Morale>
           <Stats>
             <SoftAttack>7</SoftAttack>
             <SoftDefence>5</SoftDefence>
@@ -118,6 +117,7 @@
             <AirAttack>5</AirAttack>
             <AntiAirRange>3</AntiAirRange>
             <Movement>5</Movement>
+            <Morale>4</Morale>
           </Stats>
           <Flags />
           <UpgradesAvailable>
@@ -142,7 +142,6 @@
           <Description>Infantry</Description>
           <Price>21</Price>
           <Hardness>0.0</Hardness>
-          <Morale>5</Morale>
           <Stats>
             <SoftAttack>4</SoftAttack>
             <SoftDefence>4</SoftDefence>
@@ -150,6 +149,7 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
+            <Morale>5</Morale>
           </Stats>
           <Flags />
           <UpgradesAvailable>
@@ -177,7 +177,6 @@
           <Description>Engineers</Description>
           <Price>25</Price>
           <Hardness>0.1</Hardness>
-          <Morale>5</Morale>
           <Stats>
             <SoftAttack>4</SoftAttack>
             <SoftDefence>4</SoftDefence>
@@ -185,6 +184,7 @@
             <HardDefence>4</HardDefence>
             <BombardmentDefence>4</BombardmentDefence>
             <Movement>3</Movement>
+            <Morale>5</Morale>
           </Stats>
           <Flags>
             <UnitFlag>Engineers</UnitFlag>
@@ -206,7 +206,6 @@
           <Description>Mechanised infantry</Description>
           <Price>36</Price>
           <Hardness>0.4</Hardness>
-          <Morale>5</Morale>
           <Stats>
             <SoftAttack>6</SoftAttack>
             <SoftDefence>5</SoftDefence>
@@ -214,6 +213,7 @@
             <HardDefence>4</HardDefence>
             <BombardmentDefence>4</BombardmentDefence>
             <Movement>6</Movement>
+            <Morale>5</Morale>
           </Stats>
           <Flags />
           <UpgradesAvailable />
@@ -223,7 +223,6 @@
           <Description>Main battle tank</Description>
           <Price>45</Price>
           <Hardness>1.0</Hardness>
-          <Morale>5</Morale>
           <Stats>
             <SoftAttack>5</SoftAttack>
             <SoftDefence>6</SoftDefence>
@@ -231,6 +230,7 @@
             <HardDefence>6</HardDefence>
             <BombardmentDefence>5</BombardmentDefence>
             <Movement>5</Movement>
+            <Morale>4</Morale>
           </Stats>
           <Flags />
           <UpgradesAvailable>

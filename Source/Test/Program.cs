@@ -34,6 +34,7 @@ namespace Test
 			stats.HardDefence = 3;
 			stats.BombardmentDefence = 3;
 			stats.Movement = 3;
+			stats.Morale = 5;
 
 			UnitStats bonus = new UnitStats();
 			bonus.HardAttack = 1;
@@ -48,9 +49,8 @@ namespace Test
 			unit.Name = "Name";
 			unit.Price = 20;
 			unit.Hardness = 0.0;
-			unit.Morale = 5;
 			unit.Stats = stats;
-			unit.Flags.Add(UnitFlag.Engineer);
+			unit.Flags.Add(UnitFlag.Engineers);
 			unit.UpgradesAvailable.Add(upgrade);
 
 			Faction faction = new Faction();

@@ -37,5 +37,9 @@
 		// The number of hexes this unit can move per turn.
 		// Air units have no movement.
 		public int? Movement { get; set; }
+
+		// Morale represents a unit's ability to suffer losses without retreating.
+		// Air units have no morale.
+		public int? Morale { get; set; }
 	}
 }
