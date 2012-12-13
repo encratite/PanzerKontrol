@@ -107,6 +107,7 @@
           <Name>Noyan</Name>
           <Description>Self-propelled autocannon</Description>
           <Price>42</Price>
+          <Limit>4</Limit>
           <Hardness>0.8</Hardness>
           <Stats>
             <SoftAttack>7</SoftAttack>
@@ -205,6 +206,7 @@
           <Name>Martyrs</Name>
           <Description>Mechanised infantry</Description>
           <Price>36</Price>
+          <Limit>4</Limit>
           <Hardness>0.4</Hardness>
           <Stats>
             <SoftAttack>6</SoftAttack>
@@ -222,6 +224,7 @@
           <Name>Salaam</Name>
           <Description>Main battle tank</Description>
           <Price>45</Price>
+          <Limit>3</Limit>
           <Hardness>1.0</Hardness>
           <Stats>
             <SoftAttack>5</SoftAttack>
@@ -250,6 +253,7 @@
           <Name>Adhaan</Name>
           <Description>Attack aircraft</Description>
           <Price>55</Price>
+          <Limit>3</Limit>
           <Stats>
             <SoftAttack>5</SoftAttack>
             <HardAttack>4</HardAttack>
