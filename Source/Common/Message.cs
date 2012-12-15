@@ -9,8 +9,8 @@ namespace PanzerKontrol
 		WelcomeRequest,
 		RegistrationRequest,
 		LoginRequest,
-		CustomGamesRequest,
-		CreateGameRequest,
+		ViewLobbiesRequest,
+		CreateLobbyRequest,
 		JoinGameRequest,
 		ChangeTeamRequest,
 		StartGameRequest,
@@ -22,8 +22,8 @@ namespace PanzerKontrol
 		WelcomeReply,
 		RegistrationReply,
 		LoginReply,
-		CustomGamesReply,
-		CreateGameReply,
+		ViewLobbiesReply,
+		CreateLobbyReply,
 		JoinGameReply,
 		UpdateGameInformation,
 		GameStart,
@@ -50,18 +50,18 @@ namespace PanzerKontrol
 		AlreadyLoggedIn,
 	}
 
-	enum CreateGameReplyType
+	public enum CreateLobbyReplyType
 	{
 		Success,
-		NameTaken,
-		InvalidName,
+		// The player may not create a new game because they're already in a lobby or a game
+		NotPermitted,
 	}
 
-	enum JoinGameReplyType
+	enum JoinLobbyReplyType
 	{
 		Success,
-		GameIsFull,
-		GameDoesNotExist,
+		LobbyIsFull,
+		LobbyDoesNotExist,
 		NeedInvitation,
 	}
 
@@ -86,16 +86,16 @@ namespace PanzerKontrol
 		public ClientToServerMessageType Type { get; set; }
 
 		[ProtoMember(2, IsRequired = false)]
-		public RegistrationRequest Registration { get; set; }
+		public RegistrationRequest RegistrationRequest { get; set; }
 
 		[ProtoMember(3, IsRequired = false)]
-		public LoginRequest Login { get; set; }
+		public LoginRequest LoginRequest { get; set; }
 
 		[ProtoMember(4, IsRequired = false)]
-		public CreateGameRequest CreateGame { get; set; }
+		public CreateLobbyRequest CreateLobbyRequest { get; set; }
 
 		[ProtoMember(5, IsRequired = false)]
-		public ChangeTeamRequest ChangeTeam { get; set; }
+		public ChangeTeamRequest ChangeTeamRequest { get; set; }
 
 		[ProtoMember(6, IsRequired = false)]
 		public PlayerInitialisationResultType? PlayerInitialisationResult { get; set; }
@@ -130,13 +130,13 @@ namespace PanzerKontrol
 		public LoginReplyType? LoginReply { get; set; }
 
 		[ProtoMember(5, IsRequired = false)]
-		public CustomGamesReply CustomGames { get; set; }
+		public ViewLobbiesReply ViewLobbiesReply { get; set; }
 
 		[ProtoMember(6, IsRequired = false)]
-		public CreateGameReplyType? CreateGameReply { get; set; }
+		public CreateLobbyReply CreateLobbyReply { get; set; }
 
 		[ProtoMember(7, IsRequired = false)]
-		public JoinGameReply JoinGameReply { get; set; }
+		public JoinLobbyReply JoinGameReply { get; set; }
 
 		[ProtoMember(8, IsRequired = false)]
 		public GameInformation GameInformationUpdate { get; set; }
@@ -144,22 +144,28 @@ namespace PanzerKontrol
 		[ProtoMember(9, IsRequired = false)]
 		public GameStart Start { get; set; }
 
-		public ServerToClientMessage(ServerWelcome serverWelcome)
+		public ServerToClientMessage(ServerWelcome reply)
 		{
 			Type = ServerToClientMessageType.WelcomeReply;
-			ServerWelcome = serverWelcome;
+			ServerWelcome = reply;
 		}
 
-		public ServerToClientMessage(LoginReplyType loginReply)
+		public ServerToClientMessage(LoginReplyType reply)
 		{
 			Type = ServerToClientMessageType.LoginReply;
-			LoginReply = loginReply;
+			LoginReply = reply;
 		}
 
-		public ServerToClientMessage(RegistrationReplyType registrationReply)
+		public ServerToClientMessage(RegistrationReplyType reply)
 		{
 			Type = ServerToClientMessageType.RegistrationReply;
-			RegistrationReply = registrationReply;
+			RegistrationReply = reply;
+		}
+
+		public ServerToClientMessage(CreateLobbyReply reply)
+		{
+			Type = ServerToClientMessageType.CreateLobbyReply;
+			CreateLobbyReply = reply;
 		}
 	}
 
@@ -204,14 +210,15 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class CustomGamesReply
+	class ViewLobbiesReply
 	{
+		// These are only the public lobbies
 		[ProtoMember(1)]
-		public List<CustomGameEntry> Games { get; set; }
+		public List<LobbyInformation> Lobbies { get; set; }
 	}
 
 	[ProtoContract]
-	class CustomGameEntry
+	class LobbyInformation
 	{
 		[ProtoMember(1)]
 		public long GameId { get; set; }
@@ -224,7 +231,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class CreateGameRequest
+	public class CreateLobbyRequest
 	{
 		// The description is only specified for public games
 		[ProtoMember(1, IsRequired = false)]
@@ -235,6 +242,17 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
+	public class CreateLobbyReply
+	{
+		[ProtoMember(1)]
+		public CreateLobbyReplyType Type { get; set; }
+
+		// The game ID is only transmitted if the lobby was created successfully
+		[ProtoMember(2, IsRequired = false)]
+		public int? GameId { get; set; }
+	}
+
+	[ProtoContract]
 	class JoinGameRequest
 	{
 		[ProtoMember(1)]
@@ -242,10 +260,10 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class JoinGameReply
+	class JoinLobbyReply
 	{
 		[ProtoMember(1)]
-		public JoinGameReplyType Type { get; set; }
+		public JoinLobbyReplyType Type { get; set; }
 
 		[ProtoMember(2)]
 		public GameInformation Game { get; set; }

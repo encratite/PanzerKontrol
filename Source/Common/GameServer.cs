@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -12,6 +13,41 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
+	class Lobby
+	{
+		public readonly Client Creator;
+		public readonly List<Team> Teams;
+		// Map data missing
+
+		public Lobby(Client creator)
+		{
+			Creator = creator;
+			Teams = new List<Team>();
+		}
+	}
+
+	class Team
+	{
+		public readonly List<TeamPlayer> Players;
+
+		public Team()
+		{
+			Players = new List<TeamPlayer>();
+		}
+	}
+
+	class TeamPlayer
+	{
+		public readonly Client Player;
+		public readonly Faction Faction;
+
+		public TeamPlayer(Client player, Faction faction)
+		{
+			Player = player;
+			Faction = faction;
+		}
+	}
+
 	public class GameServer
 	{
 		public const PrefixStyle Prefix = PrefixStyle.Fixed32BigEndian;
@@ -43,9 +79,11 @@ namespace PanzerKontrol
 		TcpListener Listener;
 		X509Certificate Certificate;
 		bool ShuttingDown;
-		List<ClientHandler> Clients;
+		List<Client> Clients;
 
 		GameServerState State;
+
+		List<Lobby> Lobbies;
 
 		public GameServer(GameServerConfiguration configuration, IObjectContainer database)
 		{
@@ -58,9 +96,11 @@ namespace PanzerKontrol
 			Listener = new TcpListener(endpoint);
 			Certificate = new X509Certificate(configuration.CertificatePath);
 			ShuttingDown = false;
-			Clients = new List<ClientHandler>();
+			Clients = new List<Client>();
 
 			LoadState();
+
+			Lobbies = new List<Lobby>();
 		}
 
 		void LoadState()
@@ -83,7 +123,7 @@ namespace PanzerKontrol
 				NetworkStream stream = new NetworkStream(socket);
 				SslStream secureStream = new SslStream(stream, false, AcceptAnyCertificate, null);
 				secureStream.AuthenticateAsServer(Certificate, false, SslProtocols.Tls12, false);
-				ClientHandler client = new ClientHandler(secureStream, this);
+				Client client = new Client(secureStream, this);
 				lock (Clients)
 					Clients.Add(client);
 			}
@@ -210,6 +250,11 @@ namespace PanzerKontrol
 			RegisteredPlayer player = new RegisteredPlayer(GeneratePlayerId(), request.Name, request.KeyHash);
 			Database.Store(player);
 			return RegistrationReplyType.Success;
+		}
+
+		public CreateLobbyReply CreateLobby(CreateLobbyRequest request)
+		{
+			throw new Exception("Not implemented");
 		}
 	}
 }

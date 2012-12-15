@@ -30,7 +30,7 @@ namespace PanzerKontrol
 
 	delegate void MessageHandler(ClientToServerMessage message);
 
-	class ClientHandler
+	class Client
 	{
 		GameServer Server;
 		SslStream Stream;
@@ -52,7 +52,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public ClientHandler(SslStream stream, GameServer server)
+		public Client(SslStream stream, GameServer server)
 		{
 			Stream = stream;
 			Server = server;
@@ -66,7 +66,7 @@ namespace PanzerKontrol
 			InitialiseMessageHandlerMap();
 		}
 
-		public void Handle()
+		public void Process()
 		{
 			Thread = new Thread(Run);
 			Thread.Start();
@@ -77,6 +77,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.WelcomeRequest] = OnWelcomeRequest;
 			MessageHandlerMap[ClientToServerMessageType.LoginRequest] = OnLoginRequest;
 			MessageHandlerMap[ClientToServerMessageType.RegistrationRequest] = OnRegistrationRequest;
+			MessageHandlerMap[ClientToServerMessageType.CreateLobbyRequest] = OnCreateLobbyRequest;
 		}
 
 		void SetExpectedMessageTypes(params ClientToServerMessageType[] expectedMessageTypes)
@@ -125,14 +126,14 @@ namespace PanzerKontrol
 		{
 			ClientState = ClientState.LoggedIn;
 			ClientPlayer = player;
-			SetExpectedMessageTypes(ClientToServerMessageType.CustomGamesRequest, ClientToServerMessageType.CreateGameRequest, ClientToServerMessageType.JoinGameRequest);
+			SetExpectedMessageTypes(ClientToServerMessageType.ViewLobbiesRequest, ClientToServerMessageType.CreateLobbyRequest, ClientToServerMessageType.JoinGameRequest);
 		}
 
 		void OnLoginRequest(ClientToServerMessage message)
 		{
-			if (message.Login == null)
+			if (message.LoginRequest == null)
 				throw new ClientException("Invalid login request");
-			LoginRequest login = message.Login;
+			LoginRequest login = message.LoginRequest;
 			LoginReplyType result;
 			Player player;
 			if (login.IsGuestLogin)
@@ -154,10 +155,18 @@ namespace PanzerKontrol
 
 		void OnRegistrationRequest(ClientToServerMessage message)
 		{
-			if (message.Registration == null)
+			if (message.RegistrationRequest == null)
 				throw new ClientException("Invalid login request");
-			RegistrationReplyType result = Server.RegisterPlayer(message.Registration);
+			RegistrationReplyType result = Server.RegisterPlayer(message.RegistrationRequest);
 			SendMessage(new ServerToClientMessage(result));
+		}
+
+		void OnCreateLobbyRequest(ClientToServerMessage message)
+		{
+			if (message.CreateLobbyRequest == null)
+				throw new ClientException("Invalid lobby creation request");
+			CreateLobbyReply reply = Server.CreateLobby(message.CreateLobbyRequest);
+			SendMessage(new ServerToClientMessage(reply));
 		}
 	}
 }
