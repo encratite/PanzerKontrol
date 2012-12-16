@@ -108,7 +108,7 @@ namespace PanzerKontrol
 				ProcessMessage(message);
 		}
 
-		void SendMessage(ServerToClientMessage message)
+		public void SendMessage(ServerToClientMessage message)
 		{
 			Serializer.Serialize<ServerToClientMessage>(Stream, message);
 		}
@@ -179,7 +179,8 @@ namespace PanzerKontrol
 
 		void OnViewLobbiesRequest(ClientToServerMessage message)
 		{
-			throw new Exception("Not implemented");
+			ViewLobbiesReply reply = Server.ViewLobbies();
+			SendMessage(new ServerToClientMessage(reply));
 		}
 
 		void OnCreateLobbyRequest(ClientToServerMessage message)
@@ -194,7 +195,12 @@ namespace PanzerKontrol
 
 		void OnJoinLobbyRequest(ClientToServerMessage message)
 		{
-			throw new Exception("Not implemented");
+			if (message.JoinLobbyRequest == null)
+				throw new ClientException("Invalid join lobby request");
+			JoinLobbyReply reply = Server.JoinLobby(this, message.JoinLobbyRequest);
+			if (reply.Type == JoinLobbyReplyType.Success)
+				InLobby(true);
+			SendMessage(new ServerToClientMessage(reply));
 		}
 
 		void OnJoinTeamRequest(ClientToServerMessage message)

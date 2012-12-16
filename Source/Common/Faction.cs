@@ -4,6 +4,9 @@ namespace PanzerKontrol
 {
 	public class Faction
 	{
+		// The numeric identifier of the faction.
+		public int Id { get; set; }
+
 		// The name of the faction.
 		public string Name { get; set; }
 

@@ -2,6 +2,7 @@
 <UnitConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Factions>
     <Faction>
+      <Id>1</Id>
       <Name>Nomads</Name>
       <Description>Hostile steppes gave birth to these nomadic predators. Originally governed by local warlords who were constantly fighting each other, the Nomads formed a fragile alliance in pursuit of more land, cattle, and wives. Their equipment may be crude and some of them are even said to ride into battle on horses, facing machine guns and artillery fire. Yet their greed and especially their cruelty against civilians are widely feared.</Description>
       <Units>
@@ -135,8 +136,9 @@
       </Units>
     </Faction>
     <Faction>
+      <Id>2</Id>
       <Name>The Brotherhood</Name>
-      <Description>The Brotherhood is an ethnoreligious group ruled by a powerful elite of clerics. After the death of the great prophet many charismatic leaders attempted to take his place and the community was torn apart by internal strife. The civil war that followed lasted nearly half a century and created generations born into violence and suffering. Reunited and driven by religious zeal, these men endure great hardships and gladly lay down their lives in service of their god.</Description>
+      <Description>The Brotherhood is an ethnoreligious group ruled by a powerful elite of clerics. After the death of the great prophet, many charismatic leaders attempted to take his place and the community was torn apart by internal strife. The civil war that followed lasted nearly half a century and created generations born into violence and suffering. Reunited and driven by religious zeal, these men endure great hardships and gladly lay down their lives in service of their god.</Description>
       <Units>
         <Unit>
           <Name>Zealots</Name>

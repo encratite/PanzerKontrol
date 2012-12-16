@@ -4,7 +4,7 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
-	enum ClientToServerMessageType
+	public enum ClientToServerMessageType
 	{
 		WelcomeRequest,
 		RegistrationRequest,
@@ -18,14 +18,14 @@ namespace PanzerKontrol
 		PlayerInitialisationResult,
 	}
 
-	enum ServerToClientMessageType
+	public enum ServerToClientMessageType
 	{
 		WelcomeReply,
 		RegistrationReply,
 		LoginReply,
 		ViewLobbiesReply,
 		CreateLobbyReply,
-		JoinGameReply,
+		JoinLobbyReply,
 		UpdateGameInformation,
 		GameStart,
 		GameInitialisationResult,
@@ -57,22 +57,21 @@ namespace PanzerKontrol
 		// I can't think of any useful error states right now, just leaving this for now
 	}
 
-	enum JoinLobbyReplyType
+	public enum JoinLobbyReplyType
 	{
 		Success,
-		LobbyIsFull,
 		LobbyDoesNotExist,
 		NeedInvitation,
 	}
 
-	enum PlayerInitialisationResultType
+	public enum PlayerInitialisationResultType
 	{
 		Success,
 		MapNotFound,
 		Error,
 	}
 
-	enum GameInitialisationResultType
+	public enum GameInitialisationResultType
 	{
 		Success,
 		PlayerError,
@@ -80,7 +79,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class ClientToServerMessage
+	public class ClientToServerMessage
 	{
 		[ProtoMember(1)]
 		public ClientToServerMessageType Type { get; set; }
@@ -121,7 +120,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class ServerToClientMessage
+	public class ServerToClientMessage
 	{
 		[ProtoMember(1)]
 		public ServerToClientMessageType Type { get; set; }
@@ -145,7 +144,7 @@ namespace PanzerKontrol
 		public JoinLobbyReply JoinLobbyReply { get; set; }
 
 		[ProtoMember(8, IsRequired = false)]
-		public GameInformation GameInformationUpdate { get; set; }
+		public DetailedGameInformation GameInformationUpdate { get; set; }
 
 		[ProtoMember(9, IsRequired = false)]
 		public GameStart Start { get; set; }
@@ -173,10 +172,28 @@ namespace PanzerKontrol
 			Type = ServerToClientMessageType.CreateLobbyReply;
 			CreateLobbyReply = reply;
 		}
+
+		public ServerToClientMessage(ViewLobbiesReply reply)
+		{
+			Type = ServerToClientMessageType.ViewLobbiesReply;
+			ViewLobbiesReply = reply;
+		}
+
+		public ServerToClientMessage(DetailedGameInformation information)
+		{
+			Type = ServerToClientMessageType.UpdateGameInformation;
+			GameInformationUpdate = information;
+		}
+
+		public ServerToClientMessage(JoinLobbyReply reply)
+		{
+			Type = ServerToClientMessageType.JoinLobbyReply;
+			JoinLobbyReply = reply;
+		}
 	}
 
 	[ProtoContract]
-	class ServerWelcome
+	public class ServerWelcome
 	{
 		[ProtoMember(1)]
 		public int Version { get; set; }
@@ -216,31 +233,45 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class ViewLobbiesReply
+	public class ViewLobbiesReply
 	{
 		// These are only the public lobbies
 		[ProtoMember(1)]
-		public List<LobbyInformation> Lobbies { get; set; }
+		public List<GameInformation> Lobbies { get; set; }
 	}
 
 	[ProtoContract]
-	class LobbyInformation
+	public class GameInformation
 	{
 		[ProtoMember(1)]
 		public long GameId { get; set; }
 
 		[ProtoMember(2)]
-		public string Description { get; set; }
+		public string CreatorName { get; set; }
 
 		[ProtoMember(3)]
-		public string CreatorName { get; set; }
+		public string Description { get; set; }
+
+		// This is only set once the owner of the lobby has chosen a map.
+		[ProtoMember(4, IsRequired = false)]
+		public string Map { get; set; }
+
+		// This is only set once the owner of the lobby has chosen a number of points that may be spent during the picking phase.
+		[ProtoMember(5, IsRequired = false)]
+		public int? Points { get; set; }
+
+		public GameInformation(Lobby lobby)
+		{
+			GameId = lobby.GameId;
+			CreatorName = lobby.Owner.Player.Name;
+			Description = lobby.Description;
+		}
 	}
 
 	[ProtoContract]
 	public class CreateLobbyRequest
 	{
-		// The description is only specified for public games.
-		[ProtoMember(1, IsRequired = false)]
+		[ProtoMember(1)]
 		public string Description { get; set; }
 
 		[ProtoMember(2)]
@@ -265,37 +296,55 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class JoinLobbyRequest
+	public class JoinLobbyRequest
 	{
 		[ProtoMember(1)]
 		public long GameId { get; set; }
 	}
 
 	[ProtoContract]
-	class JoinLobbyReply
+	public class JoinLobbyReply
 	{
 		[ProtoMember(1)]
 		public JoinLobbyReplyType Type { get; set; }
 
 		[ProtoMember(2)]
-		public GameInformation Game { get; set; }
+		public DetailedGameInformation Game { get; set; }
+
+		public JoinLobbyReply(JoinLobbyReplyType type)
+		{
+			Type = type;
+		}
+
+		public JoinLobbyReply(Lobby lobby)
+		{
+			Type = JoinLobbyReplyType.Success;
+			Game = new DetailedGameInformation(lobby);
+		}
 	}
 
 	[ProtoContract]
-	class PlayerInformation
+	public class PlayerInformation
 	{
 		[ProtoMember(1)]
 		public long PlayerId { get; set; }
 
 		[ProtoMember(2)]
-		public bool IsGuest { get; set; }
+		public string Name { get; set; }
 
 		[ProtoMember(3)]
-		public string Name { get; set; }
+		public bool IsGuest { get; set; }
+
+		public PlayerInformation(Player player)
+		{
+			PlayerId = player.Id;
+			Name = player.Name;
+			IsGuest = player.GetType() == typeof(GuestPlayer);
+		}
 	}
 
 	[ProtoContract]
-	class TeamPlayerInformation
+	public class TeamPlayerInformation
 	{
 		[ProtoMember(1)]
 		public PlayerInformation Player { get; set; }
@@ -305,34 +354,69 @@ namespace PanzerKontrol
 		public bool IsOwner { get; set; }
 
 		[ProtoMember(3, IsRequired = false)]
-		public int? FactionId { get; set; }
+		public int? Faction { get; set; }
+
+		public TeamPlayerInformation(TeamPlayer player, bool isOwner)
+		{
+			Player = new PlayerInformation(player.Player.Player);
+			IsOwner = isOwner;
+			Faction = player.Faction.Id;
+		}
 	}
 
 	[ProtoContract]
-	class GameInformation
+	public class DetailedGameInformation
 	{
 		[ProtoMember(1)]
+		public GameInformation Game { get; set; }
+
+		[ProtoMember(2)]
+		public List<PlayerInformation> UnassignedPlayers { get; set; }
+
+		[ProtoMember(3)]
 		public List<TeamInformation> Teams { get; set; }
 
-		// This is only set once the owner of the lobby has chosen a map.
-		[ProtoMember(2, IsRequired = false)]
-		public string Map { get; set; }
-
-		// This is only set once the owner of the lobby has chosen a number of points that may be spent during the picking phase.
-		[ProtoMember(3, IsRequired = false)]
-		public int? Points { get; set; }
+		public DetailedGameInformation(Lobby lobby)
+		{
+			Game = new GameInformation(lobby);
+			UnassignedPlayers = new List<PlayerInformation>();
+			foreach (GameServerClient client in lobby.Players)
+			{
+				if (!lobby.IsOnATeam(client.Player))
+				{
+					PlayerInformation player = new PlayerInformation(client.Player);
+					UnassignedPlayers.Add(player);
+				}
+			}
+			Teams = new List<TeamInformation>();
+			foreach (Team team in lobby.Teams)
+			{
+				TeamInformation teamInformation = new TeamInformation(lobby.Owner.Player, team);
+				Teams.Add(teamInformation);
+			}
+		}
 	}
 
 	[ProtoContract]
-	class TeamInformation
+	public class TeamInformation
 	{
 		[ProtoMember(1)]
 		public List<TeamPlayerInformation> Players { get; set; }
+
+		public TeamInformation(Player owner, Team team)
+		{
+			Players = new List<TeamPlayerInformation>();
+			foreach (TeamPlayer player in team.Players)
+			{
+				TeamPlayerInformation information = new TeamPlayerInformation(player, object.ReferenceEquals(player.Player, owner));
+				Players.Add(information);
+			}
+		}
 	}
 
 	// The change team request contains a player ID because this class is actually also used to move other players forcefully (given sufficient privileges).
 	[ProtoContract]
-	class JoinTeamRequest
+	public class JoinTeamRequest
 	{
 		[ProtoMember(1)]
 		public long PlayerId { get; set; }
@@ -342,19 +426,19 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	class SetFactionRequest
+	public class SetFactionRequest
 	{
 		[ProtoMember(1)]
 		public int Faction { get; set; }
 	}
 
 	[ProtoContract]
-	class GameStart
+	public class GameStart
 	{
 		[ProtoMember(1)]
 		public long GameId { get; set; }
 
 		[ProtoMember(2)]
-		public GameInformation Game { get; set; }
+		public DetailedGameInformation Game { get; set; }
 	}
 }

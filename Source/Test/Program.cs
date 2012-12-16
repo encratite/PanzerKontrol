@@ -54,6 +54,7 @@ namespace Test
 			unit.UpgradesAvailable.Add(upgrade);
 
 			Faction faction = new Faction();
+			faction.Id = 1;
 			faction.Name = "Faction";
 			faction.Description = "Description";
 			faction.Units.Add(unit);

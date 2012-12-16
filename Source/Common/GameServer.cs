@@ -13,25 +13,42 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
-	class Lobby
+	public class Lobby
 	{
 		public readonly long GameId;
-		public readonly GameServerClient Creator;
+		public readonly GameServerClient Owner;
+		public readonly string Description;
+		public readonly bool IsPrivate;
 		public readonly List<GameServerClient> Players;
 		public readonly List<Team> Teams;
-		// Map data missing
 
-		public Lobby(long gameId, GameServerClient creator)
+		// Map data missing
+		// Points aren't set until the owner has chosen a number
+		public readonly int? Points;
+
+		public Lobby(long gameId, GameServerClient owner, string description, bool isPrivate)
 		{
 			GameId = gameId;
-			Creator = creator;
+			Owner = owner;
+			Description = description;
+			IsPrivate = isPrivate;
 			Players = new List<GameServerClient>();
-			Players.Add(creator);
+			Players.Add(owner);
 			Teams = new List<Team>();
+		}
+
+		public bool IsOnATeam(Player player)
+		{
+			foreach (Team team in Teams)
+			{
+				if(team.Includes(player))
+					return true;
+			}
+			return false;
 		}
 	}
 
-	class Team
+	public class Team
 	{
 		public readonly List<TeamPlayer> Players;
 
@@ -39,9 +56,15 @@ namespace PanzerKontrol
 		{
 			Players = new List<TeamPlayer>();
 		}
+
+		public bool Includes(Player player)
+		{
+			TeamPlayer match = Players.Find((TeamPlayer x) => object.ReferenceEquals(x.Player, player));
+			return match != null;
+		}
 	}
 
-	class TeamPlayer
+	public class TeamPlayer
 	{
 		public readonly GameServerClient Player;
 		public readonly Faction Faction;
@@ -128,6 +151,13 @@ namespace PanzerKontrol
 			var serialiser = new Nil.Serialiser<UnitConfiguration>(Configuration.FactionsPath);
 			var configuration = serialiser.Load();
 			Factions = configuration.Factions;
+			int id = 1;
+			foreach (Faction faction in Factions)
+			{
+				if (faction.Id != id)
+					throw new Exception("Invalid faction ID detected");
+				id++;
+			}
 		}
 
 		public void Run()
@@ -156,20 +186,17 @@ namespace PanzerKontrol
 
 		public bool NameIsInUse(string name)
 		{
-			lock (Clients)
+			var registeredPlayers = Database.Query<RegisteredPlayer>(delegate(RegisteredPlayer player)
 			{
-				var registeredPlayers = Database.Query<RegisteredPlayer>(delegate(RegisteredPlayer player)
-				{
-					return player.Name == name;
-				});
-				if (registeredPlayers.Count > 0)
-					return false;
-				var unregisteredPlayers =
-					from x in Clients
-					where x.Player != null && x.Player.Name == name
-					select x.Player;
-				return unregisteredPlayers.Count() > 0;
-			}
+				return player.Name == name;
+			});
+			if (registeredPlayers.Count > 0)
+				return false;
+			var unregisteredPlayers =
+				from x in Clients
+				where x.Player != null && x.Player.Name == name
+				select x.Player;
+			return unregisteredPlayers.Count() > 0;
 		}
 
 		public LoginReplyType ProcessGuestPlayerLoginRequest(LoginRequest login, out GuestPlayer player)
@@ -256,24 +283,74 @@ namespace PanzerKontrol
 
 		public RegistrationReplyType RegisterPlayer(RegistrationRequest request)
 		{
-			if (!Configuration.EnableUserRegistration)
-				return RegistrationReplyType.RegistrationDisabled;
-			if (NameIsInUse(request.Name))
-				return RegistrationReplyType.NameTaken;
-			if (request.KeyHash.Length != KeyHashSize)
-				return RegistrationReplyType.WrongKeyHashSize;
-			RegisteredPlayer player = new RegisteredPlayer(GeneratePlayerId(), request.Name, request.KeyHash);
-			Database.Store(player);
-			return RegistrationReplyType.Success;
+			lock (Clients)
+			{
+				if (!Configuration.EnableUserRegistration)
+					return RegistrationReplyType.RegistrationDisabled;
+				if (NameIsInUse(request.Name))
+					return RegistrationReplyType.NameTaken;
+				if (request.KeyHash.Length != KeyHashSize)
+					return RegistrationReplyType.WrongKeyHashSize;
+				RegisteredPlayer player = new RegisteredPlayer(GeneratePlayerId(), request.Name, request.KeyHash);
+				Database.Store(player);
+				return RegistrationReplyType.Success;
+			}
 		}
 
 		public CreateLobbyReply CreateLobby(GameServerClient client, CreateLobbyRequest request)
 		{
-			long gameId = State.GetGameId();
-			Lobby lobby = new Lobby(gameId, client);
-			Lobbies.Add(lobby);
-			CreateLobbyReply reply = new CreateLobbyReply(gameId);
-			return reply;
+			lock (Lobbies)
+			{
+				long gameId = State.GetGameId();
+				Lobby lobby = new Lobby(gameId, client, request.Description, request.IsPrivate);
+				Lobbies.Add(lobby);
+				CreateLobbyReply reply = new CreateLobbyReply(gameId);
+				return reply;
+			}
+		}
+
+		public ViewLobbiesReply ViewLobbies()
+		{
+			lock (Lobbies)
+			{
+				ViewLobbiesReply reply = new ViewLobbiesReply();
+				foreach (Lobby lobby in Lobbies)
+				{
+					// Conceal private lobbies
+					if (lobby.IsPrivate)
+						continue;
+					GameInformation information = new GameInformation(lobby);
+					reply.Lobbies.Add(information);
+				}
+				return reply;
+			}
+		}
+
+		void UpdateGameInformation(Lobby lobby, GameServerClient excludedClient = null)
+		{
+			foreach (GameServerClient client in lobby.Players)
+			{
+				if (excludedClient != null && object.ReferenceEquals(excludedClient, client))
+					continue;
+				DetailedGameInformation gameInformation = new DetailedGameInformation(lobby);
+				ServerToClientMessage message = new ServerToClientMessage(gameInformation);
+				client.SendMessage(message);
+			}
+		}
+
+		public JoinLobbyReply JoinLobby(GameServerClient client, JoinLobbyRequest request)
+		{
+			lock (Lobbies)
+			{
+				Lobby lobby = Lobbies.Find((Lobby x) => x.GameId == request.GameId);
+				if (lobby == null)
+					return new JoinLobbyReply(JoinLobbyReplyType.LobbyDoesNotExist);
+				if(lobby.IsPrivate)
+					return new JoinLobbyReply(JoinLobbyReplyType.NeedInvitation);
+				lobby.Players.Add(client);
+				UpdateGameInformation(lobby, client);
+				return new JoinLobbyReply(lobby);
+			}
 		}
 	}
 }
