@@ -50,7 +50,7 @@ namespace Test
 			unit.Price = 20;
 			unit.Hardness = 0.0;
 			unit.Stats = stats;
-			unit.Flags.Add(UnitFlag.Engineers);
+			unit.Flags.Add(UnitFlag.Infantry);
 			unit.UpgradesAvailable.Add(upgrade);
 
 			Faction faction = new Faction();

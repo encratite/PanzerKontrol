@@ -1,9 +1,15 @@
 ﻿using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace PanzerKontrol
 {
 	public class Unit
 	{
+		// The numeric identifier of this unit.
+		// This value is generated automatically by the server based on the order of units in the configuration file.
+		[XmlIgnore]
+		public int? Id;
+
 		// The name of this unit.
 		public string Name { get; set; }
 

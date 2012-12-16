@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace PanzerKontrol
 {
 	public class Faction
 	{
-		// The numeric identifier of the faction.
-		public int Id { get; set; }
+		// The numeric identifier of this faction.
+		// This value is generated automatically by the server based on the order of factions in the configurationfile.
+		[XmlIgnore]
+		public int? Id;
 
 		// The name of the faction.
 		public string Name { get; set; }
@@ -19,6 +22,16 @@ namespace PanzerKontrol
 		public Faction()
 		{
 			Units = new List<Unit>();
+		}
+
+		public void SetUnitIds()
+		{
+			int id = 0;
+			foreach (Unit unit in Units)
+			{
+				unit.Id = id;
+				id++;
+			}
 		}
 	}
 }

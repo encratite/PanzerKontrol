@@ -151,11 +151,10 @@ namespace PanzerKontrol
 			var serialiser = new Nil.Serialiser<UnitConfiguration>(Configuration.FactionsPath);
 			var configuration = serialiser.Load();
 			Factions = configuration.Factions;
-			int id = 1;
+			int id = 0;
 			foreach (Faction faction in Factions)
 			{
-				if (faction.Id != id)
-					throw new Exception("Invalid faction ID detected");
+				faction.Id = id;
 				id++;
 			}
 		}

@@ -14,7 +14,9 @@
 		// Once artillery units have moved, they are unable to perform attacks for the rest of the turn.
 		// Units can't defend themselves against artillery attacks.
 		Artillery,
-		// Engineers ignore entrenchment defence bonuses when attacking entrenched enemy units.
+		// Engineers ignore remove enemy entrenchment on attacks.
 		Engineers,
+		// Only infantry is able to entrench in a position to increase its defensive stats.
+		Infantry,
 	}
 }
