@@ -15,13 +15,18 @@ namespace PanzerKontrol
 {
 	class Lobby
 	{
-		public readonly Client Creator;
+		public readonly long GameId;
+		public readonly GameServerClient Creator;
+		public readonly List<GameServerClient> Players;
 		public readonly List<Team> Teams;
 		// Map data missing
 
-		public Lobby(Client creator)
+		public Lobby(long gameId, GameServerClient creator)
 		{
+			GameId = gameId;
 			Creator = creator;
+			Players = new List<GameServerClient>();
+			Players.Add(creator);
 			Teams = new List<Team>();
 		}
 	}
@@ -38,10 +43,10 @@ namespace PanzerKontrol
 
 	class TeamPlayer
 	{
-		public readonly Client Player;
+		public readonly GameServerClient Player;
 		public readonly Faction Faction;
 
-		public TeamPlayer(Client player, Faction faction)
+		public TeamPlayer(GameServerClient player, Faction faction)
 		{
 			Player = player;
 			Faction = faction;
@@ -79,9 +84,11 @@ namespace PanzerKontrol
 		TcpListener Listener;
 		X509Certificate Certificate;
 		bool ShuttingDown;
-		List<Client> Clients;
+		List<GameServerClient> Clients;
 
 		GameServerState State;
+
+		List<Faction> Factions;
 
 		List<Lobby> Lobbies;
 
@@ -96,9 +103,10 @@ namespace PanzerKontrol
 			Listener = new TcpListener(endpoint);
 			Certificate = new X509Certificate(configuration.CertificatePath);
 			ShuttingDown = false;
-			Clients = new List<Client>();
+			Clients = new List<GameServerClient>();
 
 			LoadState();
+			LoadFactions();
 
 			Lobbies = new List<Lobby>();
 		}
@@ -115,6 +123,13 @@ namespace PanzerKontrol
 				State = (GameServerState)result.Next();
 		}
 
+		void LoadFactions()
+		{
+			var serialiser = new Nil.Serialiser<UnitConfiguration>(Configuration.FactionsPath);
+			var configuration = serialiser.Load();
+			Factions = configuration.Factions;
+		}
+
 		public void Run()
 		{
 			while (!ShuttingDown)
@@ -123,7 +138,7 @@ namespace PanzerKontrol
 				NetworkStream stream = new NetworkStream(socket);
 				SslStream secureStream = new SslStream(stream, false, AcceptAnyCertificate, null);
 				secureStream.AuthenticateAsServer(Certificate, false, SslProtocols.Tls12, false);
-				Client client = new Client(secureStream, this);
+				GameServerClient client = new GameServerClient(secureStream, this);
 				lock (Clients)
 					Clients.Add(client);
 			}
@@ -252,9 +267,13 @@ namespace PanzerKontrol
 			return RegistrationReplyType.Success;
 		}
 
-		public CreateLobbyReply CreateLobby(CreateLobbyRequest request)
+		public CreateLobbyReply CreateLobby(GameServerClient client, CreateLobbyRequest request)
 		{
-			throw new Exception("Not implemented");
+			long gameId = State.GetGameId();
+			Lobby lobby = new Lobby(gameId, client);
+			Lobbies.Add(lobby);
+			CreateLobbyReply reply = new CreateLobbyReply(gameId);
+			return reply;
 		}
 	}
 }

@@ -30,7 +30,7 @@ namespace PanzerKontrol
 
 	delegate void MessageHandler(ClientToServerMessage message);
 
-	class Client
+	public class GameServerClient
 	{
 		GameServer Server;
 		SslStream Stream;
@@ -52,7 +52,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public Client(SslStream stream, GameServer server)
+		public GameServerClient(SslStream stream, GameServer server)
 		{
 			Stream = stream;
 			Server = server;
@@ -75,9 +75,16 @@ namespace PanzerKontrol
 		void InitialiseMessageHandlerMap()
 		{
 			MessageHandlerMap[ClientToServerMessageType.WelcomeRequest] = OnWelcomeRequest;
-			MessageHandlerMap[ClientToServerMessageType.LoginRequest] = OnLoginRequest;
 			MessageHandlerMap[ClientToServerMessageType.RegistrationRequest] = OnRegistrationRequest;
+			MessageHandlerMap[ClientToServerMessageType.LoginRequest] = OnLoginRequest;
+			MessageHandlerMap[ClientToServerMessageType.ViewLobbiesRequest] = OnViewLobbiesRequest;
 			MessageHandlerMap[ClientToServerMessageType.CreateLobbyRequest] = OnCreateLobbyRequest;
+
+			MessageHandlerMap[ClientToServerMessageType.JoinLobbyRequest] = OnJoinLobbyRequest;
+			MessageHandlerMap[ClientToServerMessageType.JoinTeamRequest] = OnJoinTeamRequest;
+			MessageHandlerMap[ClientToServerMessageType.SetFactionRequest] = OnSetFactionRequest;
+			MessageHandlerMap[ClientToServerMessageType.StartGameRequest] = OnStartGameRequest;
+			MessageHandlerMap[ClientToServerMessageType.PlayerInitialisationResult] = OnPlayerInitialisationResult;
 		}
 
 		void SetExpectedMessageTypes(params ClientToServerMessageType[] expectedMessageTypes)
@@ -115,6 +122,22 @@ namespace PanzerKontrol
 				throw new Exception("Encountered an unknown server to client message type");
 		}
 
+		void LogIn(Player player)
+		{
+			ClientState = ClientState.LoggedIn;
+			ClientPlayer = player;
+			SetExpectedMessageTypes(ClientToServerMessageType.ViewLobbiesRequest, ClientToServerMessageType.CreateLobbyRequest, ClientToServerMessageType.JoinLobbyRequest);
+		}
+
+		void InLobby(bool isOwner)
+		{
+			ClientState = ClientState.InLobby;
+			if (isOwner)
+				SetExpectedMessageTypes(ClientToServerMessageType.JoinTeamRequest, ClientToServerMessageType.SetFactionRequest, ClientToServerMessageType.StartGameRequest);
+			else
+				SetExpectedMessageTypes(ClientToServerMessageType.JoinTeamRequest, ClientToServerMessageType.SetFactionRequest);
+		}
+
 		void OnWelcomeRequest(ClientToServerMessage message)
 		{
 			SetExpectedMessageTypes(ClientToServerMessageType.LoginRequest, ClientToServerMessageType.RegistrationRequest);
@@ -122,12 +145,13 @@ namespace PanzerKontrol
 			SendMessage(new ServerToClientMessage(welcome));
 		}
 
-		void LogIn(Player player)
+		void OnRegistrationRequest(ClientToServerMessage message)
 		{
-			ClientState = ClientState.LoggedIn;
-			ClientPlayer = player;
-			SetExpectedMessageTypes(ClientToServerMessageType.ViewLobbiesRequest, ClientToServerMessageType.CreateLobbyRequest, ClientToServerMessageType.JoinGameRequest);
-		}
+			if (message.RegistrationRequest == null)
+				throw new ClientException("Invalid login request");
+			RegistrationReplyType result = Server.RegisterPlayer(message.RegistrationRequest);
+			SendMessage(new ServerToClientMessage(result));
+		}	
 
 		void OnLoginRequest(ClientToServerMessage message)
 		{
@@ -153,20 +177,44 @@ namespace PanzerKontrol
 			SendMessage(new ServerToClientMessage(result));
 		}
 
-		void OnRegistrationRequest(ClientToServerMessage message)
+		void OnViewLobbiesRequest(ClientToServerMessage message)
 		{
-			if (message.RegistrationRequest == null)
-				throw new ClientException("Invalid login request");
-			RegistrationReplyType result = Server.RegisterPlayer(message.RegistrationRequest);
-			SendMessage(new ServerToClientMessage(result));
+			throw new Exception("Not implemented");
 		}
 
 		void OnCreateLobbyRequest(ClientToServerMessage message)
 		{
 			if (message.CreateLobbyRequest == null)
 				throw new ClientException("Invalid lobby creation request");
-			CreateLobbyReply reply = Server.CreateLobby(message.CreateLobbyRequest);
+			CreateLobbyReply reply = Server.CreateLobby(this, message.CreateLobbyRequest);
+			if (reply.Type == CreateLobbyReplyType.Success)
+				InLobby(true);
 			SendMessage(new ServerToClientMessage(reply));
+		}
+
+		void OnJoinLobbyRequest(ClientToServerMessage message)
+		{
+			throw new Exception("Not implemented");
+		}
+
+		void OnJoinTeamRequest(ClientToServerMessage message)
+		{
+			throw new Exception("Not implemented");
+		}
+
+		void OnSetFactionRequest(ClientToServerMessage message)
+		{
+			throw new Exception("Not implemented");
+		}
+
+		void OnStartGameRequest(ClientToServerMessage message)
+		{
+			throw new Exception("Not implemented");
+		}
+
+		void OnPlayerInitialisationResult(ClientToServerMessage message)
+		{
+			throw new Exception("Not implemented");
 		}
 	}
 }

@@ -11,8 +11,9 @@ namespace PanzerKontrol
 		LoginRequest,
 		ViewLobbiesRequest,
 		CreateLobbyRequest,
-		JoinGameRequest,
-		ChangeTeamRequest,
+		JoinLobbyRequest,
+		JoinTeamRequest,
+		SetFactionRequest,
 		StartGameRequest,
 		PlayerInitialisationResult,
 	}
@@ -53,8 +54,7 @@ namespace PanzerKontrol
 	public enum CreateLobbyReplyType
 	{
 		Success,
-		// The player may not create a new game because they're already in a lobby or a game
-		NotPermitted,
+		// I can't think of any useful error states right now, just leaving this for now
 	}
 
 	enum JoinLobbyReplyType
@@ -95,13 +95,19 @@ namespace PanzerKontrol
 		public CreateLobbyRequest CreateLobbyRequest { get; set; }
 
 		[ProtoMember(5, IsRequired = false)]
-		public ChangeTeamRequest ChangeTeamRequest { get; set; }
+		public JoinLobbyRequest JoinLobbyRequest { get; set; }
 
 		[ProtoMember(6, IsRequired = false)]
-		public PlayerInitialisationResultType? PlayerInitialisationResult { get; set; }
+		public JoinTeamRequest JoinTeamRequest { get; set; }
 
 		[ProtoMember(7, IsRequired = false)]
+		public PlayerInitialisationResultType? PlayerInitialisationResult { get; set; }
+
+		[ProtoMember(8, IsRequired = false)]
 		public GameInitialisationResultType? GameInitialisationResult { get; set; }
+
+		[ProtoMember(9, IsRequired = false)]
+		public SetFactionRequest SetFactionRequest { get; set; }
 
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
@@ -136,7 +142,7 @@ namespace PanzerKontrol
 		public CreateLobbyReply CreateLobbyReply { get; set; }
 
 		[ProtoMember(7, IsRequired = false)]
-		public JoinLobbyReply JoinGameReply { get; set; }
+		public JoinLobbyReply JoinLobbyReply { get; set; }
 
 		[ProtoMember(8, IsRequired = false)]
 		public GameInformation GameInformationUpdate { get; set; }
@@ -233,7 +239,7 @@ namespace PanzerKontrol
 	[ProtoContract]
 	public class CreateLobbyRequest
 	{
-		// The description is only specified for public games
+		// The description is only specified for public games.
 		[ProtoMember(1, IsRequired = false)]
 		public string Description { get; set; }
 
@@ -247,13 +253,19 @@ namespace PanzerKontrol
 		[ProtoMember(1)]
 		public CreateLobbyReplyType Type { get; set; }
 
-		// The game ID is only transmitted if the lobby was created successfully
+		// The game ID is only transmitted if the lobby was created successfully.
 		[ProtoMember(2, IsRequired = false)]
-		public int? GameId { get; set; }
+		public long? GameId { get; set; }
+
+		public CreateLobbyReply(long gameId)
+		{
+			Type = CreateLobbyReplyType.Success;
+			GameId = gameId;
+		}
 	}
 
 	[ProtoContract]
-	class JoinGameRequest
+	class JoinLobbyRequest
 	{
 		[ProtoMember(1)]
 		public long GameId { get; set; }
@@ -280,12 +292,19 @@ namespace PanzerKontrol
 
 		[ProtoMember(3)]
 		public string Name { get; set; }
+	}
 
-		// This flag is set to true if the player created the lobby and has privileges, including changing the map, kicking players, rearranging teams
-		[ProtoMember(4)]
-		public bool IsPrivileged { get; set; }
+	[ProtoContract]
+	class TeamPlayerInformation
+	{
+		[ProtoMember(1)]
+		public PlayerInformation Player { get; set; }
 
-		[ProtoMember(5, IsRequired = false)]
+		// This flag is set to true if the player created the lobby and is granted special privileges, including changing the map, kicking players, rearranging teams.
+		[ProtoMember(2)]
+		public bool IsOwner { get; set; }
+
+		[ProtoMember(3, IsRequired = false)]
 		public int? FactionId { get; set; }
 	}
 
@@ -295,29 +314,38 @@ namespace PanzerKontrol
 		[ProtoMember(1)]
 		public List<TeamInformation> Teams { get; set; }
 
-		[ProtoMember(2)]
+		// This is only set once the owner of the lobby has chosen a map.
+		[ProtoMember(2, IsRequired = false)]
 		public string Map { get; set; }
 
-		[ProtoMember(3)]
-		public int Points { get; set; }
+		// This is only set once the owner of the lobby has chosen a number of points that may be spent during the picking phase.
+		[ProtoMember(3, IsRequired = false)]
+		public int? Points { get; set; }
 	}
 
 	[ProtoContract]
 	class TeamInformation
 	{
 		[ProtoMember(1)]
-		public List<PlayerInformation> Players { get; set; }
+		public List<TeamPlayerInformation> Players { get; set; }
 	}
 
-	// The change team request contains a player ID because this class is actually also used to move other players forcefully (given sufficient privileges)
+	// The change team request contains a player ID because this class is actually also used to move other players forcefully (given sufficient privileges).
 	[ProtoContract]
-	class ChangeTeamRequest
+	class JoinTeamRequest
 	{
 		[ProtoMember(1)]
 		public long PlayerId { get; set; }
 
 		[ProtoMember(2)]
 		public int NewTeamId { get; set; }
+	}
+
+	[ProtoContract]
+	class SetFactionRequest
+	{
+		[ProtoMember(1)]
+		public int Faction { get; set; }
 	}
 
 	[ProtoContract]
