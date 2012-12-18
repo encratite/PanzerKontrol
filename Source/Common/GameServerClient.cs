@@ -44,6 +44,8 @@ namespace PanzerKontrol
 
 		Player ClientPlayer;
 
+		Lobby lobby;
+
 		public Player Player
 		{
 			get
@@ -197,7 +199,7 @@ namespace PanzerKontrol
 		{
 			if (message.JoinLobbyRequest == null)
 				throw new ClientException("Invalid join lobby request");
-			JoinLobbyReply reply = Server.JoinLobby(this, message.JoinLobbyRequest);
+			JoinLobbyReply reply = Server.JoinLobby(this, message.JoinLobbyRequest, out lobby);
 			if (reply.Type == JoinLobbyReplyType.Success)
 				InLobby(true);
 			SendMessage(new ServerToClientMessage(reply));
@@ -205,7 +207,12 @@ namespace PanzerKontrol
 
 		void OnJoinTeamRequest(ClientToServerMessage message)
 		{
-			throw new Exception("Not implemented");
+			JoinTeamRequest request = message.JoinTeamRequest;
+			if (request == null)
+				throw new ClientException("Invalid join team request");
+			if (request.NewTeamId >= GameServer.TeamLimit)
+				throw new ClientException("Invalid team ID");
+			Server.JoinTeam(this, lobby, request);
 		}
 
 		void OnSetFactionRequest(ClientToServerMessage message)

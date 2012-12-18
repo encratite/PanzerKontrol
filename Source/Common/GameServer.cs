@@ -35,16 +35,50 @@ namespace PanzerKontrol
 			Players = new List<GameServerClient>();
 			Players.Add(owner);
 			Teams = new List<Team>();
+			for (int i = 0; i < GameServer.TeamLimit; i++)
+				Teams.Add(new Team());
 		}
 
-		public bool IsOnATeam(Player player)
+		public bool IsOnATeam(GameServerClient client)
 		{
 			foreach (Team team in Teams)
 			{
-				if(team.Includes(player))
+				if(team.Includes(client.Player))
 					return true;
 			}
 			return false;
+		}
+
+		public void RemovePlayer(GameServerClient client)
+		{
+			foreach (Team team in Teams)
+				team.Remove(client.Player);
+		}
+
+		public TeamPlayer GetPlayer(GameServerClient client)
+		{
+			foreach (Team team in Teams)
+			{
+				TeamPlayer player = team.Get(client.Player);
+				if (player != null)
+					return player;
+			}
+			return null;
+		}
+
+		public void AddPlayer(TeamPlayer player, int teamId)
+		{
+			Teams[teamId].Players.Add(player);
+		}
+
+		public void JoinTeam(GameServerClient client, int teamId, Faction defaultFaction)
+		{
+			TeamPlayer player = GetPlayer(client);
+			if (player == null)
+				player = new TeamPlayer(client, defaultFaction);
+			else
+				RemovePlayer(client);
+			Teams[teamId].Players.Add(player);
 		}
 	}
 
@@ -57,10 +91,20 @@ namespace PanzerKontrol
 			Players = new List<TeamPlayer>();
 		}
 
+		public TeamPlayer Get(Player player)
+		{
+			TeamPlayer teamPlayer = Players.Find((TeamPlayer x) => object.ReferenceEquals(x.Player, player));
+			return teamPlayer;
+		}
+
 		public bool Includes(Player player)
 		{
-			TeamPlayer match = Players.Find((TeamPlayer x) => object.ReferenceEquals(x.Player, player));
-			return match != null;
+			return Get(player) != null;
+		}
+
+		public void Remove(Player player)
+		{
+			Players.RemoveAll((TeamPlayer x) => object.ReferenceEquals(x.Player, player));
 		}
 	}
 
@@ -78,6 +122,8 @@ namespace PanzerKontrol
 
 	public class GameServer
 	{
+		public const int TeamLimit = 2;
+
 		public const PrefixStyle Prefix = PrefixStyle.Fixed32BigEndian;
 		public const int SaltSize = KeyHashSize;
 		// SHA-2, 512 bits
@@ -337,11 +383,11 @@ namespace PanzerKontrol
 			}
 		}
 
-		public JoinLobbyReply JoinLobby(GameServerClient client, JoinLobbyRequest request)
+		public JoinLobbyReply JoinLobby(GameServerClient client, JoinLobbyRequest request, out Lobby lobby)
 		{
 			lock (Lobbies)
 			{
-				Lobby lobby = Lobbies.Find((Lobby x) => x.GameId == request.GameId);
+				lobby = Lobbies.Find((Lobby x) => x.GameId == request.GameId);
 				if (lobby == null)
 					return new JoinLobbyReply(JoinLobbyReplyType.LobbyDoesNotExist);
 				if(lobby.IsPrivate)
@@ -349,6 +395,23 @@ namespace PanzerKontrol
 				lobby.Players.Add(client);
 				UpdateGameInformation(lobby, client);
 				return new JoinLobbyReply(lobby);
+			}
+		}
+
+		public void JoinTeam(GameServerClient client, Lobby lobby, JoinTeamRequest request)
+		{
+			Faction defaultFaction = Factions.First();
+			if (request.PlayerId == null)
+			{
+				// The player himself is requesting to join a team
+				lobby.JoinTeam(client, request.NewTeamId, defaultFaction);
+			}
+			else
+			{
+				// It's a request to move another player to a certain team
+				if (!object.ReferenceEquals(client, lobby.Owner))
+					throw new ClientException("You are not the owner");
+				throw new Exception("Not fully implemented");
 			}
 		}
 	}

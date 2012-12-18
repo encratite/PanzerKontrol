@@ -382,7 +382,7 @@ namespace PanzerKontrol
 			UnassignedPlayers = new List<PlayerInformation>();
 			foreach (GameServerClient client in lobby.Players)
 			{
-				if (!lobby.IsOnATeam(client.Player))
+				if (!lobby.IsOnATeam(client))
 				{
 					PlayerInformation player = new PlayerInformation(client.Player);
 					UnassignedPlayers.Add(player);
@@ -418,8 +418,9 @@ namespace PanzerKontrol
 	[ProtoContract]
 	public class JoinTeamRequest
 	{
-		[ProtoMember(1)]
-		public long PlayerId { get; set; }
+		// If the player ID is zero, the player himself is trying to join that team
+		[ProtoMember(1, IsRequired = false)]
+		public long? PlayerId { get; set; }
 
 		[ProtoMember(2)]
 		public int NewTeamId { get; set; }
