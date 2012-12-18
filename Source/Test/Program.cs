@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-
-using PanzerKontrol;
+﻿using PanzerKontrol;
 
 namespace Test
 {
@@ -14,11 +10,6 @@ namespace Test
 			configuration.Address = "127.0.0.1";
 			configuration.Port = 45489;
 			configuration.CertificatePath = "ServerCertificate.pk12";
-			configuration.Salt = new byte[GameServer.SaltSize];
-			Random random = new Random();
-			random.NextBytes(configuration.Salt);
-			configuration.EnableUserRegistration = true;
-			configuration.EnableGuestLogin = true;
 			configuration.MaximumNameLength = 50;
 			var serialiser = new Nil.Serialiser<GameServerConfiguration>("Configuration.xml");
 			serialiser.Store(configuration);
@@ -67,7 +58,7 @@ namespace Test
 
 		static void Main(string[] arguments)
 		{
-			//GenerateConfiguration();
+			GenerateConfiguration();
 			GenerateFactions();
 		}
 	}

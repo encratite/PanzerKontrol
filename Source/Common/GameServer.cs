@@ -14,30 +14,9 @@ namespace PanzerKontrol
 {
 	public class GameServer
 	{
-		public const int TeamLimit = 2;
-
 		public const PrefixStyle Prefix = PrefixStyle.Fixed32BigEndian;
-		public const int SaltSize = KeyHashSize;
-		// SHA-2, 512 bits
-		const int KeyHashSize = 512 / 8;
 
 		public readonly int Version;
-
-		public byte[] Salt
-		{
-			get
-			{
-				return Configuration.Salt;
-			}
-		}
-
-		public bool EnableGuestLogin
-		{
-			get
-			{
-				return Configuration.EnableGuestLogin;
-			}
-		}
 
 		GameServerConfiguration Configuration;
  
