@@ -13,7 +13,6 @@ namespace Test
 			var configuration = new GameServerConfiguration();
 			configuration.Address = "127.0.0.1";
 			configuration.Port = 45489;
-			configuration.DatabasePath = "ServerDatabase.db4o";
 			configuration.CertificatePath = "ServerCertificate.pk12";
 			configuration.Salt = new byte[GameServer.SaltSize];
 			Random random = new Random();

@@ -6,7 +6,6 @@ namespace PanzerKontrol
 	{
 		public string Address { get; set; }
 		public int Port { get; set; }
-		public string DatabasePath { get; set; }
 		public string CertificatePath { get; set; }
 		public string FactionsPath { get; set; }
 		public byte[] Salt { get; set; }
