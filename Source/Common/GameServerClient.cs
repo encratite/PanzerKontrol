@@ -162,6 +162,15 @@ namespace PanzerKontrol
 			ActiveGame = null;
 		}
 
+		public void StartGame(Game game)
+		{
+			ActiveGame = game;
+			MapConfiguration map = new MapConfiguration(game.Map, game.Points);
+			string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
+			GameStart start = new GameStart(map, opponentName);
+			SendMessage(new ServerToClientMessage(start));
+		}
+
 		void OnError(ClientToServerMessage message)
 		{
 			ShuttingDown = true;
@@ -201,7 +210,21 @@ namespace PanzerKontrol
 
 		void OnJoinGameRequest(ClientToServerMessage message)
 		{
-			throw new MissingFeatureException("OnJoinGameRequest");
+			JoinGameRequest request = message.JoinGameRequest;
+			if (request == null)
+				throw new ClientException("Invalid join game request");
+			bool success = Server.JoinGame(this, request);
+			if (success)
+			{
+				State = ClientState.InGame;
+				SetExpectedMessageTypes(ClientToServerMessageType.CancelGameRequest, ClientToServerMessageType.LeaveGameRequest);
+				throw new NotImplementedException("Need to add the message types for the picking phase");
+			}
+			else
+			{
+				ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.NoSuchGame);
+				SendMessage(reply);	
+			}
 		}
 
 		void OnCancelGameRequest(ClientToServerMessage message)
@@ -213,6 +236,7 @@ namespace PanzerKontrol
 				return;
 			}
 
+			Server.CancelGame(this);
 			SetLoggedInState();
 			SendMessage(new ServerToClientMessage(ServerToClientMessageType.CancelGameConfirmation));
 		}

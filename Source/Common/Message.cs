@@ -340,7 +340,7 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public string Opponent;
 
-		private GameStart( MapConfiguration mapConfiguration, string opponent)
+		public GameStart(MapConfiguration mapConfiguration, string opponent)
 		{
 			MapConfiguration = mapConfiguration;
 			Opponent = opponent;

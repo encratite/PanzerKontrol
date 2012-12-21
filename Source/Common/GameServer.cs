@@ -30,11 +30,14 @@ namespace PanzerKontrol
 
 		List<Faction> Factions;
 
-		// The keys are the names of players used to join public games.
+		// The keys are the names of players used to join public games
 		Dictionary<string, Game> PublicGames;
 
-		// The keys are the randomly generated private strings required to join private games.
+		// The keys are the randomly generated private strings required to join private games
 		Dictionary<string, Game> PrivateGames;
+
+		// Games that are currently being played
+		List<Game> ActiveGames;
 
 		public GameServer(GameServerConfiguration configuration)
 		{
@@ -52,6 +55,7 @@ namespace PanzerKontrol
 
 			PublicGames = new Dictionary<string, Game>();
 			PrivateGames = new Dictionary<string, Game>();
+			ActiveGames = new List<Game>();
 		}
 
 		void LoadFactions()
@@ -203,6 +207,33 @@ namespace PanzerKontrol
 			if (factionId >= Factions.Count)
 				throw new ClientException("Invalid faction ID specified");
 			return Factions[factionId];
+		}
+
+		public bool JoinGame(GameServerClient client, JoinGameRequest request)
+		{
+			lock (Clients)
+			{
+				Game game;
+				if (request.IsPrivate)
+				{
+					string key = request.PrivateKey;
+					if (!PrivateGames.TryGetValue(key, out game))
+						return false;
+					PrivateGames.Remove(key);
+				}
+				else
+				{
+					string key = request.Owner;
+					if (!PublicGames.TryGetValue(key, out game))
+						return false;
+					PublicGames.Remove(key);
+				}
+				game.Opponent = client;
+				game.Owner.StartGame(game);
+				client.StartGame(game);
+				ActiveGames.Add(game);
+				return true;
+			}
 		}
 	}
 }

@@ -5,7 +5,7 @@ namespace PanzerKontrol
 	public class Game
 	{
 		public readonly GameServerClient Owner;
-		GameServerClient Opponent;
+		public GameServerClient Opponent;
 
 		public readonly bool IsPrivate;
 		public readonly string PrivateKey;
