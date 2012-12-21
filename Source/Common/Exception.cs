@@ -12,8 +12,8 @@ namespace PanzerKontrol
 
 	class MissingFeatureException : Exception
 	{
-		public MissingFeatureException() :
-			base("Missing feature")
+		public MissingFeatureException(string message) :
+			base(string.Format("Missing feature: {0}", message))
 		{
 		}
 	}

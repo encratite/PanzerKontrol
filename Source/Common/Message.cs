@@ -268,7 +268,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class PublicGameInfo
+	public class PublicGameInformation
 	{
 		[ProtoMember(1)]
 		public string Owner { get; set; }
@@ -276,7 +276,7 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public MapConfiguration MapConfiguration { get; set; }
 
-		public PublicGameInfo(string owner, MapConfiguration mapConfiguration)
+		public PublicGameInformation(string owner, MapConfiguration mapConfiguration)
 		{
 			Owner = owner;
 			MapConfiguration = mapConfiguration;
@@ -287,11 +287,11 @@ namespace PanzerKontrol
 	public class ViewPublicGamesReply
 	{
 		[ProtoMember(1)]
-		public List<PublicGameInfo> Games { get; set; }
+		public List<PublicGameInformation> Games { get; set; }
 
 		public ViewPublicGamesReply()
 		{
-			Games = new List<PublicGameInfo>();
+			Games = new List<PublicGameInformation>();
 		}
 	}
 

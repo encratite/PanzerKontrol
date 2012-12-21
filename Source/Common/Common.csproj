@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Game.cs" />
     <Compile Include="GameServerClient.cs" />
     <Compile Include="Exception.cs" />
     <Compile Include="Faction.cs" />
