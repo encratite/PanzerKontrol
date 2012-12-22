@@ -19,6 +19,8 @@ namespace PanzerKontrol
 
 		public readonly int Version;
 
+		public readonly OutputManager OutputManager;
+
 		const int PrivateKeyLength = 32;
 
 		GameServerConfiguration Configuration;
@@ -39,9 +41,13 @@ namespace PanzerKontrol
 		// Games that are currently being played
 		List<Game> ActiveGames;
 
-		public GameServer(GameServerConfiguration configuration)
+		#region Generic public functions
+
+		public GameServer(GameServerConfiguration configuration, OutputManager outputManager)
 		{
 			Configuration = configuration;
+
+			OutputManager = outputManager;
 
 			Version = Assembly.GetEntryAssembly().GetName().Version.Revision;
 
@@ -58,19 +64,6 @@ namespace PanzerKontrol
 			ActiveGames = new List<Game>();
 		}
 
-		void LoadFactions()
-		{
-			var serialiser = new Nil.Serialiser<UnitConfiguration>(Configuration.FactionsPath);
-			var configuration = serialiser.Load();
-			Factions = configuration.Factions;
-			int id = 0;
-			foreach (Faction faction in Factions)
-			{
-				faction.Id = id;
-				id++;
-			}
-		}
-
 		public void Run()
 		{
 			while (!ShuttingDown)
@@ -82,6 +75,158 @@ namespace PanzerKontrol
 				GameServerClient client = new GameServerClient(secureStream, this);
 				lock (Clients)
 					Clients.Add(client);
+			}
+		}
+
+		public Faction GetFaction(int factionId)
+		{
+			if (factionId >= Factions.Count)
+				throw new ClientException("Invalid faction ID specified");
+			return Factions[factionId];
+		}
+
+		#endregion
+
+		#region Client request/event handlers
+
+		public LoginReply OnLoginRequest(LoginRequest request)
+		{
+			lock (Clients)
+			{
+				LoginReplyType replyType;
+				if (!IsCompatibleClientVersion(request.ClientVersion))
+					replyType = LoginReplyType.IncompatibleVersion;
+				else if (NameIsTooLong(request.Name))
+					replyType = LoginReplyType.NameTooLong;
+				else if (NameIsInUse(request.Name))
+					replyType = LoginReplyType.NameInUse;
+				else
+					replyType = LoginReplyType.Success;
+				LoginReply reply = new LoginReply(replyType, Version);
+				return reply;
+			}
+		}
+
+		public CreateGameReply OnCreateGameRequest(GameServerClient client, CreateGameRequest request, out Faction faction, out Game game)
+		{
+			faction = GetFaction(request.FactionId);
+			if (request.IsPrivate)
+			{
+				lock (PrivateGames)
+				{
+					string privateKey = GeneratePrivateKey();
+					game = new Game(client, true, privateKey, request.MapConfiguration);
+					PrivateGames[privateKey] = game;
+					return new CreateGameReply(privateKey);
+				}
+			}
+			else
+			{
+				lock (PublicGames)
+				{
+					game = new Game(client, false, null, request.MapConfiguration);
+					PublicGames[client.Name] = game;
+					return new CreateGameReply();
+				}
+			}
+		}
+
+		public ViewPublicGamesReply OnViewPublicGamesRequest()
+		{
+			lock (PublicGames)
+			{
+				ViewPublicGamesReply reply = new ViewPublicGamesReply();
+				foreach (var pair in PublicGames)
+				{
+					string ownerName = pair.Key;
+					Game game = pair.Value;
+					MapConfiguration configuration = new MapConfiguration(game.Map, game.Points);
+					PublicGameInformation information = new PublicGameInformation(ownerName, configuration);
+					reply.Games.Add(information);
+				}
+				return reply;
+			}
+		}
+
+		public void OnCancelGameRequest(GameServerClient client)
+		{
+			Game game = client.Game;
+			if (game.IsPrivate)
+			{
+				lock (PrivateGames)
+					PrivateGames.Remove(game.Owner.Name);
+			}
+			else
+			{
+				lock (PublicGames)
+					PublicGames.Remove(game.PrivateKey);
+			}
+		}
+
+		public bool OnJoinGameRequest(GameServerClient client, JoinGameRequest request)
+		{
+			Game game;
+			if (request.IsPrivate)
+			{
+				lock (PrivateGames)
+				{
+					string key = request.PrivateKey;
+					if (!PrivateGames.TryGetValue(key, out game))
+						return false;
+					PrivateGames.Remove(key);
+				}
+			}
+			else
+			{
+				lock (PublicGames)
+				{
+					string key = request.Owner;
+					if (!PublicGames.TryGetValue(key, out game))
+						return false;
+					PublicGames.Remove(key);
+				}
+			}
+			game.Opponent = client;
+			game.Owner.StartGame(game);
+			client.StartGame(game);
+			lock (ActiveGames)
+				ActiveGames.Add(game);
+			return true;
+		}
+
+		public void OnLeaveGameRequest(GameServerClient client)
+		{
+			Game game = client.Game;
+			ActiveGames.Remove(game);
+			GameServerClient otherClient = game.GetOtherClient(client);
+			throw new MissingFeatureException("Incomplete");
+		}
+
+		public void OnClientTermination(GameServerClient client)
+		{
+			Clients.Remove(client);
+			throw new MissingFeatureException("If a game is going on, it needs to be shut down gracefully");
+		}
+
+		#endregion
+
+		#region Internal utility functions
+
+		void WriteLine(string line, params object[] arguments)
+		{
+			OutputManager.WriteLine(string.Format(line, arguments));
+		}
+
+		void LoadFactions()
+		{
+			var serialiser = new Nil.Serialiser<UnitConfiguration>(Configuration.FactionsPath);
+			var configuration = serialiser.Load();
+			Factions = configuration.Factions;
+			int id = 0;
+			foreach (Faction faction in Factions)
+			{
+				faction.Id = id;
+				id++;
 			}
 		}
 
@@ -106,30 +251,6 @@ namespace PanzerKontrol
 			return client != null;
 		}
 
-		public LoginReply Login(LoginRequest request)
-		{
-			lock (Clients)
-			{
-				LoginReplyType replyType;
-				if (!IsCompatibleClientVersion(request.ClientVersion))
-					replyType = LoginReplyType.IncompatibleVersion;
-				else if (NameIsTooLong(request.Name))
-					replyType = LoginReplyType.NameTooLong;
-				else if (NameIsInUse(request.Name))
-					replyType = LoginReplyType.NameInUse;
-				else
-					replyType = LoginReplyType.Success;
-				LoginReply reply = new LoginReply(replyType, Version);
-				return reply;
-			}
-		}
-
-		public void OnClientTermination(GameServerClient client)
-		{
-			Clients.Remove(client);
-			throw new MissingFeatureException("If a game is going on, it needs to be shut down gracefully");
-		}
-
 		string GetRandomString(int length)
 		{
 			string output = "";
@@ -152,88 +273,6 @@ namespace PanzerKontrol
 			}
 		}
 
-		public CreateGameReply CreateGame(GameServerClient client, CreateGameRequest request, out Faction faction, out Game game)
-		{
-			lock (Clients)
-			{
-				faction = GetFaction(request.FactionId);
-				if (request.IsPrivate)
-				{
-					string privateKey = GeneratePrivateKey();
-					game = new Game(client, true, privateKey, request.MapConfiguration);
-					PrivateGames[privateKey] = game;
-					return new CreateGameReply(privateKey);
-				}
-				else
-				{
-					game = new Game(client, false, null, request.MapConfiguration);
-					PublicGames[client.Name] = game;
-					return new CreateGameReply();
-				}
-			}
-		}
-
-		public ViewPublicGamesReply ViewPublicGames()
-		{
-			lock (Clients)
-			{
-				ViewPublicGamesReply reply = new ViewPublicGamesReply();
-				foreach (var pair in PublicGames)
-				{
-					string ownerName = pair.Key;
-					Game game = pair.Value;
-					MapConfiguration configuration = new MapConfiguration(game.Map, game.Points);
-					PublicGameInformation information = new PublicGameInformation(ownerName, configuration);
-					reply.Games.Add(information);
-				}
-				return reply;
-			}
-		}
-
-		public void CancelGame(GameServerClient client)
-		{
-			lock (Clients)
-			{
-				Game game = client.Game;
-				if (game.IsPrivate)
-					PrivateGames.Remove(game.Owner.Name);
-				else
-					PublicGames.Remove(game.PrivateKey);
-			}
-		}
-
-		public Faction GetFaction(int factionId)
-		{
-			if (factionId >= Factions.Count)
-				throw new ClientException("Invalid faction ID specified");
-			return Factions[factionId];
-		}
-
-		public bool JoinGame(GameServerClient client, JoinGameRequest request)
-		{
-			lock (Clients)
-			{
-				Game game;
-				if (request.IsPrivate)
-				{
-					string key = request.PrivateKey;
-					if (!PrivateGames.TryGetValue(key, out game))
-						return false;
-					PrivateGames.Remove(key);
-				}
-				else
-				{
-					string key = request.Owner;
-					if (!PublicGames.TryGetValue(key, out game))
-						return false;
-					PublicGames.Remove(key);
-				}
-				game.Opponent = client;
-				game.Owner.StartGame(game);
-				client.StartGame(game);
-				ActiveGames.Add(game);
-				return true;
-			}
-		}
+		#endregion
 	}
 }

@@ -52,6 +52,7 @@
     <Compile Include="GameServerClient.cs" />
     <Compile Include="Exception.cs" />
     <Compile Include="Faction.cs" />
+    <Compile Include="OutputManager.cs" />
     <Compile Include="UnitConfiguration.cs" />
     <Compile Include="GameServer.cs" />
     <Compile Include="GameServerConfiguration.cs" />

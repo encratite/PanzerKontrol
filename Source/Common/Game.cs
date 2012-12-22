@@ -24,5 +24,13 @@ namespace PanzerKontrol
 			Map = mapConfiguration.Map;
 			Points = mapConfiguration.Points;
 		}
+
+		public GameServerClient GetOtherClient(GameServerClient client)
+		{
+			if (object.ReferenceEquals(Owner, client))
+				return Opponent;
+			else
+				return Owner;
+		}
 	}
 }
