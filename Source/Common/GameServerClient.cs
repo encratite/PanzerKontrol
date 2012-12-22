@@ -117,14 +117,11 @@ namespace PanzerKontrol
 
 		public void StartGame(Game game)
 		{
-			lock (this)
-			{
-				ActiveGame = game;
-				MapConfiguration map = new MapConfiguration(game.Map, game.Points);
-				string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
-				GameStart start = new GameStart(map, opponentName);
-				QueueMessage(new ServerToClientMessage(start));
-			}
+			ActiveGame = game;
+			MapConfiguration map = new MapConfiguration(game.Map, game.Points);
+			string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
+			GameStart start = new GameStart(map, opponentName);
+			QueueMessage(new ServerToClientMessage(start));
 		}
 
 		#endregion
@@ -183,7 +180,7 @@ namespace PanzerKontrol
 			{
 				try
 				{
-					lock(this)
+					lock(Server)
 						ProcessMessage(message);
 				}
 				catch (ClientException exception)

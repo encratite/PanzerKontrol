@@ -69,12 +69,14 @@ namespace PanzerKontrol
 			while (!ShuttingDown)
 			{
 				Socket socket = Listener.AcceptSocket();
-				NetworkStream stream = new NetworkStream(socket);
-				SslStream secureStream = new SslStream(stream, false, AcceptAnyCertificate, null);
-				secureStream.AuthenticateAsServer(Certificate, false, SslProtocols.Tls12, false);
-				GameServerClient client = new GameServerClient(secureStream, this);
-				lock (Clients)
+				lock (this)
+				{
+					NetworkStream stream = new NetworkStream(socket);
+					SslStream secureStream = new SslStream(stream, false, AcceptAnyCertificate, null);
+					secureStream.AuthenticateAsServer(Certificate, false, SslProtocols.Tls12, false);
+					GameServerClient client = new GameServerClient(secureStream, this);
 					Clients.Add(client);
+				}
 			}
 		}
 
@@ -91,20 +93,17 @@ namespace PanzerKontrol
 
 		public LoginReply OnLoginRequest(LoginRequest request)
 		{
-			lock (Clients)
-			{
-				LoginReplyType replyType;
-				if (!IsCompatibleClientVersion(request.ClientVersion))
-					replyType = LoginReplyType.IncompatibleVersion;
-				else if (NameIsTooLong(request.Name))
-					replyType = LoginReplyType.NameTooLong;
-				else if (NameIsInUse(request.Name))
-					replyType = LoginReplyType.NameInUse;
-				else
-					replyType = LoginReplyType.Success;
-				LoginReply reply = new LoginReply(replyType, Version);
-				return reply;
-			}
+			LoginReplyType replyType;
+			if (!IsCompatibleClientVersion(request.ClientVersion))
+				replyType = LoginReplyType.IncompatibleVersion;
+			else if (NameIsTooLong(request.Name))
+				replyType = LoginReplyType.NameTooLong;
+			else if (NameIsInUse(request.Name))
+				replyType = LoginReplyType.NameInUse;
+			else
+				replyType = LoginReplyType.Success;
+			LoginReply reply = new LoginReply(replyType, Version);
+			return reply;
 		}
 
 		public CreateGameReply OnCreateGameRequest(GameServerClient client, CreateGameRequest request, out Faction faction, out Game game)
@@ -112,55 +111,40 @@ namespace PanzerKontrol
 			faction = GetFaction(request.FactionId);
 			if (request.IsPrivate)
 			{
-				lock (PrivateGames)
-				{
-					string privateKey = GeneratePrivateKey();
-					game = new Game(client, true, privateKey, request.MapConfiguration);
-					PrivateGames[privateKey] = game;
-					return new CreateGameReply(privateKey);
-				}
+				string privateKey = GeneratePrivateKey();
+				game = new Game(client, true, privateKey, request.MapConfiguration);
+				PrivateGames[privateKey] = game;
+				return new CreateGameReply(privateKey);
 			}
 			else
 			{
-				lock (PublicGames)
-				{
-					game = new Game(client, false, null, request.MapConfiguration);
-					PublicGames[client.Name] = game;
-					return new CreateGameReply();
-				}
+				game = new Game(client, false, null, request.MapConfiguration);
+				PublicGames[client.Name] = game;
+				return new CreateGameReply();
 			}
 		}
 
 		public ViewPublicGamesReply OnViewPublicGamesRequest()
 		{
-			lock (PublicGames)
+			ViewPublicGamesReply reply = new ViewPublicGamesReply();
+			foreach (var pair in PublicGames)
 			{
-				ViewPublicGamesReply reply = new ViewPublicGamesReply();
-				foreach (var pair in PublicGames)
-				{
-					string ownerName = pair.Key;
-					Game game = pair.Value;
-					MapConfiguration configuration = new MapConfiguration(game.Map, game.Points);
-					PublicGameInformation information = new PublicGameInformation(ownerName, configuration);
-					reply.Games.Add(information);
-				}
-				return reply;
+				string ownerName = pair.Key;
+				Game game = pair.Value;
+				MapConfiguration configuration = new MapConfiguration(game.Map, game.Points);
+				PublicGameInformation information = new PublicGameInformation(ownerName, configuration);
+				reply.Games.Add(information);
 			}
+			return reply;
 		}
 
 		public void OnCancelGameRequest(GameServerClient client)
 		{
 			Game game = client.Game;
 			if (game.IsPrivate)
-			{
-				lock (PrivateGames)
-					PrivateGames.Remove(game.Owner.Name);
-			}
+				PrivateGames.Remove(game.Owner.Name);
 			else
-			{
-				lock (PublicGames)
-					PublicGames.Remove(game.PrivateKey);
-			}
+				PublicGames.Remove(game.PrivateKey);
 		}
 
 		public bool OnJoinGameRequest(GameServerClient client, JoinGameRequest request)
@@ -168,40 +152,30 @@ namespace PanzerKontrol
 			Game game;
 			if (request.IsPrivate)
 			{
-				lock (PrivateGames)
-				{
-					string key = request.PrivateKey;
-					if (!PrivateGames.TryGetValue(key, out game))
-						return false;
-					PrivateGames.Remove(key);
-				}
+				string key = request.PrivateKey;
+				if (!PrivateGames.TryGetValue(key, out game))
+					return false;
+				PrivateGames.Remove(key);
 			}
 			else
 			{
-				lock (PublicGames)
-				{
-					string key = request.Owner;
-					if (!PublicGames.TryGetValue(key, out game))
-						return false;
-					PublicGames.Remove(key);
-				}
+				string key = request.Owner;
+				if (!PublicGames.TryGetValue(key, out game))
+					return false;
+				PublicGames.Remove(key);
 			}
 			game.Opponent = client;
 			game.Owner.StartGame(game);
 			client.StartGame(game);
-			lock (ActiveGames)
-				ActiveGames.Add(game);
+			ActiveGames.Add(game);
 			return true;
 		}
 
 		public void OnLeaveGameRequest(GameServerClient client)
 		{
-			lock (ActiveGames)
-			{
-				Game game = client.Game;
-				ActiveGames.Remove(game);
-				GameServerClient otherClient = game.GetOtherClient(client);
-			}
+			Game game = client.Game;
+			ActiveGames.Remove(game);
+			GameServerClient otherClient = game.GetOtherClient(client);
 			throw new MissingFeatureException("Incomplete");
 		}
 
