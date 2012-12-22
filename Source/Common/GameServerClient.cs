@@ -31,7 +31,12 @@ namespace PanzerKontrol
 	{
 		GameServer Server;
 		SslStream Stream;
-		Thread Thread;
+
+		Thread ReceivingThread;
+		Thread SendingThread;
+
+		ManualResetEvent SendEvent;
+		List<ServerToClientMessage> SendQueue;
 
 		bool ShuttingDown;
 
@@ -85,6 +90,9 @@ namespace PanzerKontrol
 			Stream = stream;
 			Server = server;
 
+			SendEvent = new ManualResetEvent(false);
+			SendQueue = new List<ServerToClientMessage>();
+
 			ShuttingDown = false;
 
 			ExpectedMessageTypes = null;
@@ -99,19 +107,24 @@ namespace PanzerKontrol
 			ActiveGame = null;
 		}
 
-		public void Process()
+		public void Run()
 		{
-			Thread = new Thread(Run);
-			Thread.Start();
+			ReceivingThread = new Thread(ReceiveMessages);
+			ReceivingThread.Start();
+			SendingThread = new Thread(SendMessages);
+			SendingThread.Start();
 		}
 
 		public void StartGame(Game game)
 		{
-			ActiveGame = game;
-			MapConfiguration map = new MapConfiguration(game.Map, game.Points);
-			string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
-			GameStart start = new GameStart(map, opponentName);
-			SendMessage(new ServerToClientMessage(start));
+			lock (this)
+			{
+				ActiveGame = game;
+				MapConfiguration map = new MapConfiguration(game.Map, game.Points);
+				string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
+				GameStart start = new GameStart(map, opponentName);
+				QueueMessage(new ServerToClientMessage(start));
+			}
 		}
 
 		#endregion
@@ -134,9 +147,13 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.LeaveGameRequest] = OnLeaveGameRequest;
 		}
 
-		void SendMessage(ServerToClientMessage message)
+		void QueueMessage(ServerToClientMessage message)
 		{
-			Serializer.Serialize<ServerToClientMessage>(Stream, message);
+			lock (SendQueue)
+			{
+				SendQueue.Add(message);
+				SendEvent.Set();
+			}
 		}
 
 		void SetExpectedMessageTypes(List<ClientToServerMessageType> expectedMessageTypes)
@@ -157,7 +174,7 @@ namespace PanzerKontrol
 			return ExpectedMessageTypes.IndexOf(type) >= 0;
 		}
 
-		void Run()
+		void ReceiveMessages()
 		{
 			ConnectedState();
 
@@ -172,14 +189,34 @@ namespace PanzerKontrol
 				catch (ClientException exception)
 				{
 					ErrorMessage error = new ErrorMessage(exception.Message);
-					SendMessage(new ServerToClientMessage(error));
+					QueueMessage(new ServerToClientMessage(error));
 					ShuttingDown = true;
 				}
 				if (ShuttingDown)
 					break;
 			}
+			ShuttingDown = true;
 			Stream.Close();
+			lock (SendQueue)
+				SendEvent.Set();
 			Server.OnClientTermination(this);
+		}
+
+		void SendMessages()
+		{
+			while (!ShuttingDown)
+			{
+				SendEvent.WaitOne();
+				if (!ShuttingDown)
+					break;
+				lock (SendQueue)
+				{
+					foreach (var message in SendQueue)
+						Serializer.SerializeWithLengthPrefix<ServerToClientMessage>(Stream, message, GameServer.Prefix);
+					SendQueue.Clear();
+					SendEvent.Reset();
+				}
+			}
 		}
 
 		void ProcessMessage(ClientToServerMessage message)
@@ -245,7 +282,7 @@ namespace PanzerKontrol
 				PlayerName = request.Name;
 				LoggedInState();
 			}
-			SendMessage(new ServerToClientMessage(reply));
+			QueueMessage(new ServerToClientMessage(reply));
 		}
 
 		void OnCreateGameRequest(ClientToServerMessage message)
@@ -254,14 +291,14 @@ namespace PanzerKontrol
 			if (request == null)
 				throw new ClientException("Invalid game creation request");
 			CreateGameReply reply = Server.OnCreateGameRequest(this, request, out PlayerFaction, out ActiveGame);
-			SendMessage(new ServerToClientMessage(reply));
+			QueueMessage(new ServerToClientMessage(reply));
 			WaitingForOpponentState();
 		}
 
 		void OnViewPublicGamesRequest(ClientToServerMessage message)
 		{
 			ViewPublicGamesReply reply = Server.OnViewPublicGamesRequest();
-			SendMessage(new ServerToClientMessage(reply));
+			QueueMessage(new ServerToClientMessage(reply));
 		}
 
 		void OnJoinGameRequest(ClientToServerMessage message)
@@ -278,7 +315,7 @@ namespace PanzerKontrol
 			else
 			{
 				ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.NoSuchGame);
-				SendMessage(reply);	
+				QueueMessage(reply);	
 			}
 		}
 
@@ -293,7 +330,7 @@ namespace PanzerKontrol
 
 			Server.OnCancelGameRequest(this);
 			LoggedInState();
-			SendMessage(new ServerToClientMessage(ServerToClientMessageType.CancelGameConfirmation));
+			QueueMessage(new ServerToClientMessage(ServerToClientMessageType.CancelGameConfirmation));
 		}
 
 		void OnLeaveGameRequest(ClientToServerMessage message)

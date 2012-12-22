@@ -196,9 +196,12 @@ namespace PanzerKontrol
 
 		public void OnLeaveGameRequest(GameServerClient client)
 		{
-			Game game = client.Game;
-			ActiveGames.Remove(game);
-			GameServerClient otherClient = game.GetOtherClient(client);
+			lock (ActiveGames)
+			{
+				Game game = client.Game;
+				ActiveGames.Remove(game);
+				GameServerClient otherClient = game.GetOtherClient(client);
+			}
 			throw new MissingFeatureException("Incomplete");
 		}
 
