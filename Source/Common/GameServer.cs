@@ -118,13 +118,13 @@ namespace PanzerKontrol
 			if (request.IsPrivate)
 			{
 				string privateKey = GeneratePrivateKey();
-				game = new Game(client, true, privateKey, request.MapConfiguration);
+				game = new Game(client, true, privateKey, request.MapConfiguration, Configuration.TimeConfiguration);
 				PrivateGames[privateKey] = game;
 				return new CreateGameReply(privateKey);
 			}
 			else
 			{
-				game = new Game(client, false, null, request.MapConfiguration);
+				game = new Game(client, false, null, request.MapConfiguration, Configuration.TimeConfiguration);
 				PublicGames[client.Name] = game;
 				return new CreateGameReply();
 			}
@@ -137,8 +137,7 @@ namespace PanzerKontrol
 			{
 				string ownerName = pair.Key;
 				Game game = pair.Value;
-				MapConfiguration configuration = new MapConfiguration(game.Map, game.Points);
-				PublicGameInformation information = new PublicGameInformation(ownerName, configuration);
+				PublicGameInformation information = new PublicGameInformation(ownerName, game.MapConfiguration);
 				reply.Games.Add(information);
 			}
 			return reply;
@@ -146,7 +145,7 @@ namespace PanzerKontrol
 
 		public void OnCancelGameRequest(GameServerClient client)
 		{
-			CancelGame(client.Game);
+			CancelGame(client);
 		}
 
 		public bool OnJoinGameRequest(GameServerClient client, JoinGameRequest request)
@@ -184,6 +183,7 @@ namespace PanzerKontrol
 			switch (client.State)
 			{
 				case ClientStateType.WaitingForOpponent:
+					CancelGame(client);
 					break;
 
 				case ClientStateType.InGame:
@@ -203,7 +203,7 @@ namespace PanzerKontrol
 
 		void LoadFactions()
 		{
-			var serialiser = new Nil.Serialiser<UnitConfiguration>(Configuration.FactionsPath);
+			var serialiser = new Nil.Serialiser<FactionConfiguration>(Configuration.FactionsPath);
 			var configuration = serialiser.Load();
 			Factions = configuration.Factions;
 			int id = 0;
@@ -257,8 +257,9 @@ namespace PanzerKontrol
 			}
 		}
 
-		void CancelGame(Game game)
+		void CancelGame(GameServerClient client)
 		{
+			Game game = client.Game;
 			if (game.IsPrivate)
 				PrivateGames.Remove(game.Owner.Name);
 			else

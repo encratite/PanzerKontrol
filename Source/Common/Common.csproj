@@ -53,7 +53,7 @@
     <Compile Include="Exception.cs" />
     <Compile Include="Faction.cs" />
     <Compile Include="OutputManager.cs" />
-    <Compile Include="UnitConfiguration.cs" />
+    <Compile Include="FactionConfiguration.cs" />
     <Compile Include="GameServer.cs" />
     <Compile Include="GameServerConfiguration.cs" />
     <Compile Include="Message.cs" />

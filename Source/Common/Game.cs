@@ -10,10 +10,10 @@ namespace PanzerKontrol
 		public readonly bool IsPrivate;
 		public readonly string PrivateKey;
 
-		public readonly string Map;
-		public readonly int Points;
+		public readonly MapConfiguration MapConfiguration;
+		public readonly TimeConfiguration TimeConfiguration;
 
-		public Game(GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration)
+		public Game(GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration)
 		{
 			Owner = owner;
 			Opponent = null;
@@ -21,8 +21,8 @@ namespace PanzerKontrol
 			IsPrivate = isPrivate;
 			PrivateKey = privateKey;
 
-			Map = mapConfiguration.Map;
-			Points = mapConfiguration.Points;
+			MapConfiguration = mapConfiguration;
+			TimeConfiguration = timeConfiguration;
 		}
 
 		public GameServerClient GetOtherClient(GameServerClient client)

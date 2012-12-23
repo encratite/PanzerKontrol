@@ -7,10 +7,6 @@ namespace Test
 		static void GenerateConfiguration()
 		{
 			var configuration = new GameServerConfiguration();
-			configuration.Address = "127.0.0.1";
-			configuration.Port = 45489;
-			configuration.CertificatePath = "ServerCertificate.pk12";
-			configuration.MaximumNameLength = 50;
 			var serialiser = new Nil.Serialiser<GameServerConfiguration>("Configuration.xml");
 			serialiser.Store(configuration);
 		}
@@ -49,10 +45,10 @@ namespace Test
 			faction.Description = "Description";
 			faction.Units.Add(unit);
 
-			UnitConfiguration factions = new UnitConfiguration();
+			FactionConfiguration factions = new FactionConfiguration();
 			factions.Factions.Add(faction);
 
-			var serialiser = new Nil.Serialiser<UnitConfiguration>("Factions.xml");
+			var serialiser = new Nil.Serialiser<FactionConfiguration>("Factions.xml");
 			serialiser.Store(factions);
 		}
 

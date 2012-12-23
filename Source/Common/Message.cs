@@ -6,52 +6,64 @@ namespace PanzerKontrol
 {
 	public enum ClientToServerMessageType
 	{
-		// A fatal error occurred.
+		// A fatal error occurred
 		Error,
-		// Log on to the server.
+		// Log on to the server
 		LoginRequest,
-		// Create a game that may instantly be started by another player who accepts the challenge.
+		// Create a game that may instantly be started by another player who accepts the challenge
 		CreateGameRequest,
-		// Retrieve a list of public games.
-		// Zero data message.
+		// Retrieve a list of public games
+		// Zero data message
 		ViewPublicGamesRequest,
-		// Join a public or a private game.
+		// Join a public or a private game
 		JoinGameRequest,
-		// Cancel the offer for a game that was previously created with CreateGameRequest.
-		// Zero data message.
+		// Cancel the offer for a game that was previously created with CreateGameRequest
+		// Zero data message
 		CancelGameRequest,
-		// The client requests to leave a game it is currently in.
-		// Zero data message.
+		// The client requests to leave a game it is currently in
+		// Zero data message
 		LeaveGameRequest,
+		// Submit units purchased during the open picking phase		
+		SubmitOpenPicks,
+		// Submit units purchased during the hidden picking phase
+		SubmitHiddenPicks,
+		// Submit the deployment plan
+		SubmitDeploymentPlan,
 	}
 
 	public enum ServerToClientMessageType
 	{
-		// A fatal error occurred.
+		// A fatal error occurred
 		Error,
-		// Tells the client if the login succeeded.
+		// Tells the client if the login succeeded
 		LoginReply,
-		// Tells the client that the game offer has been created.
-		// The key required to join private games is also transmitted with this reply.
+		// Tells the client that the game offer has been created
+		// The key required to join private games is also transmitted with this reply
 		CreateGameReply,
-		// A list of all public games.
+		// A list of all public games
 		ViewPublicGamesReply,
-		// The game has started.
-		// This happens after successfully joining a game and also after an opponent joins your game.
+		// The game has started
+		// This happens after successfully joining a game and also after an opponent joins your game
 		GameStart,
-		// The game the player tried to join no longer exists.
-		// Zero data message.
+		// The game the player tried to join no longer exists
+		// Zero data message
 		NoSuchGame,
-		// The servers confirms that the offer for a game that was previously created with CreateGameRequest, is now cancelled.
-		// Zero data message.
+		// The servers confirms that the offer for a game that was previously created with CreateGameRequest, is now cancelled
+		// Zero data message
 		CancelGameConfirmation,
-		// Confirm the LeaveGameRequest of the client.
-		// Zero data message.
+		// Confirm the LeaveGameRequest of the client
+		// Zero data message
 		LeaveGameConfirmation,
-		// The opponent has left the game.
-		// The game is cancelled.
-		// Zero data message.
+		// The opponent has left the game
+		// The game is cancelled
+		// Zero data message
 		OpponentLeftGame,
+		// The hidden picking phase commences
+		HiddenPicks,
+		// Deployment commences
+		DeploymentStart,
+		// The deployment phase is over, the enemy deployment plan is revealed
+		EnemyDeployment,
 	}
 
 	public enum LoginReplyType
@@ -79,6 +91,12 @@ namespace PanzerKontrol
 
 		[ProtoMember(5, IsRequired = false)]
 		public JoinGameRequest JoinGameRequest { get; set; }
+
+		[ProtoMember(6, IsRequired = false)]
+		public PickSubmission Picks { get; set; }
+
+		[ProtoMember(7, IsRequired = false)]
+		public DeploymentPlan DeploymentPlan { get; set; }
 
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
@@ -108,6 +126,28 @@ namespace PanzerKontrol
 			Type = ClientToServerMessageType.JoinGameRequest;
 			JoinGameRequest = request;
 		}
+
+		public ClientToServerMessage(DeploymentPlan plan)
+		{
+			Type = ClientToServerMessageType.SubmitDeploymentPlan;
+			DeploymentPlan = plan;
+		}
+
+		ClientToServerMessage(ClientToServerMessageType type, PickSubmission picks)
+		{
+			Type = type;
+			Picks = picks;
+		}
+
+		public static ClientToServerMessage SubmitOpenPicks(PickSubmission picks)
+		{
+			return new ClientToServerMessage(ClientToServerMessageType.SubmitOpenPicks, picks);
+		}
+
+		public static ClientToServerMessage SubmitHiddenPicks(PickSubmission picks)
+		{
+			return new ClientToServerMessage(ClientToServerMessageType.SubmitHiddenPicks, picks);
+		}
 	}
 
 	[ProtoContract]
@@ -130,6 +170,15 @@ namespace PanzerKontrol
 
 		[ProtoMember(6, IsRequired = false)]
 		public GameStart GameStart { get; set; }
+
+		[ProtoMember(7, IsRequired = false)]
+		public PickUpdate PickUpdate { get; set; }
+
+		[ProtoMember(8, IsRequired = false)]
+		public ArmyListing ArmyListing { get; set; }
+
+		[ProtoMember(9, IsRequired = false)]
+		public DeploymentPlan EnemeyDeploymentPlan { get; set; }
 
 		public ServerToClientMessage(ServerToClientMessageType type)
 		{
@@ -164,6 +213,34 @@ namespace PanzerKontrol
 		{
 			Type = ServerToClientMessageType.GameStart;
 			GameStart = reply;
+		}
+
+		public ServerToClientMessage(ArmyListing listing)
+		{
+			Type = ServerToClientMessageType.DeploymentStart;
+			ArmyListing = listing;
+		}
+
+		public ServerToClientMessage(DeploymentPlan plan)
+		{
+			Type = ServerToClientMessageType.EnemyDeployment;
+			EnemeyDeploymentPlan = plan;
+		}
+
+		ServerToClientMessage(ServerToClientMessageType type, PickUpdate update)
+		{
+			Type = type;
+			PickUpdate = update;
+		}
+
+		public static ServerToClientMessage HiddenPicks(PickUpdate update)
+		{
+			return new ServerToClientMessage(ServerToClientMessageType.HiddenPicks, update);
+		}
+
+		public static ServerToClientMessage Deployment(PickUpdate update)
+		{
+			return new ServerToClientMessage(ServerToClientMessageType.DeploymentStart, update);
 		}
 	}
 
@@ -247,6 +324,27 @@ namespace PanzerKontrol
 		{
 			Map = map;
 			Points = points;
+		}
+	}
+
+	[ProtoContract]
+	public class TimeConfiguration
+	{
+		// In seconds
+		[ProtoMember(1)]
+		public int OpenPicks { get; set; }
+
+		[ProtoMember(2)]
+		public int HiddenPicks { get; set; }
+
+		[ProtoMember(3)]
+		public int Deployment { get; set; }
+
+		public TimeConfiguration()
+		{
+			OpenPicks = 60;
+			HiddenPicks = 60;
+			Deployment = 60;
 		}
 	}
 
@@ -338,12 +436,140 @@ namespace PanzerKontrol
 		public MapConfiguration MapConfiguration { get; set; }
 
 		[ProtoMember(2)]
-		public string Opponent;
+		public TimeConfiguration TimeConfiguration { get; set; }
 
-		public GameStart(MapConfiguration mapConfiguration, string opponent)
+		[ProtoMember(3)]
+		public string Opponent { get; set; }
+
+		public GameStart(MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, string opponent)
 		{
 			MapConfiguration = mapConfiguration;
+			TimeConfiguration = timeConfiguration;
 			Opponent = opponent;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitConfiguration
+	{
+		// The ID isn't specified until after the hidden picking phase
+		[ProtoMember(1, IsRequired = false)]
+		public int? UnitId { get; set; }
+
+		// This is the numeric identifier of the type of the unit as generated from the faction fconfiguration file
+		[ProtoMember(2)]
+		public int UnitTypeId { get; set; }
+
+		[ProtoMember(3)]
+		public List<int> Upgrades { get; set; }
+
+		public UnitConfiguration(int unitTypeId)
+		{
+			UnitId = null;
+			UnitTypeId = unitTypeId;
+			Upgrades = new List<int>();
+		}
+
+		public UnitConfiguration(int unitId, int unitTypeId)
+		{
+			UnitId = unitId;
+			UnitTypeId = unitTypeId;
+			Upgrades = new List<int>();
+		}
+	}
+
+	// This data type is used for the submission of picks in both the open and the hidden picking phase
+	[ProtoContract]
+	public class PickSubmission
+	{
+		[ProtoMember(1)]
+		public List<UnitConfiguration> Units { get; set; }
+
+		public PickSubmission()
+		{
+			Units = new List<UnitConfiguration>();
+		}
+	}
+
+	// This is transmitted once the hidden picking phase commences
+	// It contains both the points left to be spent in the hidden picking phase and also units purchased by the opponent.
+	[ProtoContract]
+	public class PickUpdate
+	{
+		[ProtoMember(1)]
+		public int RemainingPoints { get; set; }
+
+		[ProtoMember(2)]
+		public List<UnitConfiguration> EnemyUnits { get; set; }
+
+		public PickUpdate(int remainingPoints)
+		{
+			RemainingPoints = remainingPoints;
+			EnemyUnits = new List<UnitConfiguration>();
+		}
+	}
+
+	// The army listing contains complete information about the units of both players
+	// Unique unit IDs were generated for each unit
+	// This is sent after the hidden picks
+	[ProtoContract]
+	public class ArmyListing
+	{
+		[ProtoMember(1)]
+		public List<UnitConfiguration> OwnUnits;
+
+		[ProtoMember(2)]
+		public List<UnitConfiguration> EnemyUnits;
+
+		public ArmyListing()
+		{
+			OwnUnits = new List<UnitConfiguration>();
+			EnemyUnits = new List<UnitConfiguration>();
+		}
+	}
+
+	[ProtoContract]
+	public class Position
+	{
+		[ProtoMember(1)]
+		public int X { get; set; }
+
+		[ProtoMember(2)]
+		public int Y { get; set; }
+
+		public Position(int x, int y)
+		{
+			X = x;
+			Y = y;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitPosition
+	{
+		[ProtoMember(1)]
+		public int UnitId { get; set; }
+
+		[ProtoMember(2)]
+		public Position Position { get; set; }
+
+		public UnitPosition(int unitId, Position positition)
+		{
+			UnitId = unitId;
+			Position = Position;
+		}
+	}
+
+	// This data structure is not only used to submit one's own deployment but also to receive the deployment data of the enemy
+	[ProtoContract]
+	public class DeploymentPlan
+	{
+		[ProtoMember(1)]
+		public List<UnitPosition> Units;
+
+		public DeploymentPlan()
+		{
+			Units = new List<UnitPosition>();
 		}
 	}
 }

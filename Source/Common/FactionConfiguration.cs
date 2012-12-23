@@ -2,11 +2,11 @@
 
 namespace PanzerKontrol
 {
-	public class UnitConfiguration
+	public class FactionConfiguration
 	{
 		public List<Faction> Factions;
 
-		public UnitConfiguration()
+		public FactionConfiguration()
 		{
 			Factions = new List<Faction>();
 		}

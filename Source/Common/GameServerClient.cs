@@ -108,9 +108,7 @@ namespace PanzerKontrol
 			InitialiseMessageHandlerMap();
 
 			PlayerName = null;
-
 			PlayerFaction = null;
-
 			ActiveGame = null;
 
 			ConnectedState();
@@ -131,9 +129,8 @@ namespace PanzerKontrol
 		public void OnGameStart(Game game)
 		{
 			ActiveGame = game;
-			MapConfiguration map = new MapConfiguration(game.Map, game.Points);
 			string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
-			GameStart start = new GameStart(map, opponentName);
+			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, opponentName);
 			QueueMessage(new ServerToClientMessage(start));
 		}
 
@@ -162,6 +159,9 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.JoinGameRequest] = OnJoinGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.LeaveGameRequest] = OnLeaveGameRequest;
+			MessageHandlerMap[ClientToServerMessageType.SubmitOpenPicks] = OnSubmitOpenPicks;
+			MessageHandlerMap[ClientToServerMessageType.SubmitHiddenPicks] = OnSubmitHiddenPicks;
+			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
 		}
 
 		void QueueMessage(ServerToClientMessage message)
@@ -209,11 +209,15 @@ namespace PanzerKontrol
 				if (ShuttingDown)
 					break;
 			}
-			ShuttingDown = true;
-			Stream.Close();
+			lock (Server)
+			{
+				ShuttingDown = true;
+				Server.OnClientTermination(this);
+				Stream.Close();
+			}
+			// Set the send event so the sending thread will terminate
 			lock (SendQueue)
 				SendEvent.Set();
-			Server.OnClientTermination(this);
 		}
 
 		void SendMessages()
@@ -353,6 +357,30 @@ namespace PanzerKontrol
 			LoggedInState();
 			ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.LeaveGameConfirmation);
 			QueueMessage(reply);
+		}
+
+		void OnSubmitOpenPicks(ClientToServerMessage message)
+		{
+			PickSubmission picks = message.Picks;
+			if (picks == null)
+				throw new ClientException("Invalid open pick submission");
+			throw new NotImplementedException("OnSubmitOpenPicks");
+		}
+
+		void OnSubmitHiddenPicks(ClientToServerMessage message)
+		{
+			PickSubmission picks = message.Picks;
+			if (picks == null)
+				throw new ClientException("Invalid hidden pick submission");
+			throw new NotImplementedException("OnSubmitHiddenPicks");
+		}
+
+		void OnSubmitDeploymentPlan(ClientToServerMessage message)
+		{
+			DeploymentPlan plan = message.DeploymentPlan;
+			if (plan == null)
+				throw new ClientException("Invalid deployment plan submission");
+			throw new NotImplementedException("OnSubmitDeploymentPlan");
 		}
 
 		#endregion
