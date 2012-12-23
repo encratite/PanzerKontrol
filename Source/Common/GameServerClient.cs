@@ -8,7 +8,7 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
-	enum ClientStateType
+	public enum ClientStateType
 	{
 		Connected,
 		LoggedIn,
@@ -16,7 +16,7 @@ namespace PanzerKontrol
 		InGame,
 	}
 
-	enum GameStateType
+	public enum GameStateType
 	{
 		OpenPicks,
 		HiddenPicks,
@@ -43,7 +43,7 @@ namespace PanzerKontrol
 		ClientStateType ClientState;
 		GameStateType GameState;
 
-		List<ClientToServerMessageType> ExpectedMessageTypes;
+		HashSet<ClientToServerMessageType> ExpectedMessageTypes;
 		Dictionary<ClientToServerMessageType, MessageHandler> MessageHandlerMap;
 
 		// The name chosen by the player when he logged into the server
@@ -81,9 +81,17 @@ namespace PanzerKontrol
 			}
 		}
 
+		public ClientStateType State
+		{
+			get
+			{
+				return ClientState;
+			}
+		}
+
 		#endregion
 
-		#region Public functions
+		#region Construction and startup
 
 		public GameServerClient(SslStream stream, GameServer server)
 		{
@@ -95,7 +103,6 @@ namespace PanzerKontrol
 
 			ShuttingDown = false;
 
-			ExpectedMessageTypes = null;
 			MessageHandlerMap = new Dictionary<ClientToServerMessageType, MessageHandler>();
 
 			InitialiseMessageHandlerMap();
@@ -105,6 +112,8 @@ namespace PanzerKontrol
 			PlayerFaction = null;
 
 			ActiveGame = null;
+
+			ConnectedState();
 		}
 
 		public void Run()
@@ -115,7 +124,11 @@ namespace PanzerKontrol
 			SendingThread.Start();
 		}
 
-		public void StartGame(Game game)
+		#endregion
+
+		#region Public functions for events caused by other players
+
+		public void OnGameStart(Game game)
 		{
 			ActiveGame = game;
 			MapConfiguration map = new MapConfiguration(game.Map, game.Points);
@@ -124,13 +137,20 @@ namespace PanzerKontrol
 			QueueMessage(new ServerToClientMessage(start));
 		}
 
+		public void OnOpponentLeftGame()
+		{
+			LoggedInState();
+			ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.OpponentLeftGame);
+			QueueMessage(reply);
+		}
+
 		#endregion
 
 		#region Generic internal functions
 
 		void WriteLine(string line, params object[] arguments)
 		{
-			Server.OutputManager.WriteLine(string.Format(line, arguments));
+			Server.OutputManager.Message(string.Format(line, arguments));
 		}
 
 		void InitialiseMessageHandlerMap()
@@ -153,28 +173,25 @@ namespace PanzerKontrol
 			}
 		}
 
-		void SetExpectedMessageTypes(List<ClientToServerMessageType> expectedMessageTypes)
+		void SetExpectedMessageTypes(HashSet<ClientToServerMessageType> expectedMessageTypes)
 		{
 			ExpectedMessageTypes = expectedMessageTypes;
+			// Errors are always expected
 			ExpectedMessageTypes.Add(ClientToServerMessageType.Error);
 		}
 
 		void SetExpectedMessageTypes(params ClientToServerMessageType[] expectedMessageTypes)
 		{
-			SetExpectedMessageTypes(new List<ClientToServerMessageType>(expectedMessageTypes));
+			SetExpectedMessageTypes(new HashSet<ClientToServerMessageType>(expectedMessageTypes));
 		}
 
 		bool IsExpectedMessageType(ClientToServerMessageType type)
 		{
-			if (ExpectedMessageTypes == null)
-				return true;
-			return ExpectedMessageTypes.IndexOf(type) >= 0;
+			return ExpectedMessageTypes.Contains(type);
 		}
 
 		void ReceiveMessages()
 		{
-			ConnectedState();
-
 			var enumerator = Serializer.DeserializeItems<ClientToServerMessage>(Stream, GameServer.Prefix, 0);
 			foreach (var message in enumerator)
 			{
@@ -219,7 +236,13 @@ namespace PanzerKontrol
 		void ProcessMessage(ClientToServerMessage message)
 		{
 			if (!IsExpectedMessageType(message.Type))
-				throw new ClientException("Received an unexpected message type");
+			{
+				// Ignore unexpected messages
+				// These are usually the result of network delay
+				// However, they could also be the result of broken client implementations so log it anyways
+				WriteLine("Encountered an unexpected message type: {0}", message.Type);
+				return;
+			}
 			MessageHandler handler;
 			if(!MessageHandlerMap.TryGetValue(message.Type, out handler))
 				throw new Exception("Encountered an unknown server to client message type");
@@ -253,7 +276,7 @@ namespace PanzerKontrol
 		{
 			ClientState = ClientStateType.InGame;
 			GameState = gameState;
-			List<ClientToServerMessageType> expectedMessageTypes = new List<ClientToServerMessageType>(gameMessageTypes);
+			var expectedMessageTypes = new HashSet<ClientToServerMessageType>(gameMessageTypes);
 			expectedMessageTypes.Add(ClientToServerMessageType.LeaveGameRequest);
 			SetExpectedMessageTypes(expectedMessageTypes);
 		}
@@ -306,7 +329,7 @@ namespace PanzerKontrol
 			bool success = Server.OnJoinGameRequest(this, request);
 			if (success)
 			{
-				InGameState(GameStateType.OpenPicks, ClientToServerMessageType.CancelGameRequest);
+				InGameState(GameStateType.OpenPicks);
 				throw new NotImplementedException("Need to add the message types for the picking phase");
 			}
 			else
@@ -318,21 +341,18 @@ namespace PanzerKontrol
 
 		void OnCancelGameRequest(ClientToServerMessage message)
 		{
-			if (ClientState == ClientStateType.InGame)
-			{
-				// The client sent a cancel game request after a game had already been started
-				// This is expected, just ignore it
-				return;
-			}
-
 			Server.OnCancelGameRequest(this);
 			LoggedInState();
-			QueueMessage(new ServerToClientMessage(ServerToClientMessageType.CancelGameConfirmation));
+			ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.CancelGameConfirmation);
+			QueueMessage(reply);
 		}
 
 		void OnLeaveGameRequest(ClientToServerMessage message)
 		{
-			throw new MissingFeatureException("OnLeaveGameRequest");
+			Server.OnLeaveGameRequest(this);
+			LoggedInState();
+			ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.LeaveGameConfirmation);
+			QueueMessage(reply);
 		}
 
 		#endregion

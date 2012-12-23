@@ -24,10 +24,11 @@ namespace PanzerKontrol
 		const int PrivateKeyLength = 32;
 
 		GameServerConfiguration Configuration;
+
+		bool ShuttingDown;
  
 		TcpListener Listener;
 		X509Certificate Certificate;
-		bool ShuttingDown;
 		List<GameServerClient> Clients;
 
 		List<Faction> Factions;
@@ -41,20 +42,21 @@ namespace PanzerKontrol
 		// Games that are currently being played
 		List<Game> ActiveGames;
 
-		#region Generic public functions
+		#region Construction and startup
 
 		public GameServer(GameServerConfiguration configuration, OutputManager outputManager)
 		{
+			OutputManager = outputManager;
+
 			Configuration = configuration;
 
-			OutputManager = outputManager;
+			ShuttingDown = false;
 
 			Version = Assembly.GetEntryAssembly().GetName().Version.Revision;
 
 			IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(configuration.Address), configuration.Port);
 			Listener = new TcpListener(endpoint);
 			Certificate = new X509Certificate(configuration.CertificatePath);
-			ShuttingDown = false;
 			Clients = new List<GameServerClient>();
 
 			LoadFactions();
@@ -79,6 +81,10 @@ namespace PanzerKontrol
 				}
 			}
 		}
+
+		#endregion
+
+		#region Public utility functions
 
 		public Faction GetFaction(int factionId)
 		{
@@ -140,11 +146,7 @@ namespace PanzerKontrol
 
 		public void OnCancelGameRequest(GameServerClient client)
 		{
-			Game game = client.Game;
-			if (game.IsPrivate)
-				PrivateGames.Remove(game.Owner.Name);
-			else
-				PublicGames.Remove(game.PrivateKey);
+			CancelGame(client.Game);
 		}
 
 		public bool OnJoinGameRequest(GameServerClient client, JoinGameRequest request)
@@ -165,24 +167,29 @@ namespace PanzerKontrol
 				PublicGames.Remove(key);
 			}
 			game.Opponent = client;
-			game.Owner.StartGame(game);
-			client.StartGame(game);
+			game.Owner.OnGameStart(game);
+			client.OnGameStart(game);
 			ActiveGames.Add(game);
 			return true;
 		}
 
 		public void OnLeaveGameRequest(GameServerClient client)
 		{
-			Game game = client.Game;
-			ActiveGames.Remove(game);
-			GameServerClient otherClient = game.GetOtherClient(client);
-			throw new MissingFeatureException("Incomplete");
+			LeaveGame(client);	
 		}
 
 		public void OnClientTermination(GameServerClient client)
 		{
 			Clients.Remove(client);
-			throw new MissingFeatureException("If a game is going on, it needs to be shut down gracefully");
+			switch (client.State)
+			{
+				case ClientStateType.WaitingForOpponent:
+					break;
+
+				case ClientStateType.InGame:
+					LeaveGame(client);
+					break;
+			}
 		}
 
 		#endregion
@@ -191,7 +198,7 @@ namespace PanzerKontrol
 
 		void WriteLine(string line, params object[] arguments)
 		{
-			OutputManager.WriteLine(string.Format(line, arguments));
+			OutputManager.Message(string.Format(line, arguments));
 		}
 
 		void LoadFactions()
@@ -248,6 +255,22 @@ namespace PanzerKontrol
 				if (!PrivateGames.ContainsKey(privateKey))
 					return privateKey;
 			}
+		}
+
+		void CancelGame(Game game)
+		{
+			if (game.IsPrivate)
+				PrivateGames.Remove(game.Owner.Name);
+			else
+				PublicGames.Remove(game.PrivateKey);
+		}
+
+		void LeaveGame(GameServerClient client)
+		{
+			Game game = client.Game;
+			ActiveGames.Remove(game);
+			GameServerClient otherClient = game.GetOtherClient(client);
+			otherClient.OnOpponentLeftGame();
 		}
 
 		#endregion

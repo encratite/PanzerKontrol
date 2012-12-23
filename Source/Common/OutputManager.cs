@@ -1,7 +1,13 @@
 ﻿namespace PanzerKontrol
 {
-	public interface OutputManager
+	abstract public class OutputManager
 	{
-		void WriteLine(string message, params object[] arguments);
+		public void Message(string message, params object[] arguments)
+		{
+			lock (this)
+				WriteMessage(string.Format(message, arguments));
+		}
+
+		abstract protected void WriteMessage(string message);
 	}
 }
