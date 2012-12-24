@@ -20,7 +20,6 @@ namespace Test
 			stats.HardDefence = 3;
 			stats.BombardmentDefence = 3;
 			stats.Movement = 3;
-			stats.Morale = 5;
 
 			UnitStats bonus = new UnitStats();
 			bonus.HardAttack = 1;
@@ -28,19 +27,18 @@ namespace Test
 
 			UnitUpgrade upgrade = new UnitUpgrade();
 			upgrade.Name = "Upgrade";
-			upgrade.Price = 5;
+			upgrade.Points = 5;
 			upgrade.Slot = 0;
 
-			Unit unit = new Unit();
+			UnitType unit = new UnitType();
 			unit.Name = "Name";
-			unit.Price = 20;
+			unit.Points = 20;
 			unit.Hardness = 0.0;
 			unit.Stats = stats;
 			unit.Flags.Add(UnitFlag.Infantry);
-			unit.UpgradesAvailable.Add(upgrade);
+			unit.Upgrades.Add(upgrade);
 
 			Faction faction = new Faction();
-			faction.Id = 1;
 			faction.Name = "Faction";
 			faction.Description = "Description";
 			faction.Units.Add(unit);

@@ -17,21 +17,30 @@ namespace PanzerKontrol
 		public string Description { get; set; }
 
 		// Units that may be purchased during the picking phase when playing this faction.
-		public List<Unit> Units { get; set; }
+		public List<UnitType> Units { get; set; }
 
 		public Faction()
 		{
-			Units = new List<Unit>();
+			Units = new List<UnitType>();
 		}
 
-		public void SetUnitIds()
+		public void SetIds()
 		{
 			int id = 0;
-			foreach (Unit unit in Units)
+			foreach (UnitType unit in Units)
 			{
+				unit.Faction = this;
 				unit.Id = id;
+				unit.SetIds();
 				id++;
 			}
+		}
+
+		public UnitType GetUnitType(int unitTypeId)
+		{
+			if (unitTypeId < 0 || unitTypeId >= Units.Count)
+				throw new ClientException("Invalid unit type specified");
+			return Units[unitTypeId];
 		}
 	}
 }

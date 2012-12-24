@@ -88,7 +88,7 @@ namespace PanzerKontrol
 
 		public Faction GetFaction(int factionId)
 		{
-			if (factionId >= Factions.Count)
+			if (factionId < 0 || factionId >= Factions.Count)
 				throw new ClientException("Invalid faction ID specified");
 			return Factions[factionId];
 		}
@@ -210,6 +210,7 @@ namespace PanzerKontrol
 			foreach (Faction faction in Factions)
 			{
 				faction.Id = id;
+				faction.SetIds();
 				id++;
 			}
 		}

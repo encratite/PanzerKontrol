@@ -2,14 +2,13 @@
 <UnitConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Factions>
     <Faction>
-      <Id>1</Id>
       <Name>Nomads</Name>
       <Description>Hostile steppes gave birth to these nomadic predators. Originally governed by local warlords who were constantly fighting each other, the Nomads formed a fragile alliance in pursuit of more land, cattle, and wives. Their equipment may be crude and some of them are even said to ride into battle on horses, facing machine guns and artillery fire. Yet their greed and especially their cruelty against civilians are widely feared.</Description>
       <Units>
         <Unit>
           <Name>Looters</Name>
           <Description>Infantry</Description>
-          <Price>16</Price>
+          <Points>16</Points>
           <Hardness>0.0</Hardness>
           <Stats>
             <SoftAttack>4</SoftAttack>
@@ -18,24 +17,23 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
-            <Morale>3</Morale>
           </Stats>
           <Flags />
-          <UpgradesAvailable>
-            <UnitUpgrade>
+          <Upgrades>
+            <Upgrade>
               <Name>Grenade launchers</Name>
-              <Price>5</Price>
+              <Points>5</Points>
               <Slot>0</Slot>
               <Bonus>
                 <SoftAttack>2</SoftAttack>
               </Bonus>
-            </UnitUpgrade>
-          </UpgradesAvailable>
+            </Upgrade>
+          </Upgrades>
         </Unit>
         <Unit>
           <Name>Marauders</Name>
           <Description>Heavy infantry</Description>
-          <Price>23</Price>
+          <Points>23</Points>
           <Hardness>0.2</Hardness>
           <Stats>
             <SoftAttack>5</SoftAttack>
@@ -44,33 +42,32 @@
             <HardDefence>4</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
-            <Morale>4</Morale>
           </Stats>
           <Flags />
-          <UpgradesAvailable>
-            <UnitUpgrade>
+          <Upgrades>
+            <Upgrade>
               <Name>Recoilless rifles</Name>
-              <Price>3</Price>
+              <Points>3</Points>
               <Slot>0</Slot>
               <Bonus>
                 <HardAttack>1</HardAttack>
                 <HardDefence>1</HardDefence>
               </Bonus>
-            </UnitUpgrade>
-            <UnitUpgrade>
+            </Upgrade>
+            <Upgrade>
               <Name>Flack jackets</Name>
-              <Price>2</Price>
+              <Points>2</Points>
               <Slot>0</Slot>
               <Bonus>
                 <BombardmentDefence>2</BombardmentDefence>
               </Bonus>
-            </UnitUpgrade>
-          </UpgradesAvailable>
+            </Upgrade>
+          </Upgrades>
         </Unit>
         <Unit>
           <Name>Raiders</Name>
           <Description>Cavalry</Description>
-          <Price>20</Price>
+          <Points>20</Points>
           <Hardness>0.0</Hardness>
           <Stats>
             <SoftAttack>4</SoftAttack>
@@ -79,15 +76,14 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>2</BombardmentDefence>
             <Movement>6</Movement>
-            <Morale>3</Morale>
           </Stats>
           <Flags />
-          <UpgradesAvailable />
+          <Upgrades />
         </Unit>
         <Unit>
           <Name>Darga</Name>
           <Description>Artillery</Description>
-          <Price>28</Price>
+          <Points>28</Points>
           <Hardness>0.3</Hardness>
           <Stats>
             <SoftAttack>5</SoftAttack>
@@ -97,17 +93,16 @@
             <BombardmentDefence>3</BombardmentDefence>
             <Range>3</Range>
             <Movement>3</Movement>
-            <Morale>3</Morale>
           </Stats>
           <Flags>
             <UnitFlag>Artillery</UnitFlag>
           </Flags>
-          <UpgradesAvailable />
+          <Upgrades />
         </Unit>
         <Unit>
           <Name>Noyan</Name>
           <Description>Self-propelled autocannon</Description>
-          <Price>42</Price>
+          <Points>42</Points>
           <Limit>4</Limit>
           <Hardness>0.8</Hardness>
           <Stats>
@@ -119,31 +114,29 @@
             <AirAttack>5</AirAttack>
             <AntiAirRange>3</AntiAirRange>
             <Movement>5</Movement>
-            <Morale>4</Morale>
           </Stats>
           <Flags />
-          <UpgradesAvailable>
-            <UnitUpgrade>
+          <Upgrades>
+            <Upgrade>
               <Name>Advanced search radar</Name>
-              <Price>4</Price>
+              <Points>4</Points>
               <Slot>0</Slot>
               <Bonus>
                 <AntiAirRange>1</AntiAirRange>
               </Bonus>
-            </UnitUpgrade>
-          </UpgradesAvailable>
+            </Upgrade>
+          </Upgrades>
         </Unit>
       </Units>
     </Faction>
     <Faction>
-      <Id>2</Id>
       <Name>The Brotherhood</Name>
       <Description>The Brotherhood is an ethnoreligious group ruled by a powerful elite of clerics. After the death of the great prophet, many charismatic leaders attempted to take his place and the community was torn apart by internal strife. The civil war that followed lasted nearly half a century and created generations born into violence and suffering. Reunited and driven by religious zeal, these men endure great hardships and gladly lay down their lives in service of their god.</Description>
       <Units>
         <Unit>
           <Name>Zealots</Name>
           <Description>Infantry</Description>
-          <Price>21</Price>
+          <Points>21</Points>
           <Hardness>0.0</Hardness>
           <Stats>
             <SoftAttack>4</SoftAttack>
@@ -152,33 +145,32 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
-            <Morale>5</Morale>
           </Stats>
           <Flags />
-          <UpgradesAvailable>
-            <UnitUpgrade>
+          <Upgrades>
+            <Upgrade>
               <Name>Machine guns</Name>
-              <Price>4</Price>
+              <Points>4</Points>
               <Slot>0</Slot>
               <Bonus>
                 <SoftAttack>1</SoftAttack>
                 <SoftDefence>1</SoftDefence>
               </Bonus>
-            </UnitUpgrade>
-            <UnitUpgrade>
+            </Upgrade>
+            <Upgrade>
               <Name>Towed anti-tank gun</Name>
-              <Price>3</Price>
+              <Points>3</Points>
               <Slot>0</Slot>
               <Bonus>
                 <HardDefence>2</HardDefence>
               </Bonus>
-            </UnitUpgrade>
-          </UpgradesAvailable>
+            </Upgrade>
+          </Upgrades>
         </Unit>
         <Unit>
           <Name>Clerics</Name>
           <Description>Engineers</Description>
-          <Price>25</Price>
+          <Points>25</Points>
           <Hardness>0.1</Hardness>
           <Stats>
             <SoftAttack>4</SoftAttack>
@@ -187,27 +179,26 @@
             <HardDefence>4</HardDefence>
             <BombardmentDefence>4</BombardmentDefence>
             <Movement>3</Movement>
-            <Morale>5</Morale>
           </Stats>
           <Flags>
             <UnitFlag>Engineers</UnitFlag>
           </Flags>
-          <UpgradesAvailable>
-            <UnitUpgrade>
+          <Upgrades>
+            <Upgrade>
               <Name>Portable surface-to-air missile system</Name>
-              <Price>3</Price>
+              <Points>3</Points>
               <Slot>0</Slot>
               <Bonus>
                 <AirAttack>4</AirAttack>
                 <AntiAirRange>2</AntiAirRange>
               </Bonus>
-            </UnitUpgrade>
-          </UpgradesAvailable>
+            </Upgrade>
+          </Upgrades>
         </Unit>
         <Unit>
           <Name>Martyrs</Name>
           <Description>Mechanised infantry</Description>
-          <Price>36</Price>
+          <Points>36</Points>
           <Limit>4</Limit>
           <Hardness>0.4</Hardness>
           <Stats>
@@ -217,15 +208,14 @@
             <HardDefence>4</HardDefence>
             <BombardmentDefence>4</BombardmentDefence>
             <Movement>6</Movement>
-            <Morale>5</Morale>
           </Stats>
           <Flags />
-          <UpgradesAvailable />
+          <Upgrades />
         </Unit>
         <Unit>
           <Name>Salaam</Name>
           <Description>Main battle tank</Description>
-          <Price>45</Price>
+          <Points>45</Points>
           <Limit>3</Limit>
           <Hardness>1.0</Hardness>
           <Stats>
@@ -235,26 +225,25 @@
             <HardDefence>6</HardDefence>
             <BombardmentDefence>5</BombardmentDefence>
             <Movement>5</Movement>
-            <Morale>4</Morale>
           </Stats>
           <Flags />
-          <UpgradesAvailable>
-            <UnitUpgrade>
+          <Upgrades>
+            <Upgrade>
               <Name>Flamethrowers</Name>
-              <Price>6</Price>
+              <Points>6</Points>
               <Slot>0</Slot>
               <Bonus>
                 <SoftAttack>2</SoftAttack>
                 <HardAttack>-2</HardAttack>
                 <HardDefence>-1</HardDefence>
               </Bonus>
-            </UnitUpgrade>
-          </UpgradesAvailable>
+            </Upgrade>
+          </Upgrades>
         </Unit>
         <Unit>
           <Name>Adhaan</Name>
           <Description>Attack aircraft</Description>
-          <Price>55</Price>
+          <Points>55</Points>
           <Limit>3</Limit>
           <Stats>
             <SoftAttack>5</SoftAttack>
@@ -264,7 +253,7 @@
           <Flags>
             <UnitFlag>Air</UnitFlag>
           </Flags>
-          <UpgradesAvailable />
+          <Upgrades />
         </Unit>
       </Units>
     </Faction>

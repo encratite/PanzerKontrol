@@ -456,21 +456,26 @@ namespace PanzerKontrol
 		[ProtoMember(1, IsRequired = false)]
 		public int? UnitId { get; set; }
 
-		// This is the numeric identifier of the type of the unit as generated from the faction fconfiguration file
+		// The numeric ID of the faction the unit is from
 		[ProtoMember(2)]
+		public int FactionId { get; set; }
+
+		// This is the numeric identifier of the type of the unit as generated from the faction configuration file
+		[ProtoMember(3)]
 		public int UnitTypeId { get; set; }
 
-		[ProtoMember(3)]
+		[ProtoMember(4)]
 		public List<int> Upgrades { get; set; }
 
-		public UnitConfiguration(int unitTypeId)
+		public UnitConfiguration(int factionId, int unitTypeId)
 		{
 			UnitId = null;
+			FactionId = factionId;
 			UnitTypeId = unitTypeId;
 			Upgrades = new List<int>();
 		}
 
-		public UnitConfiguration(int unitId, int unitTypeId)
+		public UnitConfiguration(int factionId, int unitId, int unitTypeId)
 		{
 			UnitId = unitId;
 			UnitTypeId = unitTypeId;

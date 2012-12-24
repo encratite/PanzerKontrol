@@ -55,6 +55,12 @@ namespace PanzerKontrol
 		// The game the player is currently in
 		Game ActiveGame;
 
+		// Units purchased during the picking phase, also deployed units
+		List<Unit> Units;
+
+		// Points spent during the picking phases
+		int? PointsSpent;
+
 		#region Read-only accessors
 
 		public string Name
@@ -110,6 +116,9 @@ namespace PanzerKontrol
 			PlayerName = null;
 			PlayerFaction = null;
 			ActiveGame = null;
+
+			Units = null;
+			PointsSpent = null;
 
 			ConnectedState();
 		}
@@ -266,8 +275,12 @@ namespace PanzerKontrol
 		{
 			ClientState = ClientStateType.LoggedIn;
 			SetExpectedMessageTypes(ClientToServerMessageType.CreateGameRequest, ClientToServerMessageType.ViewPublicGamesRequest, ClientToServerMessageType.JoinGameRequest);
+
 			PlayerFaction = null;
 			ActiveGame = null;
+
+			Units = null;
+			PointsSpent = null;
 		}
 
 		void WaitingForOpponentState()
@@ -332,10 +345,7 @@ namespace PanzerKontrol
 				throw new ClientException("Invalid join game request");
 			bool success = Server.OnJoinGameRequest(this, request);
 			if (success)
-			{
-				InGameState(GameStateType.OpenPicks);
-				throw new NotImplementedException("Need to add the message types for the picking phase");
-			}
+				InGameState(GameStateType.OpenPicks, ClientToServerMessageType.SubmitOpenPicks);
 			else
 			{
 				ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.NoSuchGame);
@@ -364,7 +374,18 @@ namespace PanzerKontrol
 			PickSubmission picks = message.Picks;
 			if (picks == null)
 				throw new ClientException("Invalid open pick submission");
-			throw new NotImplementedException("OnSubmitOpenPicks");
+			int totalPoints = 0;
+			Units = new List<Unit>();
+			foreach (var pick in picks.Units)
+			{
+				Unit unit = new Unit(pick, Server);
+				totalPoints += unit.Points;
+				Units.Add(unit);
+			}
+			if (totalPoints > Game.MapConfiguration.Points)
+				throw new ClientException("An invalid number of points was spent during the open picking phase");
+			InGameState(GameStateType.HiddenPicks, ClientToServerMessageType.SubmitHiddenPicks);
+			throw new NotImplementedException("Still need to deal with the picking timer and stuff");
 		}
 
 		void OnSubmitHiddenPicks(ClientToServerMessage message)

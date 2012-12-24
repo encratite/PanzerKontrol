@@ -58,9 +58,10 @@
     <Compile Include="GameServerConfiguration.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Unit.cs" />
     <Compile Include="UnitFlag.cs" />
     <Compile Include="UnitStats.cs" />
-    <Compile Include="Unit.cs" />
+    <Compile Include="UnitType.cs" />
     <Compile Include="UnitUpgrade.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

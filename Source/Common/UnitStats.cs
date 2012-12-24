@@ -1,4 +1,8 @@
-﻿namespace PanzerKontrol
+﻿using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+
+namespace PanzerKontrol
 {
 	public class UnitStats
 	{
@@ -38,8 +42,50 @@
 		// Air units have no movement.
 		public int? Movement { get; set; }
 
-		// Morale represents a unit's ability to suffer losses without retreating.
-		// Air units have no morale.
-		public int? Morale { get; set; }
+		public UnitStats()
+		{
+		}
+
+		public UnitStats Clone()
+		{
+			IFormatter formatter = new BinaryFormatter();
+			Stream stream = new MemoryStream();
+			using (stream)
+			{
+				formatter.Serialize(stream, this);
+				stream.Seek(0, SeekOrigin.Begin);
+				return (UnitStats)formatter.Deserialize(stream);
+			}
+		}
+
+		public void Combine(UnitStats stats)
+		{
+			SoftAttack = Add(SoftAttack, stats.SoftAttack);
+			SoftDefence = Add(SoftDefence, stats.SoftDefence);
+
+			HardAttack = Add(HardAttack, stats.HardAttack);
+			HardDefence = Add(HardDefence, stats.HardDefence);
+
+			BombardmentDefence = Add(BombardmentDefence, stats.BombardmentDefence);
+
+			AirAttack = Add(AirAttack, stats.AirAttack);
+			AntiAirDefence = Add(AntiAirDefence, stats.AntiAirDefence);
+
+			Range = Add(Range, stats.Range);
+
+			AntiAirRange = Add(AntiAirRange, stats.AntiAirRange);
+
+			Movement = Add(Movement, stats.Movement);
+		}
+
+		int? Add(int? x, int? y)
+		{
+			if (x == null)
+				return y;
+			else if (y == null)
+				return x;
+			else
+				return x + y;
+		}
 	}
 }
