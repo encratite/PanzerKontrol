@@ -247,18 +247,18 @@ namespace PanzerKontrol
 
 		void SendMessages()
 		{
-			while (!ShuttingDown)
+			while (Stream.CanWrite)
 			{
 				SendEvent.WaitOne();
-				if (!ShuttingDown)
-					break;
+				List<ServerToClientMessage> queue;
 				lock (SendQueue)
 				{
-					foreach (var message in SendQueue)
-						Serializer.SerializeWithLengthPrefix<ServerToClientMessage>(Stream, message, GameServer.Prefix);
+					queue = new List<ServerToClientMessage>(SendQueue);
 					SendQueue.Clear();
 					SendEvent.Reset();
 				}
+				foreach (var message in queue)
+					Serializer.SerializeWithLengthPrefix<ServerToClientMessage>(Stream, message, GameServer.Prefix);
 			}
 		}
 
