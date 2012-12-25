@@ -2,17 +2,16 @@ This is a crude open source turn-based strategy game inspired by games like Panz
 Currently only a player vs. player mode is planned, no single player.
 I'm not sure about the details of the playable factions yet.
 
-Each match is played by two opposing players.
-It starts with a picking phase during which players choose the composition of their army.
-Each player is given the same amount of points that are used to purchase units.
-The picking phase is subdivided into two steps.
-In the first step, known as "open picking", each player may use up to 75% of their points to purchase units.
-These picks are made visible to the opponent after the completion of this step.
-Half the points that are not spent in this step are lost and may not be used in the next step.
-In the second step, known as "hidden picking", each player may use the remaining 25% of their points to purchase units.
-These picks can be made to counter the majority of the enemy army.
+A match is played by two opposing players.
+A certain number of points P_base may be spent to purchase units.
+The amount is predefined by the map that is being played.
+However, the owner of a custom game may override this value.
+Players have already chosen a base army worth 0 < P_army <= P_base before they connect.
+The following amount of points may be spent on reinforcements during the game:
+P_reinforce = 0.5 * (P_base - P_army) + 0.3 * P_base
+These points may be spent on both new units and improving/replenishing existing units.
 
-After the completion of the picks, deployment commences.
+Once the players have connected, deployment commmences.
 Players may place their units in their own deployment zones in parallel.
 These unit placements are not visible to the enemy until the game has started (there is no fog of war).
 
