@@ -2,7 +2,7 @@
 
 namespace PanzerKontrol
 {
-	class Unit
+	public class Unit
 	{
 		public readonly UnitType Type;
 		public readonly List<UnitUpgrade> Upgrades;

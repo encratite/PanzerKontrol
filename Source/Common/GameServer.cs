@@ -114,7 +114,7 @@ namespace PanzerKontrol
 
 		public CreateGameReply OnCreateGameRequest(GameServerClient client, CreateGameRequest request, out Faction faction, out Game game)
 		{
-			faction = GetFaction(request.FactionId);
+			faction = GetFaction(request.Army.FactionId);
 			if (request.IsPrivate)
 			{
 				string privateKey = GeneratePrivateKey();
@@ -169,7 +169,7 @@ namespace PanzerKontrol
 			game.Owner.OnGameStart(game);
 			client.OnGameStart(game);
 			ActiveGames.Add(game);
-			game.StartTimer(game.TimeConfiguration.OpenPicks, OnOpenPickingTimerExpiration);
+			game.StartTimer(game.TimeConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
 			return true;
 		}
 
@@ -197,12 +197,12 @@ namespace PanzerKontrol
 
 		#region Timer event handlers
 
-		public void OnOpenPickingTimerExpiration(Game game)
+		public void OnDeploymentTimerExpiration(Game game)
 		{
 			lock (this)
 			{
-				game.Owner.OnOpenPickingTimer();
-				game.Opponent.OnOpenPickingTimer();
+				game.Owner.OnDeploymentTimerExpiration();
+				game.Opponent.OnDeploymentTimerExpiration();
 			}
 		}
 

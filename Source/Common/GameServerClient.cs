@@ -18,8 +18,6 @@ namespace PanzerKontrol
 
 	public enum GameStateType
 	{
-		OpenPicks,
-		HiddenPicks,
 		Deployment,
 		MyTurn,
 		OpponentTurn,
@@ -61,10 +59,11 @@ namespace PanzerKontrol
 		// The game the player is currently in
 		Game ActiveGame;
 
-		// Units purchased during the picking phase, also deployed units
+		// Units remaining
 		List<Unit> Units;
-
-		int? PointsAvailable;
+		
+		// Reinforcement points remaining for the current game
+		int? ReinforcementPoints;
 
 		#region Read-only accessors
 
@@ -123,7 +122,7 @@ namespace PanzerKontrol
 			ActiveGame = null;
 
 			Units = null;
-			PointsAvailable = null;
+			ReinforcementPoints = null;
 
 			ConnectedState();
 		}
@@ -138,14 +137,13 @@ namespace PanzerKontrol
 
 		#endregion
 
-		#region Public functions for events caused by external events
+		#region External events
 
 		public void OnGameStart(Game game)
 		{
 			ActiveGame = game;
-			PointsAvailable = (int)(1.0 - HiddenPickPointRatio) * game.MapConfiguration.Points;
-			string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
-			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, opponentName, PointsAvailable.Value);
+			GameServerClient opponent = game.GetOtherClient(this);
+			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, GetBaseArmy(), opponent.GetBaseArmy(), opponent.Name, ReinforcementPoints.Value);
 			QueueMessage(new ServerToClientMessage(start));
 		}
 
@@ -156,17 +154,18 @@ namespace PanzerKontrol
 			QueueMessage(reply);
 		}
 
-		public void OnOpenPickingTimer()
+		public void OnDeploymentTimerExpiration()
 		{
-			throw new NotImplementedException("Screw this");
+			throw new NotImplementedException("OnDeploymentTimerExpiration");
 		}
 
-		public void OnOpenPickSubmissionCheck()
+		#endregion
+
+		#region Public utility functions
+
+		public BaseArmy GetBaseArmy()
 		{
-			if (GameState == GameStateType.HiddenPicks)
-			{
-				throw new NotImplementedException("Screw this");
-			}
+			return new BaseArmy(PlayerFaction, Units);
 		}
 
 		#endregion
@@ -187,8 +186,6 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.JoinGameRequest] = OnJoinGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.LeaveGameRequest] = OnLeaveGameRequest;
-			MessageHandlerMap[ClientToServerMessageType.SubmitOpenPicks] = OnSubmitOpenPicks;
-			MessageHandlerMap[ClientToServerMessageType.SubmitHiddenPicks] = OnSubmitHiddenPicks;
 			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
 		}
 
@@ -280,6 +277,26 @@ namespace PanzerKontrol
 				throw new Exception("Encountered an unknown server to client message type");
 		}
 
+		void InitialiseArmy(BaseArmy army)
+		{
+			const double reinforcementPointsPenaltyFactor = 0.5;
+			const double reinforcementPointsBaseRatio = 0.3;
+
+			Units = new List<Unit>();
+
+			int pointsSpent = 0;
+			foreach (var unitConfiguration in army.Units)
+			{
+				Unit unit = new Unit(unitConfiguration, Server);
+				pointsSpent += unit.Points;
+				Units.Add(unit);
+			}
+			int pointsAvailable = ActiveGame.MapConfiguration.Points;
+			if (pointsSpent > pointsAvailable)
+				throw new ClientException("You have spent too many points");
+			ReinforcementPoints = (int)(reinforcementPointsPenaltyFactor * (pointsAvailable - pointsSpent) + reinforcementPointsBaseRatio * pointsAvailable);
+		}
+
 		#endregion
 
 		#region Client/game state modifiers and expected message type modifiers
@@ -298,8 +315,8 @@ namespace PanzerKontrol
 			PlayerFaction = null;
 			ActiveGame = null;
 
-			Units = new List<Unit>();
-			PointsAvailable = null;
+			Units = null;
+			ReinforcementPoints = null;
 		}
 
 		void WaitingForOpponentState()
@@ -346,6 +363,7 @@ namespace PanzerKontrol
 			CreateGameRequest request = message.CreateGameRequest;
 			if (request == null)
 				throw new ClientException("Invalid game creation request");
+			InitialiseArmy(request.Army);
 			CreateGameReply reply = Server.OnCreateGameRequest(this, request, out PlayerFaction, out ActiveGame);
 			QueueMessage(new ServerToClientMessage(reply));
 			WaitingForOpponentState();
@@ -362,9 +380,10 @@ namespace PanzerKontrol
 			JoinGameRequest request = message.JoinGameRequest;
 			if (request == null)
 				throw new ClientException("Invalid join game request");
+			InitialiseArmy(request.Army);
 			bool success = Server.OnJoinGameRequest(this, request);
 			if (success)
-				InGameState(GameStateType.OpenPicks, ClientToServerMessageType.SubmitOpenPicks);
+				InGameState(GameStateType.Deployment, ClientToServerMessageType.SubmitDeploymentPlan);
 			else
 			{
 				ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.NoSuchGame);
@@ -386,33 +405,6 @@ namespace PanzerKontrol
 			LoggedInState();
 			ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.LeaveGameConfirmation);
 			QueueMessage(reply);
-		}
-
-		void OnSubmitOpenPicks(ClientToServerMessage message)
-		{
-			PickSubmission picks = message.Picks;
-			if (picks == null)
-				throw new ClientException("Invalid open pick submission");
-			int pointsSpent = 0;
-			foreach (var pick in picks.Units)
-			{
-				Unit unit = new Unit(pick, Server);
-				pointsSpent += unit.Points;
-				Units.Add(unit);
-			}
-			if (pointsSpent > PointsAvailable)
-				throw new ClientException("You have spent too many points");
-			InGameState(GameStateType.HiddenPicks, ClientToServerMessageType.SubmitHiddenPicks);
-			GameServerClient opponent = ActiveGame.GetOtherClient(this);
-			opponent.OnOpenPickSubmissionCheck();
-		}
-
-		void OnSubmitHiddenPicks(ClientToServerMessage message)
-		{
-			PickSubmission picks = message.Picks;
-			if (picks == null)
-				throw new ClientException("Invalid hidden pick submission");
-			throw new NotImplementedException("OnSubmitHiddenPicks");
 		}
 
 		void OnSubmitDeploymentPlan(ClientToServerMessage message)

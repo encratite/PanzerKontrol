@@ -22,6 +22,8 @@ namespace PanzerKontrol
 		GameTimerHandler TimerHandler;
 		Timer ActiveTimer;
 
+		int UnitIdCounter;
+
 		public Game(GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration)
 		{
 			Owner = owner;
@@ -36,6 +38,8 @@ namespace PanzerKontrol
 			GameIsOver = false;
 			TimerHandler = null;
 			ActiveTimer = null;
+
+			UnitIdCounter = 0;
 		}
 
 		public GameServerClient GetOtherClient(GameServerClient client)
@@ -69,6 +73,13 @@ namespace PanzerKontrol
 				ActiveTimer.AutoReset = false;
 				ActiveTimer.Enabled = true;
 			}
+		}
+
+		public int GetUnitId()
+		{
+			int output = UnitIdCounter;
+			UnitIdCounter++;
+			return output;
 		}
 
 		void OnTimerExpiration(object source, ElapsedEventArgs arguments)

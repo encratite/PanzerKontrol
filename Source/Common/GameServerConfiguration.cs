@@ -20,6 +20,8 @@ namespace PanzerKontrol
 			Port = 45489;
 			CertificatePath = "ServerCertificate.pk12";
 			FactionsPath = "Factions.xml";
+
+			MaximumNameLength = 50;
 		}
 	}
 }

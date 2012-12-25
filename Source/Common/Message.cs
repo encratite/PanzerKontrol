@@ -23,10 +23,6 @@ namespace PanzerKontrol
 		// The client requests to leave a game it is currently in
 		// Zero data message
 		LeaveGameRequest,
-		// Submit units purchased during the open picking phase		
-		SubmitOpenPicks,
-		// Submit units purchased during the hidden picking phase
-		SubmitHiddenPicks,
 		// Submit the deployment plan
 		SubmitDeploymentPlan,
 	}
@@ -58,10 +54,6 @@ namespace PanzerKontrol
 		// The game is cancelled
 		// Zero data message
 		OpponentLeftGame,
-		// The hidden picking phase commences
-		HiddenPicks,
-		// Deployment commences
-		DeploymentStart,
 		// The deployment phase is over, the enemy deployment plan is revealed
 		EnemyDeployment,
 	}
@@ -93,9 +85,6 @@ namespace PanzerKontrol
 		public JoinGameRequest JoinGameRequest { get; set; }
 
 		[ProtoMember(6, IsRequired = false)]
-		public PickSubmission Picks { get; set; }
-
-		[ProtoMember(7, IsRequired = false)]
 		public DeploymentPlan DeploymentPlan { get; set; }
 
 		public ClientToServerMessage(ClientToServerMessageType type)
@@ -132,22 +121,6 @@ namespace PanzerKontrol
 			Type = ClientToServerMessageType.SubmitDeploymentPlan;
 			DeploymentPlan = plan;
 		}
-
-		ClientToServerMessage(ClientToServerMessageType type, PickSubmission picks)
-		{
-			Type = type;
-			Picks = picks;
-		}
-
-		public static ClientToServerMessage SubmitOpenPicks(PickSubmission picks)
-		{
-			return new ClientToServerMessage(ClientToServerMessageType.SubmitOpenPicks, picks);
-		}
-
-		public static ClientToServerMessage SubmitHiddenPicks(PickSubmission picks)
-		{
-			return new ClientToServerMessage(ClientToServerMessageType.SubmitHiddenPicks, picks);
-		}
 	}
 
 	[ProtoContract]
@@ -172,12 +145,6 @@ namespace PanzerKontrol
 		public GameStart GameStart { get; set; }
 
 		[ProtoMember(7, IsRequired = false)]
-		public PickUpdate PickUpdate { get; set; }
-
-		[ProtoMember(8, IsRequired = false)]
-		public ArmyListing ArmyListing { get; set; }
-
-		[ProtoMember(9, IsRequired = false)]
 		public DeploymentPlan EnemeyDeploymentPlan { get; set; }
 
 		public ServerToClientMessage(ServerToClientMessageType type)
@@ -215,32 +182,10 @@ namespace PanzerKontrol
 			GameStart = reply;
 		}
 
-		public ServerToClientMessage(ArmyListing listing)
-		{
-			Type = ServerToClientMessageType.DeploymentStart;
-			ArmyListing = listing;
-		}
-
 		public ServerToClientMessage(DeploymentPlan plan)
 		{
 			Type = ServerToClientMessageType.EnemyDeployment;
 			EnemeyDeploymentPlan = plan;
-		}
-
-		ServerToClientMessage(ServerToClientMessageType type, PickUpdate update)
-		{
-			Type = type;
-			PickUpdate = update;
-		}
-
-		public static ServerToClientMessage HiddenPicks(PickUpdate update)
-		{
-			return new ServerToClientMessage(ServerToClientMessageType.HiddenPicks, update);
-		}
-
-		public static ServerToClientMessage Deployment(PickUpdate update)
-		{
-			return new ServerToClientMessage(ServerToClientMessageType.DeploymentStart, update);
 		}
 	}
 
@@ -291,9 +236,8 @@ namespace PanzerKontrol
 	[ProtoContract]
 	public class CreateGameRequest
 	{
-		// The faction of the owner of the game
 		[ProtoMember(1)]
-		public int FactionId { get; set; }
+		public BaseArmy Army { get; set; }
 
 		[ProtoMember(2)]
 		public bool IsPrivate { get; set; }
@@ -301,9 +245,9 @@ namespace PanzerKontrol
 		[ProtoMember(3)]
 		public MapConfiguration MapConfiguration { get; set; }
 
-		public CreateGameRequest(int factionId, bool isPrivate, MapConfiguration mapConfiguration)
+		public CreateGameRequest(BaseArmy army, bool isPrivate, MapConfiguration mapConfiguration)
 		{
-			FactionId = factionId;
+			Army = army;
 			IsPrivate = isPrivate;
 			MapConfiguration = mapConfiguration;
 		}
@@ -332,19 +276,15 @@ namespace PanzerKontrol
 	{
 		// In seconds
 		[ProtoMember(1)]
-		public int OpenPicks { get; set; }
+		public int DeploymentTime { get; set; }
 
 		[ProtoMember(2)]
-		public int HiddenPicks { get; set; }
-
-		[ProtoMember(3)]
-		public int Deployment { get; set; }
+		public int TurnTime { get; set; }
 
 		public TimeConfiguration()
 		{
-			OpenPicks = 60;
-			HiddenPicks = 60;
-			Deployment = 60;
+			DeploymentTime = 90;
+			TurnTime = 30;
 		}
 	}
 
@@ -397,7 +337,7 @@ namespace PanzerKontrol
 	public class JoinGameRequest
 	{
 		[ProtoMember(1)]
-		public int FactionId { get; set; }
+		public BaseArmy Army { get; set; }
 
 		[ProtoMember(2)]
 		public bool IsPrivate { get; set; }
@@ -410,22 +350,22 @@ namespace PanzerKontrol
 		[ProtoMember(4, IsRequired = false)]
 		public string PrivateKey;
 
-		private JoinGameRequest(int factionId, bool isPrivate, string owner, string privateKey)
+		private JoinGameRequest(BaseArmy army, bool isPrivate, string owner, string privateKey)
 		{
-			FactionId = factionId;
+			Army = army;
 			IsPrivate = isPrivate;
 			Owner = owner;
 			PrivateKey = privateKey;
 		}
 
-		public static JoinGameRequest JoinPublicGame(int factionId, string owner)
+		public static JoinGameRequest JoinPublicGame(BaseArmy army, string owner)
 		{
-			return new JoinGameRequest(factionId, false, owner, null);
+			return new JoinGameRequest(army, false, owner, null);
 		}
 
-		public static JoinGameRequest JoinPrivateGame(int factionId, string privateKey)
+		public static JoinGameRequest JoinPrivateGame(BaseArmy army, string privateKey)
 		{
-			return new JoinGameRequest(factionId, false, null, privateKey);
+			return new JoinGameRequest(army, false, null, privateKey);
 		}
 	}
 
@@ -439,25 +379,35 @@ namespace PanzerKontrol
 		public TimeConfiguration TimeConfiguration { get; set; }
 
 		[ProtoMember(3)]
+		public BaseArmy MyArmy { get; set; }
+
+		[ProtoMember(4)]
+		public BaseArmy EnemyArmy { get; set; }
+
+		[ProtoMember(5)]
 		public string Opponent { get; set; }
 
-		// Points available for the open picking phase
-		[ProtoMember(4)]
-		public int PointsAvailable { get; set; }
+		[ProtoMember(6)]
+		public int ReinforcementPoints { get; set; }
 
-		public GameStart(MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, string opponent, int pointsAvailable)
+		public GameStart(MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, BaseArmy myArmy, BaseArmy enemyArmy, string opponent, int reinforcementPoints)
 		{
 			MapConfiguration = mapConfiguration;
 			TimeConfiguration = timeConfiguration;
+
+			MyArmy = myArmy;
+			EnemyArmy = enemyArmy;
+
 			Opponent = opponent;
-			PointsAvailable = pointsAvailable;
+
+			ReinforcementPoints = reinforcementPoints;
 		}
 	}
 
 	[ProtoContract]
 	public class UnitConfiguration
 	{
-		// The ID isn't specified until after the hidden picking phase
+		// The ID isn't specified when the client sends the base army to the server
 		[ProtoMember(1, IsRequired = false)]
 		public int? UnitId { get; set; }
 
@@ -488,53 +438,26 @@ namespace PanzerKontrol
 		}
 	}
 
-	// This data type is used for the submission of picks in both the open and the hidden picking phase
 	[ProtoContract]
-	public class PickSubmission
+	public class BaseArmy
 	{
 		[ProtoMember(1)]
+		public int FactionId;
+
+		[ProtoMember(2)]
 		public List<UnitConfiguration> Units { get; set; }
 
-		public PickSubmission()
+		public BaseArmy(Faction faction, List<Unit> units)
 		{
+			FactionId = faction.Id.Value;
 			Units = new List<UnitConfiguration>();
-		}
-	}
-
-	// This is transmitted once the hidden picking phase commences
-	// It contains both the points left to be spent in the hidden picking phase and also units purchased by the opponent.
-	[ProtoContract]
-	public class PickUpdate
-	{
-		[ProtoMember(1)]
-		public int PointsAvailable { get; set; }
-
-		[ProtoMember(2)]
-		public List<UnitConfiguration> EnemyUnits { get; set; }
-
-		public PickUpdate(int pointsAvailable)
-		{
-			PointsAvailable = pointsAvailable;
-			EnemyUnits = new List<UnitConfiguration>();
-		}
-	}
-
-	// The army listing contains complete information about the units of both players
-	// Unique unit IDs were generated for each unit
-	// This is sent after the hidden picks
-	[ProtoContract]
-	public class ArmyListing
-	{
-		[ProtoMember(1)]
-		public List<UnitConfiguration> OwnUnits;
-
-		[ProtoMember(2)]
-		public List<UnitConfiguration> EnemyUnits;
-
-		public ArmyListing()
-		{
-			OwnUnits = new List<UnitConfiguration>();
-			EnemyUnits = new List<UnitConfiguration>();
+			foreach (var unit in units)
+			{
+				UnitConfiguration unitConfiguration = new UnitConfiguration(FactionId, unit.Type.Id.Value);
+				foreach (var upgrade in unit.Upgrades)
+					unitConfiguration.Upgrades.Add(upgrade.Id.Value);
+				Units.Add(unitConfiguration);
+			}
 		}
 	}
 
