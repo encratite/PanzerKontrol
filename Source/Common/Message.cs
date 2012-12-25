@@ -441,11 +441,16 @@ namespace PanzerKontrol
 		[ProtoMember(3)]
 		public string Opponent { get; set; }
 
-		public GameStart(MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, string opponent)
+		// Points available for the open picking phase
+		[ProtoMember(4)]
+		public int PointsAvailable { get; set; }
+
+		public GameStart(MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, string opponent, int pointsAvailable)
 		{
 			MapConfiguration = mapConfiguration;
 			TimeConfiguration = timeConfiguration;
 			Opponent = opponent;
+			PointsAvailable = pointsAvailable;
 		}
 	}
 
@@ -502,14 +507,14 @@ namespace PanzerKontrol
 	public class PickUpdate
 	{
 		[ProtoMember(1)]
-		public int RemainingPoints { get; set; }
+		public int PointsAvailable { get; set; }
 
 		[ProtoMember(2)]
 		public List<UnitConfiguration> EnemyUnits { get; set; }
 
-		public PickUpdate(int remainingPoints)
+		public PickUpdate(int pointsAvailable)
 		{
-			RemainingPoints = remainingPoints;
+			PointsAvailable = pointsAvailable;
 			EnemyUnits = new List<UnitConfiguration>();
 		}
 	}

@@ -29,6 +29,12 @@ namespace PanzerKontrol
 
 	public class GameServerClient
 	{
+		// The ratio of points that are reserved for the hidden picking phase
+		const double HiddenPickPointRatio = 0.25;
+
+		// The ratio of unspent points lost upon entering the hidden picking phase
+		const double HiddenPickPointLossRatio = 0.5;
+
 		GameServer Server;
 		SslStream Stream;
 
@@ -58,8 +64,7 @@ namespace PanzerKontrol
 		// Units purchased during the picking phase, also deployed units
 		List<Unit> Units;
 
-		// Points spent during the picking phases
-		int? PointsSpent;
+		int? PointsAvailable;
 
 		#region Read-only accessors
 
@@ -118,7 +123,7 @@ namespace PanzerKontrol
 			ActiveGame = null;
 
 			Units = null;
-			PointsSpent = null;
+			PointsAvailable = null;
 
 			ConnectedState();
 		}
@@ -133,13 +138,14 @@ namespace PanzerKontrol
 
 		#endregion
 
-		#region Public functions for events caused by other players
+		#region Public functions for events caused by external events
 
 		public void OnGameStart(Game game)
 		{
 			ActiveGame = game;
+			PointsAvailable = (int)(1.0 - HiddenPickPointRatio) * game.MapConfiguration.Points;
 			string opponentName = object.ReferenceEquals(game.Opponent, this) ? game.Owner.Name : game.Opponent.Name;
-			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, opponentName);
+			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, opponentName, PointsAvailable.Value);
 			QueueMessage(new ServerToClientMessage(start));
 		}
 
@@ -148,6 +154,19 @@ namespace PanzerKontrol
 			LoggedInState();
 			ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.OpponentLeftGame);
 			QueueMessage(reply);
+		}
+
+		public void OnOpenPickingTimer()
+		{
+			throw new NotImplementedException("Screw this");
+		}
+
+		public void OnOpenPickSubmissionCheck()
+		{
+			if (GameState == GameStateType.HiddenPicks)
+			{
+				throw new NotImplementedException("Screw this");
+			}
 		}
 
 		#endregion
@@ -279,8 +298,8 @@ namespace PanzerKontrol
 			PlayerFaction = null;
 			ActiveGame = null;
 
-			Units = null;
-			PointsSpent = null;
+			Units = new List<Unit>();
+			PointsAvailable = null;
 		}
 
 		void WaitingForOpponentState()
@@ -374,18 +393,18 @@ namespace PanzerKontrol
 			PickSubmission picks = message.Picks;
 			if (picks == null)
 				throw new ClientException("Invalid open pick submission");
-			int totalPoints = 0;
-			Units = new List<Unit>();
+			int pointsSpent = 0;
 			foreach (var pick in picks.Units)
 			{
 				Unit unit = new Unit(pick, Server);
-				totalPoints += unit.Points;
+				pointsSpent += unit.Points;
 				Units.Add(unit);
 			}
-			if (totalPoints > Game.MapConfiguration.Points)
-				throw new ClientException("An invalid number of points was spent during the open picking phase");
+			if (pointsSpent > PointsAvailable)
+				throw new ClientException("You have spent too many points");
 			InGameState(GameStateType.HiddenPicks, ClientToServerMessageType.SubmitHiddenPicks);
-			throw new NotImplementedException("Still need to deal with the picking timer and stuff");
+			GameServerClient opponent = ActiveGame.GetOtherClient(this);
+			opponent.OnOpenPickSubmissionCheck();
 		}
 
 		void OnSubmitHiddenPicks(ClientToServerMessage message)

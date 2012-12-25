@@ -169,6 +169,7 @@ namespace PanzerKontrol
 			game.Owner.OnGameStart(game);
 			client.OnGameStart(game);
 			ActiveGames.Add(game);
+			game.StartTimer(game.TimeConfiguration.OpenPicks, OnOpenPickingTimerExpiration);
 			return true;
 		}
 
@@ -189,6 +190,19 @@ namespace PanzerKontrol
 				case ClientStateType.InGame:
 					LeaveGame(client);
 					break;
+			}
+		}
+
+		#endregion
+
+		#region Timer event handlers
+
+		public void OnOpenPickingTimerExpiration(Game game)
+		{
+			lock (this)
+			{
+				game.Owner.OnOpenPickingTimer();
+				game.Opponent.OnOpenPickingTimer();
 			}
 		}
 
@@ -270,6 +284,7 @@ namespace PanzerKontrol
 		void LeaveGame(GameServerClient client)
 		{
 			Game game = client.Game;
+			game.GameOver();
 			ActiveGames.Remove(game);
 			GameServerClient otherClient = game.GetOtherClient(client);
 			otherClient.OnOpponentLeftGame();
