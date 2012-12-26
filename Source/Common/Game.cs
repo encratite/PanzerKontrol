@@ -17,6 +17,8 @@ namespace PanzerKontrol
 		public readonly MapConfiguration MapConfiguration;
 		public readonly TimeConfiguration TimeConfiguration;
 
+		public readonly Map Map;
+
 		bool GameIsOver;
 
 		GameTimerHandler TimerHandler;
@@ -24,7 +26,7 @@ namespace PanzerKontrol
 
 		int UnitIdCounter;
 
-		public Game(GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration)
+		public Game(GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, Map map)
 		{
 			Owner = owner;
 			Opponent = null;
@@ -34,6 +36,8 @@ namespace PanzerKontrol
 
 			MapConfiguration = mapConfiguration;
 			TimeConfiguration = timeConfiguration;
+
+			Map = map;
 
 			GameIsOver = false;
 			TimerHandler = null;

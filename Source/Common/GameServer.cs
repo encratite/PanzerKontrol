@@ -32,6 +32,7 @@ namespace PanzerKontrol
 		List<GameServerClient> Clients;
 
 		List<Faction> Factions;
+		List<Map> Maps;
 
 		// The keys are the names of players used to join public games
 		Dictionary<string, Game> PublicGames;
@@ -60,6 +61,7 @@ namespace PanzerKontrol
 			Clients = new List<GameServerClient>();
 
 			LoadFactions();
+			LoadMaps();
 
 			PublicGames = new Dictionary<string, Game>();
 			PrivateGames = new Dictionary<string, Game>();
@@ -114,17 +116,20 @@ namespace PanzerKontrol
 
 		public CreateGameReply OnCreateGameRequest(GameServerClient client, CreateGameRequest request, out Faction faction, out Game game)
 		{
+			Map map = GetMap(request.MapConfiguration.Map);
+			if (map == null)
+				throw new ClientException("No such map");
 			faction = GetFaction(request.Army.FactionId);
 			if (request.IsPrivate)
 			{
 				string privateKey = GeneratePrivateKey();
-				game = new Game(client, true, privateKey, request.MapConfiguration, Configuration.TimeConfiguration);
+				game = new Game(client, true, privateKey, request.MapConfiguration, Configuration.TimeConfiguration, map);
 				PrivateGames[privateKey] = game;
 				return new CreateGameReply(privateKey);
 			}
 			else
 			{
-				game = new Game(client, false, null, request.MapConfiguration, Configuration.TimeConfiguration);
+				game = new Game(client, false, null, request.MapConfiguration, Configuration.TimeConfiguration, map);
 				PublicGames[client.Name] = game;
 				return new CreateGameReply();
 			}
@@ -229,6 +234,17 @@ namespace PanzerKontrol
 			}
 		}
 
+		void LoadMaps()
+		{
+			Maps = new List<Map>();
+			throw new NotImplementedException("LoadMaps");
+		}
+
+		Map GetMap(string name)
+		{
+			return Maps.Find((Map x) => x.Name == name);
+		}
+
 		bool AcceptAnyCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
 		{
 			return true;
@@ -286,8 +302,7 @@ namespace PanzerKontrol
 			Game game = client.Game;
 			game.GameOver();
 			ActiveGames.Remove(game);
-			GameServerClient otherClient = game.GetOtherClient(client);
-			otherClient.OnOpponentLeftGame();
+			client.Opponent.OnOpponentLeftGame();
 		}
 
 		#endregion

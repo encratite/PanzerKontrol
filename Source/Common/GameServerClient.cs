@@ -65,6 +65,18 @@ namespace PanzerKontrol
 		// Reinforcement points remaining for the current game
 		int? ReinforcementPoints;
 
+		// True if the player has submitted a deployment plan
+		bool? PlayerHasDeployedArmy;
+
+		// True if the player requested the first turn privilege
+		bool? PlayerRequestedFirstTurn;
+
+		// Indicates the starting position of the player on the map
+		PlayerIdentifier? Identifier;
+
+		// The opponent in the active game
+		GameServerClient PlayerOpponent;
+
 		#region Read-only accessors
 
 		public string Name
@@ -99,6 +111,30 @@ namespace PanzerKontrol
 			}
 		}
 
+		public bool HasDeployedArmy
+		{
+			get
+			{
+				return PlayerHasDeployedArmy.Value;
+			}
+		}
+
+		public bool RequestedFirstTurn
+		{
+			get
+			{
+				return PlayerRequestedFirstTurn.Value;
+			}
+		}
+
+		public GameServerClient Opponent
+		{
+			get
+			{
+				return PlayerOpponent;
+			}
+		}
+
 		#endregion
 
 		#region Construction and startup
@@ -118,12 +154,8 @@ namespace PanzerKontrol
 			InitialiseMessageHandlerMap();
 
 			PlayerName = null;
-			PlayerFaction = null;
-			ActiveGame = null;
 
-			Units = null;
-			ReinforcementPoints = null;
-
+			ResetGameState();
 			ConnectedState();
 		}
 
@@ -142,9 +174,10 @@ namespace PanzerKontrol
 		public void OnGameStart(Game game)
 		{
 			ActiveGame = game;
-			GameServerClient opponent = game.GetOtherClient(this);
-			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, GetBaseArmy(), opponent.GetBaseArmy(), opponent.Name, ReinforcementPoints.Value);
+			PlayerHasDeployedArmy = false;
+			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, GetBaseArmy(), Opponent.GetBaseArmy(), Opponent.Name, ReinforcementPoints.Value);
 			QueueMessage(new ServerToClientMessage(start));
+			PlayerOpponent = game.GetOtherClient(this);
 		}
 
 		public void OnOpponentLeftGame()
@@ -166,6 +199,11 @@ namespace PanzerKontrol
 		public BaseArmy GetBaseArmy()
 		{
 			return new BaseArmy(PlayerFaction, Units);
+		}
+
+		public Unit GetUnit(int id)
+		{
+			return Units.Find((Unit x) => x.Id == id);
 		}
 
 		#endregion
@@ -287,7 +325,7 @@ namespace PanzerKontrol
 			int pointsSpent = 0;
 			foreach (var unitConfiguration in army.Units)
 			{
-				Unit unit = new Unit(unitConfiguration, Server);
+				Unit unit = new Unit(ActiveGame.GetUnitId(), unitConfiguration, Server);
 				pointsSpent += unit.Points;
 				Units.Add(unit);
 			}
@@ -295,6 +333,24 @@ namespace PanzerKontrol
 			if (pointsSpent > pointsAvailable)
 				throw new ClientException("You have spent too many points");
 			ReinforcementPoints = (int)(reinforcementPointsPenaltyFactor * (pointsAvailable - pointsSpent) + reinforcementPointsBaseRatio * pointsAvailable);
+		}
+
+		void ResetGameState()
+		{
+			PlayerFaction = null;
+			ActiveGame = null;
+
+			Units = null;
+			ReinforcementPoints = null;
+			PlayerHasDeployedArmy = null;
+			PlayerRequestedFirstTurn = null;
+			Identifier = null;
+			PlayerOpponent = null;
+		}
+
+		void FirstTurn()
+		{
+			throw new ClientException("FirstTurn");
 		}
 
 		#endregion
@@ -312,11 +368,7 @@ namespace PanzerKontrol
 			ClientState = ClientStateType.LoggedIn;
 			SetExpectedMessageTypes(ClientToServerMessageType.CreateGameRequest, ClientToServerMessageType.ViewPublicGamesRequest, ClientToServerMessageType.JoinGameRequest);
 
-			PlayerFaction = null;
-			ActiveGame = null;
-
-			Units = null;
-			ReinforcementPoints = null;
+			ResetGameState();
 		}
 
 		void WaitingForOpponentState()
@@ -366,6 +418,7 @@ namespace PanzerKontrol
 			InitialiseArmy(request.Army);
 			CreateGameReply reply = Server.OnCreateGameRequest(this, request, out PlayerFaction, out ActiveGame);
 			QueueMessage(new ServerToClientMessage(reply));
+			Identifier = PlayerIdentifier.Player1;
 			WaitingForOpponentState();
 		}
 
@@ -383,11 +436,14 @@ namespace PanzerKontrol
 			InitialiseArmy(request.Army);
 			bool success = Server.OnJoinGameRequest(this, request);
 			if (success)
+			{
+				Identifier = PlayerIdentifier.Player2;
 				InGameState(GameStateType.Deployment, ClientToServerMessageType.SubmitDeploymentPlan);
+			}
 			else
 			{
 				ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.NoSuchGame);
-				QueueMessage(reply);	
+				QueueMessage(reply);
 			}
 		}
 
@@ -412,7 +468,22 @@ namespace PanzerKontrol
 			DeploymentPlan plan = message.DeploymentPlan;
 			if (plan == null)
 				throw new ClientException("Invalid deployment plan submission");
-			throw new NotImplementedException("OnSubmitDeploymentPlan");
+			foreach (var unitPosition in plan.Units)
+			{
+				Unit unit = GetUnit(unitPosition.UnitId);
+				if (unit == null)
+					throw new ClientException("Encountered an invalid unit ID in the deployment plan");
+				if (unit.Position != null)
+					throw new ClientException("Tried to specify the position of a unit that has already been deployed");
+				if (!ActiveGame.Map.IsDeploymentZone(Identifier.Value, unitPosition.Position))
+					throw new ClientException("Tried to deploy units outside the player's deployment zone");
+				unit.Position = unitPosition.Position;
+			}
+			PlayerRequestedFirstTurn = plan.RequestedFirstTurn;
+			PlayerHasDeployedArmy = true;
+			if (Opponent.HasDeployedArmy)
+				FirstTurn();
+			throw new NotImplementedException("Start the game");
 		}
 
 		#endregion

@@ -7,7 +7,9 @@ namespace PanzerKontrol
 		public string Address { get; set; }
 		public int Port { get; set; }
 		public string CertificatePath { get; set; }
+
 		public string FactionsPath { get; set; }
+		public string MapsPath { get; set; }
 
 		// Logical length, not physical length
 		public int MaximumNameLength { get; set; }
@@ -20,6 +22,7 @@ namespace PanzerKontrol
 			Port = 45489;
 			CertificatePath = "ServerCertificate.pk12";
 			FactionsPath = "Factions.xml";
+			MapsPath = "Maps";
 
 			MaximumNameLength = 50;
 		}

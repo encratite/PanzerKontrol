@@ -498,10 +498,14 @@ namespace PanzerKontrol
 	public class DeploymentPlan
 	{
 		[ProtoMember(1)]
+		public bool RequestedFirstTurn;
+
+		[ProtoMember(2)]
 		public List<UnitPosition> Units;
 
-		public DeploymentPlan()
+		public DeploymentPlan(bool requestedFirstTurn)
 		{
+			RequestedFirstTurn = requestedFirstTurn;
 			Units = new List<UnitPosition>();
 		}
 	}
