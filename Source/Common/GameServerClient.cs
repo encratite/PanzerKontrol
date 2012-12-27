@@ -238,6 +238,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
 			MessageHandlerMap[ClientToServerMessageType.MoveUnitRequest] = OnMoveUnitRequest;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnitRequest] = OnAttackUnitRequest;
+			MessageHandlerMap[ClientToServerMessageType.EndMicroTurnRequest] = OnEndMicroTurnRequest;
 		}
 
 		void QueueMessage(ServerToClientMessage message)
@@ -546,6 +547,11 @@ namespace PanzerKontrol
 			if (request == null)
 				throw new ClientException("Invalid attack unit request");
 			throw new NotImplementedException("OnAttackUnitRequest");
+		}
+
+		void OnEndMicroTurnRequest(ClientToServerMessage message)
+		{
+			throw new NotImplementedException("OnEndMicroTurnRequest");
 		}
 
 		#endregion

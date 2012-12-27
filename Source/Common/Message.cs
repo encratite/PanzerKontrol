@@ -83,28 +83,28 @@ namespace PanzerKontrol
 	public class ClientToServerMessage
 	{
 		[ProtoMember(1)]
-		public ClientToServerMessageType Type { get; set; }
+		public ClientToServerMessageType Type;
 
 		[ProtoMember(2, IsRequired = false)]
-		public ErrorMessage ErrorMessage { get; set; }
+		public ErrorMessage ErrorMessage;
 
 		[ProtoMember(3, IsRequired = false)]
-		public LoginRequest LoginRequest { get; set; }
+		public LoginRequest LoginRequest;
 
 		[ProtoMember(4, IsRequired = false)]
-		public CreateGameRequest CreateGameRequest { get; set; }
+		public CreateGameRequest CreateGameRequest;
 
 		[ProtoMember(5, IsRequired = false)]
-		public JoinGameRequest JoinGameRequest { get; set; }
+		public JoinGameRequest JoinGameRequest;
 
 		[ProtoMember(6, IsRequired = false)]
-		public DeploymentPlan DeploymentPlan { get; set; }
+		public DeploymentPlan DeploymentPlan;
 
 		[ProtoMember(7, IsRequired = false)]
-		public MoveUnitRequest MoveUnitRequest { get; set; }
+		public MoveUnitRequest MoveUnitRequest;
 
 		[ProtoMember(8, IsRequired = false)]
-		public AttackUnitRequest AttackUnitRequest { get; set; }
+		public AttackUnitRequest AttackUnitRequest;
 
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
@@ -158,31 +158,31 @@ namespace PanzerKontrol
 	public class ServerToClientMessage
 	{
 		[ProtoMember(1)]
-		public ServerToClientMessageType Type { get; set; }
+		public ServerToClientMessageType Type;
 
 		[ProtoMember(2, IsRequired = false)]
-		public ErrorMessage ErrorMessage { get; set; }
+		public ErrorMessage ErrorMessage;
 
 		[ProtoMember(3, IsRequired = false)]
-		public LoginReply LoginReply { get; set; }
+		public LoginReply LoginReply;
 
 		[ProtoMember(4, IsRequired = false)]
-		public CreateGameReply CreateGameReply { get; set; }
+		public CreateGameReply CreateGameReply;
 
 		[ProtoMember(5, IsRequired = false)]
-		public ViewPublicGamesReply ViewPublicGamesReply { get; set; }
+		public ViewPublicGamesReply ViewPublicGamesReply;
 
 		[ProtoMember(6, IsRequired = false)]
-		public GameStart GameStart { get; set; }
+		public GameStart GameStart;
 
 		[ProtoMember(7, IsRequired = false)]
-		public DeploymentPlan EnemeyDeploymentPlan { get; set; }
+		public DeploymentPlan EnemeyDeploymentPlan;
 
 		[ProtoMember(8, IsRequired = false)]
-		public MicroTurnStart MicroTurnStart { get; set; }
+		public MicroTurnStart MicroTurnStart;
 
 		[ProtoMember(9, IsRequired = false)]
-		public AttackUnitReply AttackUnitReply { get; set; }
+		public AttackUnitReply AttackUnitReply;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
 		{
@@ -242,7 +242,7 @@ namespace PanzerKontrol
 	public class ErrorMessage
 	{
 		[ProtoMember(1)]
-		public string Message { get; set; }
+		public string Message;
 
 		public ErrorMessage(string message)
 		{
@@ -254,10 +254,10 @@ namespace PanzerKontrol
 	public class LoginRequest
 	{
 		[ProtoMember(1)]
-		public string Name { get; set; }
+		public string Name;
 
 		[ProtoMember(2)]
-		public int ClientVersion { get; set; }
+		public int ClientVersion;
 
 		public LoginRequest(string name, int version)
 		{
@@ -270,10 +270,10 @@ namespace PanzerKontrol
 	public class LoginReply
 	{
 		[ProtoMember(1)]
-		public LoginReplyType Type { get; set; }
+		public LoginReplyType Type;
 
 		[ProtoMember(2)]
-		public int ServerVersion { get; set; }
+		public int ServerVersion;
 
 		public LoginReply(LoginReplyType type, int version)
 		{
@@ -286,13 +286,13 @@ namespace PanzerKontrol
 	public class CreateGameRequest
 	{
 		[ProtoMember(1)]
-		public BaseArmy Army { get; set; }
+		public BaseArmy Army;
 
 		[ProtoMember(2)]
-		public bool IsPrivate { get; set; }
+		public bool IsPrivate;
 
 		[ProtoMember(3)]
-		public MapConfiguration MapConfiguration { get; set; }
+		public MapConfiguration MapConfiguration;
 
 		public CreateGameRequest(BaseArmy army, bool isPrivate, MapConfiguration mapConfiguration)
 		{
@@ -307,11 +307,11 @@ namespace PanzerKontrol
 	{
 		// This is a part of the filename of the map
 		[ProtoMember(1)]
-		public string Map { get; set; }
+		public string Map;
 
 		// The number of points that may be spent during the picking phase
 		[ProtoMember(2)]
-		public int Points { get; set; }
+		public int Points;
 
 		public MapConfiguration(string map, int points)
 		{
@@ -325,10 +325,10 @@ namespace PanzerKontrol
 	{
 		// In seconds
 		[ProtoMember(1)]
-		public int DeploymentTime { get; set; }
+		public int DeploymentTime;
 
 		[ProtoMember(2)]
-		public int TurnTime { get; set; }
+		public int TurnTime;
 
 		public TimeConfiguration()
 		{
@@ -341,7 +341,7 @@ namespace PanzerKontrol
 	public class CreateGameReply
 	{
 		[ProtoMember(1, IsRequired = false)]
-		public string PrivateKey { get; set; }
+		public string PrivateKey;
 
 		public CreateGameReply()
 		{
@@ -358,10 +358,10 @@ namespace PanzerKontrol
 	public class PublicGameInformation
 	{
 		[ProtoMember(1)]
-		public string Owner { get; set; }
+		public string Owner;
 
 		[ProtoMember(2)]
-		public MapConfiguration MapConfiguration { get; set; }
+		public MapConfiguration MapConfiguration;
 
 		public PublicGameInformation(string owner, MapConfiguration mapConfiguration)
 		{
@@ -374,7 +374,7 @@ namespace PanzerKontrol
 	public class ViewPublicGamesReply
 	{
 		[ProtoMember(1)]
-		public List<PublicGameInformation> Games { get; set; }
+		public List<PublicGameInformation> Games;
 
 		public ViewPublicGamesReply()
 		{
@@ -386,10 +386,10 @@ namespace PanzerKontrol
 	public class JoinGameRequest
 	{
 		[ProtoMember(1)]
-		public BaseArmy Army { get; set; }
+		public BaseArmy Army;
 
 		[ProtoMember(2)]
-		public bool IsPrivate { get; set; }
+		public bool IsPrivate;
 
 		// Public games are joined based on the name of the owner
 		[ProtoMember(3, IsRequired = false)]
@@ -422,22 +422,22 @@ namespace PanzerKontrol
 	public class GameStart
 	{
 		[ProtoMember(1)]
-		public MapConfiguration MapConfiguration { get; set; }
+		public MapConfiguration MapConfiguration;
 
 		[ProtoMember(2)]
-		public TimeConfiguration TimeConfiguration { get; set; }
+		public TimeConfiguration TimeConfiguration;
 
 		[ProtoMember(3)]
-		public BaseArmy MyArmy { get; set; }
+		public BaseArmy MyArmy;
 
 		[ProtoMember(4)]
-		public BaseArmy EnemyArmy { get; set; }
+		public BaseArmy EnemyArmy;
 
 		[ProtoMember(5)]
-		public string Opponent { get; set; }
+		public string Opponent;
 
 		[ProtoMember(6)]
-		public int ReinforcementPoints { get; set; }
+		public int ReinforcementPoints;
 
 		public GameStart(MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, BaseArmy myArmy, BaseArmy enemyArmy, string opponent, int reinforcementPoints)
 		{
@@ -458,18 +458,18 @@ namespace PanzerKontrol
 	{
 		// The ID isn't specified when the client sends the base army to the server
 		[ProtoMember(1, IsRequired = false)]
-		public int? UnitId { get; set; }
+		public int? UnitId;
 
 		// The numeric ID of the faction the unit is from
 		[ProtoMember(2)]
-		public int FactionId { get; set; }
+		public int FactionId;
 
 		// This is the numeric identifier of the type of the unit as generated from the faction configuration file
 		[ProtoMember(3)]
-		public int UnitTypeId { get; set; }
+		public int UnitTypeId;
 
 		[ProtoMember(4)]
-		public List<int> Upgrades { get; set; }
+		public List<int> Upgrades;
 
 		public UnitConfiguration(int factionId, int unitTypeId)
 		{
@@ -494,7 +494,7 @@ namespace PanzerKontrol
 		public int FactionId;
 
 		[ProtoMember(2)]
-		public List<UnitConfiguration> Units { get; set; }
+		public List<UnitConfiguration> Units;
 
 		public BaseArmy(Faction faction, List<Unit> units)
 		{
@@ -514,10 +514,10 @@ namespace PanzerKontrol
 	public class Position
 	{
 		[ProtoMember(1)]
-		public int X { get; set; }
+		public int X;
 
 		[ProtoMember(2)]
-		public int Y { get; set; }
+		public int Y;
 
 		public Position(int x, int y)
 		{
@@ -530,15 +530,15 @@ namespace PanzerKontrol
 	public class UnitPosition
 	{
 		[ProtoMember(1)]
-		public int UnitId { get; set; }
+		public int UnitId;
 
 		[ProtoMember(2)]
-		public Position Position { get; set; }
+		public Position Position;
 
 		public UnitPosition(int unitId, Position positition)
 		{
 			UnitId = unitId;
-			Position = Position;
+			Position = positition;
 		}
 	}
 
