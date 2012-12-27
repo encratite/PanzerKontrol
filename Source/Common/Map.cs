@@ -36,6 +36,14 @@ namespace PanzerKontrol
 		public Position Position;
 		public TerrainType Terrain;
 		public PlayerIdentifier? Deployment;
+
+		[XmlIgnore]
+		public Unit Unit;
+
+		public Hex()
+		{
+			Unit = null;
+		}
 	}
 
 	public class Map

@@ -25,6 +25,13 @@ namespace PanzerKontrol
 		LeaveGameRequest,
 		// Submit the deployment plan
 		SubmitDeploymentPlan,
+		// Move a unit
+		MoveUnitRequest,
+		// Attack a unit
+		AttackUnitRequest,
+		// Ask for the current micro turn to end
+		// Zero data message
+		EndMicroTurnRequest,
 	}
 
 	public enum ServerToClientMessageType
@@ -56,6 +63,12 @@ namespace PanzerKontrol
 		OpponentLeftGame,
 		// The deployment phase is over, the enemy deployment plan is revealed
 		EnemyDeployment,
+		// A new microturn starts
+		MicroTurnStart,
+		// Confirm a move
+		MoveUnitReply,
+		// Confirm an attack
+		AttackUnitReply,
 	}
 
 	public enum LoginReplyType
@@ -86,6 +99,12 @@ namespace PanzerKontrol
 
 		[ProtoMember(6, IsRequired = false)]
 		public DeploymentPlan DeploymentPlan { get; set; }
+
+		[ProtoMember(7, IsRequired = false)]
+		public MoveUnitRequest MoveUnitRequest { get; set; }
+
+		[ProtoMember(8, IsRequired = false)]
+		public AttackUnitRequest AttackUnitRequest { get; set; }
 
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
@@ -121,6 +140,18 @@ namespace PanzerKontrol
 			Type = ClientToServerMessageType.SubmitDeploymentPlan;
 			DeploymentPlan = plan;
 		}
+
+		public ClientToServerMessage(MoveUnitRequest request)
+		{
+			Type = ClientToServerMessageType.MoveUnitRequest;
+			MoveUnitRequest = request;
+		}
+
+		public ClientToServerMessage(AttackUnitRequest request)
+		{
+			Type = ClientToServerMessageType.AttackUnitRequest;
+			AttackUnitRequest = request;
+		}
 	}
 
 	[ProtoContract]
@@ -146,6 +177,12 @@ namespace PanzerKontrol
 
 		[ProtoMember(7, IsRequired = false)]
 		public DeploymentPlan EnemeyDeploymentPlan { get; set; }
+
+		[ProtoMember(8, IsRequired = false)]
+		public MicroTurnStart MicroTurnStart { get; set; }
+
+		[ProtoMember(9, IsRequired = false)]
+		public AttackUnitReply AttackUnitReply { get; set; }
 
 		public ServerToClientMessage(ServerToClientMessageType type)
 		{
@@ -186,6 +223,18 @@ namespace PanzerKontrol
 		{
 			Type = ServerToClientMessageType.EnemyDeployment;
 			EnemeyDeploymentPlan = plan;
+		}
+
+		public ServerToClientMessage(MicroTurnStart microTurnStart)
+		{
+			Type = ServerToClientMessageType.MicroTurnStart;
+			MicroTurnStart = microTurnStart;
+		}
+
+		public ServerToClientMessage(AttackUnitReply reply)
+		{
+			Type = ServerToClientMessageType.AttackUnitReply;
+			AttackUnitReply = reply;
 		}
 	}
 
@@ -507,6 +556,108 @@ namespace PanzerKontrol
 		{
 			RequestedFirstTurn = requestedFirstTurn;
 			Units = new List<UnitPosition>();
+		}
+	}
+
+	[ProtoContract]
+	public class MicroTurnStart
+	{
+		[ProtoMember(1)]
+		public PlayerIdentifier ActivePlayer;
+
+		// The maximum number of units that may be used during the microturn
+		[ProtoMember(2)]
+		public int Limit;
+
+		[ProtoMember(3)]
+		public List<int> UnitsAvailable;
+
+		public MicroTurnStart(PlayerIdentifier activePlayer, int limit)
+		{
+			ActivePlayer = activePlayer;
+			Limit = limit;
+			UnitsAvailable = new List<int>();
+		}
+	}
+
+	[ProtoContract]
+	public class MoveUnitRequest
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public Position NewPosition;
+
+		public MoveUnitRequest(int unitId, Position newPosition)
+		{
+			UnitId = unitId;
+			NewPosition = newPosition;
+		}
+	}
+
+	[ProtoContract]
+	public class MoveUnitReply
+	{
+		// This is redundant, but whatever
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public int RemainingMovementPoints;
+
+		public MoveUnitReply(int unitId, int remainingMovementPoints)
+		{
+			UnitId = unitId;
+			RemainingMovementPoints = remainingMovementPoints;
+		}
+	}
+
+	[ProtoContract]
+	public class AttackUnitRequest
+	{
+		[ProtoMember(1)]
+		public int AttackerUnitId;
+
+		[ProtoMember(2)]
+		public int DefenderUnitId;
+
+		public AttackUnitRequest(int attackerUnitId, int defenderUnitId)
+		{
+			AttackerUnitId = attackerUnitId;
+			DefenderUnitId = defenderUnitId;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitCasualties
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public double NewStrength;
+
+		public UnitCasualties(int unitId, double newStrength)
+		{
+			UnitId = unitId;
+			NewStrength = newStrength;
+		}
+	}
+
+	[ProtoContract]
+	public class AttackUnitReply
+	{
+		[ProtoMember(1)]
+		public UnitCasualties AttackerCasualties;
+
+		[ProtoMember(2)]
+		public UnitCasualties DefenderCasualties;
+
+		public AttackUnitReply(UnitCasualties attackerCasualties, UnitCasualties defenderCasualties)
+		{
+			AttackerCasualties = attackerCasualties;
+			DefenderCasualties = defenderCasualties;
 		}
 	}
 }

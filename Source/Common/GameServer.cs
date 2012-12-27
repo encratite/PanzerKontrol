@@ -171,6 +171,7 @@ namespace PanzerKontrol
 				PublicGames.Remove(key);
 			}
 			game.Opponent = client;
+			game.SetFirstTurn();
 			game.Owner.OnGameStart(game);
 			client.OnGameStart(game);
 			ActiveGames.Add(game);

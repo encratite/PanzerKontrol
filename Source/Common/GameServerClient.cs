@@ -189,7 +189,12 @@ namespace PanzerKontrol
 
 		public void OnDeploymentTimerExpiration()
 		{
-			throw new NotImplementedException("OnDeploymentTimerExpiration");
+			if (!HasDeployedArmy || !Opponent.HasDeployedArmy)
+			{
+				// One of the players had not deployed their army yet
+				// This means that the timer is responsible for starting the game
+				StartFirstRound();
+			}
 		}
 
 		#endregion
@@ -204,6 +209,12 @@ namespace PanzerKontrol
 		public Unit GetUnit(int id)
 		{
 			return Units.Find((Unit x) => x.Id == id);
+		}
+
+		public void ResetUnitsForNewTurn()
+		{
+			foreach (var unit in Units)
+				unit.ResetUnitForNewTurn();
 		}
 
 		#endregion
@@ -225,6 +236,8 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.LeaveGameRequest] = OnLeaveGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
+			MessageHandlerMap[ClientToServerMessageType.MoveUnitRequest] = OnMoveUnitRequest;
+			MessageHandlerMap[ClientToServerMessageType.AttackUnitRequest] = OnAttackUnitRequest;
 		}
 
 		void QueueMessage(ServerToClientMessage message)
@@ -348,9 +361,37 @@ namespace PanzerKontrol
 			PlayerOpponent = null;
 		}
 
-		void FirstTurn()
+		void NewTurn()
 		{
-			throw new ClientException("FirstTurn");
+			ResetUnitsForNewTurn();
+			Opponent.ResetUnitsForNewTurn();
+		}
+
+		void NewMicroTurn()
+		{
+			const int MicroTurnLimit = 3;
+
+			MicroTurnStart microTurnStart = new MicroTurnStart(Identifier.Value, MicroTurnLimit);
+			foreach (var unit in Units)
+			{
+				unit.WasUsedInCurrentMicroTurn = false;
+				if (unit.Deployed && !unit.WasUsedInCurrentTurn.Value)
+					microTurnStart.UnitsAvailable.Add(unit.Id);
+			}
+			ServerToClientMessage message = new ServerToClientMessage(microTurnStart);
+			QueueMessage(message);
+			Opponent.QueueMessage(message);
+			InGameState(GameStateType.MyTurn);
+			throw new NotImplementedException("Need appropriate message types");
+		}
+
+		void StartFirstRound()
+		{
+			NewTurn();
+			if (Identifier == ActiveGame.MicroTurnPlayer)
+				NewMicroTurn();
+			else
+				Opponent.NewMicroTurn();
 		}
 
 		#endregion
@@ -468,22 +509,43 @@ namespace PanzerKontrol
 			DeploymentPlan plan = message.DeploymentPlan;
 			if (plan == null)
 				throw new ClientException("Invalid deployment plan submission");
+			HashSet<Position> occupiedPositions = new HashSet<Position>();
 			foreach (var unitPosition in plan.Units)
 			{
+				var position = unitPosition.Position;
 				Unit unit = GetUnit(unitPosition.UnitId);
 				if (unit == null)
 					throw new ClientException("Encountered an invalid unit ID in the deployment plan");
-				if (unit.Position != null)
+				if (unit.Deployed)
 					throw new ClientException("Tried to specify the position of a unit that has already been deployed");
-				if (!ActiveGame.Map.IsDeploymentZone(Identifier.Value, unitPosition.Position))
+				if (!ActiveGame.Map.IsDeploymentZone(Identifier.Value, position))
 					throw new ClientException("Tried to deploy units outside the player's deployment zone");
+				if (occupiedPositions.Contains(position))
+					throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
+				unit.Deployed = true;
 				unit.Position = unitPosition.Position;
+				occupiedPositions.Add(position);
 			}
 			PlayerRequestedFirstTurn = plan.RequestedFirstTurn;
 			PlayerHasDeployedArmy = true;
 			if (Opponent.HasDeployedArmy)
-				FirstTurn();
-			throw new NotImplementedException("Start the game");
+				StartFirstRound();
+		}
+
+		void OnMoveUnitRequest(ClientToServerMessage message)
+		{
+			MoveUnitRequest request = message.MoveUnitRequest;
+			if (request == null)
+				throw new ClientException("Invalid move unit request");
+			throw new NotImplementedException("MoveUnitRequest");
+		}
+
+		void OnAttackUnitRequest(ClientToServerMessage message)
+		{
+			AttackUnitRequest request = message.AttackUnitRequest;
+			if (request == null)
+				throw new ClientException("Invalid attack unit request");
+			throw new NotImplementedException("OnAttackUnitRequest");
 		}
 
 		#endregion

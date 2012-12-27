@@ -11,7 +11,14 @@ namespace PanzerKontrol
 		public readonly UnitStats Stats;
 		public readonly int Points;
 
+		public bool Deployed;
 		public Position Position;
+		public double Strength;
+
+		public int? MovementPoints;
+		public bool? CanPerformAction;
+		public bool? WasUsedInCurrentTurn;
+		public bool? WasUsedInCurrentMicroTurn;
 
 		public Unit(int id, UnitConfiguration configuration, GameServer server)
 		{
@@ -33,7 +40,23 @@ namespace PanzerKontrol
 				points += upgrade.Points;
 			}
 			Points = points;
+
+			Deployed = false;
 			Position = null;
+			Strength = 1.0;
+
+			MovementPoints = null;
+			CanPerformAction = null;
+			WasUsedInCurrentTurn = null;
+			WasUsedInCurrentMicroTurn = null;
+		}
+
+		public void ResetUnitForNewTurn()
+		{
+			MovementPoints = Stats.Movement;
+			CanPerformAction = true;
+			WasUsedInCurrentTurn = false;
+			WasUsedInCurrentMicroTurn = false;
 		}
 	}
 }

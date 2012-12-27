@@ -26,6 +26,17 @@ namespace PanzerKontrol
 
 		int UnitIdCounter;
 
+		Random Generator;
+		PlayerIdentifier? CurrentMicroTurnPlayer;
+
+		public PlayerIdentifier MicroTurnPlayer
+		{
+			get
+			{
+				return CurrentMicroTurnPlayer.Value;
+			}
+		}
+
 		public Game(GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, Map map)
 		{
 			Owner = owner;
@@ -44,6 +55,27 @@ namespace PanzerKontrol
 			ActiveTimer = null;
 
 			UnitIdCounter = 0;
+
+			Generator = new Random();
+			CurrentMicroTurnPlayer = null;
+		}
+
+		public void SetFirstTurn()
+		{
+			if (Owner.RequestedFirstTurn)
+			{
+				if (Opponent.RequestedFirstTurn)
+					SetRandomFirstTurn();
+				else
+					CurrentMicroTurnPlayer = PlayerIdentifier.Player1;
+			}
+			else
+			{
+				if (Opponent.RequestedFirstTurn)
+					CurrentMicroTurnPlayer = PlayerIdentifier.Player2;
+				else
+					SetRandomFirstTurn();
+			}
 		}
 
 		public GameServerClient GetOtherClient(GameServerClient client)
@@ -97,6 +129,11 @@ namespace PanzerKontrol
 				else
 					TimerHandler(this);
 			}
+		}
+
+		void SetRandomFirstTurn()
+		{
+			CurrentMicroTurnPlayer = Generator.Next(0, 1) == 1 ? PlayerIdentifier.Player1 : PlayerIdentifier.Player2;
 		}
 	}
 }
