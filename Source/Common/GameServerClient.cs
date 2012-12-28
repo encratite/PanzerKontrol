@@ -33,6 +33,9 @@ namespace PanzerKontrol
 		// The ratio of unspent points lost upon entering the hidden picking phase
 		const double HiddenPickPointLossRatio = 0.5;
 
+		// The number of units that may be used by a player during a microturn
+		const int MicroTurnLimit = 3;
+
 		GameServer Server;
 		SslStream Stream;
 
@@ -58,9 +61,6 @@ namespace PanzerKontrol
 
 		// The game the player is currently in
 		Game ActiveGame;
-
-		// Units remaining
-		List<Unit> Units;
 		
 		// Reinforcement points remaining for the current game
 		int? ReinforcementPoints;
@@ -76,6 +76,15 @@ namespace PanzerKontrol
 
 		// The opponent in the active game
 		GameServerClient PlayerOpponent;
+
+		// Units remaining
+		List<Unit> Units;
+
+		// Units that were used in the current turn
+		HashSet<Unit> CurrentTurnUnits;
+
+		// This is a list of units used during the current maneuver
+		HashSet<Unit> CurrentManeuverUnits;
 
 		#region Read-only accessors
 
@@ -213,6 +222,7 @@ namespace PanzerKontrol
 
 		public void ResetUnitsForNewTurn()
 		{
+			CurrentTurnUnits.Clear();
 			foreach (var unit in Units)
 				unit.ResetUnitForNewTurn();
 		}
@@ -238,7 +248,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
 			MessageHandlerMap[ClientToServerMessageType.MoveUnitRequest] = OnMoveUnitRequest;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnitRequest] = OnAttackUnitRequest;
-			MessageHandlerMap[ClientToServerMessageType.EndMicroTurnRequest] = OnEndMicroTurnRequest;
+			MessageHandlerMap[ClientToServerMessageType.EndManeuverRequest] = OnEndManeuverRequest;
 		}
 
 		void QueueMessage(ServerToClientMessage message)
@@ -354,12 +364,15 @@ namespace PanzerKontrol
 			PlayerFaction = null;
 			ActiveGame = null;
 
-			Units = null;
 			ReinforcementPoints = null;
 			PlayerHasDeployedArmy = null;
 			PlayerRequestedFirstTurn = null;
 			Identifier = null;
 			PlayerOpponent = null;
+
+			Units = null;
+			CurrentTurnUnits = null;
+			CurrentManeuverUnits = null;
 		}
 
 		void NewTurn()
@@ -370,13 +383,11 @@ namespace PanzerKontrol
 
 		void NewMicroTurn()
 		{
-			const int MicroTurnLimit = 3;
-
-			MicroTurnStart microTurnStart = new MicroTurnStart(Identifier.Value, MicroTurnLimit);
+			CurrentManeuverUnits.Clear();
+			ManeuverStart microTurnStart = new ManeuverStart(Identifier.Value, MicroTurnLimit);
 			foreach (var unit in Units)
 			{
-				unit.WasUsedInCurrentMicroTurn = false;
-				if (unit.Deployed && !unit.WasUsedInCurrentTurn.Value)
+				if (unit.Deployed && !CurrentTurnUnits.Contains(unit))
 					microTurnStart.UnitsAvailable.Add(unit.Id);
 			}
 			ServerToClientMessage message = new ServerToClientMessage(microTurnStart);
@@ -507,10 +518,10 @@ namespace PanzerKontrol
 
 		void OnSubmitDeploymentPlan(ClientToServerMessage message)
 		{
+			Map map = ActiveGame.Map;
 			DeploymentPlan plan = message.DeploymentPlan;
 			if (plan == null)
 				throw new ClientException("Invalid deployment plan submission");
-			HashSet<Position> occupiedPositions = new HashSet<Position>();
 			foreach (var unitPosition in plan.Units)
 			{
 				var position = unitPosition.Position;
@@ -519,13 +530,13 @@ namespace PanzerKontrol
 					throw new ClientException("Encountered an invalid unit ID in the deployment plan");
 				if (unit.Deployed)
 					throw new ClientException("Tried to specify the position of a unit that has already been deployed");
-				if (!ActiveGame.Map.IsDeploymentZone(Identifier.Value, position))
+				if (!map.IsDeploymentZone(Identifier.Value, position))
 					throw new ClientException("Tried to deploy units outside the player's deployment zone");
-				if (occupiedPositions.Contains(position))
+				Hex hex = map.GetHex(unitPosition.Position);
+				if(hex.Unit != null)
 					throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
 				unit.Deployed = true;
-				unit.Position = unitPosition.Position;
-				occupiedPositions.Add(position);
+				unit.MoveToHex(hex);
 			}
 			PlayerRequestedFirstTurn = plan.RequestedFirstTurn;
 			PlayerHasDeployedArmy = true;
@@ -549,7 +560,7 @@ namespace PanzerKontrol
 			throw new NotImplementedException("OnAttackUnitRequest");
 		}
 
-		void OnEndMicroTurnRequest(ClientToServerMessage message)
+		void OnEndManeuverRequest(ClientToServerMessage message)
 		{
 			throw new NotImplementedException("OnEndMicroTurnRequest");
 		}

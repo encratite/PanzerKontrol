@@ -12,13 +12,11 @@ namespace PanzerKontrol
 		public readonly int Points;
 
 		public bool Deployed;
-		public Position Position;
+		public Hex Hex;
 		public double Strength;
 
-		public int? MovementPoints;
-		public bool? CanPerformAction;
-		public bool? WasUsedInCurrentTurn;
-		public bool? WasUsedInCurrentMicroTurn;
+		public int MovementPoints;
+		public bool CanPerformAction;
 
 		public Unit(int id, UnitConfiguration configuration, GameServer server)
 		{
@@ -42,21 +40,22 @@ namespace PanzerKontrol
 			Points = points;
 
 			Deployed = false;
-			Position = null;
+			Hex = null;
 			Strength = 1.0;
 
-			MovementPoints = null;
-			CanPerformAction = null;
-			WasUsedInCurrentTurn = null;
-			WasUsedInCurrentMicroTurn = null;
+			ResetUnitForNewTurn();
 		}
 
 		public void ResetUnitForNewTurn()
 		{
-			MovementPoints = Stats.Movement;
+			MovementPoints = Stats.Movement.Value;
 			CanPerformAction = true;
-			WasUsedInCurrentTurn = false;
-			WasUsedInCurrentMicroTurn = false;
+		}
+
+		public void MoveToHex(Hex hex)
+		{
+			Hex = hex;
+			hex.Unit = this;
 		}
 	}
 }

@@ -29,9 +29,9 @@ namespace PanzerKontrol
 		MoveUnitRequest,
 		// Attack a unit
 		AttackUnitRequest,
-		// Ask for the current micro turn to end
+		// Ask for the current maneuver to end
 		// Zero data message
-		EndMicroTurnRequest,
+		EndManeuverRequest,
 	}
 
 	public enum ServerToClientMessageType
@@ -63,12 +63,12 @@ namespace PanzerKontrol
 		OpponentLeftGame,
 		// The deployment phase is over, the enemy deployment plan is revealed
 		EnemyDeployment,
-		// A new microturn starts
-		MicroTurnStart,
-		// Confirm a move
-		MoveUnitReply,
-		// Confirm an attack
-		AttackUnitReply,
+		// A new maneuver starts
+		ManeuverStart,
+		// A unit moved
+		UnitMove,
+		// An attack occurred
+		UnitAttack,
 	}
 
 	public enum LoginReplyType
@@ -179,10 +179,10 @@ namespace PanzerKontrol
 		public DeploymentPlan EnemeyDeploymentPlan;
 
 		[ProtoMember(8, IsRequired = false)]
-		public MicroTurnStart MicroTurnStart;
+		public ManeuverStart MicroTurnStart;
 
 		[ProtoMember(9, IsRequired = false)]
-		public AttackUnitReply AttackUnitReply;
+		public UnitAttack AttackUnitReply;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
 		{
@@ -225,15 +225,15 @@ namespace PanzerKontrol
 			EnemeyDeploymentPlan = plan;
 		}
 
-		public ServerToClientMessage(MicroTurnStart microTurnStart)
+		public ServerToClientMessage(ManeuverStart microTurnStart)
 		{
-			Type = ServerToClientMessageType.MicroTurnStart;
+			Type = ServerToClientMessageType.ManeuverStart;
 			MicroTurnStart = microTurnStart;
 		}
 
-		public ServerToClientMessage(AttackUnitReply reply)
+		public ServerToClientMessage(UnitAttack reply)
 		{
-			Type = ServerToClientMessageType.AttackUnitReply;
+			Type = ServerToClientMessageType.UnitAttack;
 			AttackUnitReply = reply;
 		}
 	}
@@ -524,6 +524,11 @@ namespace PanzerKontrol
 			X = x;
 			Y = y;
 		}
+
+		public static Position operator +(Position a, Position b)
+		{
+			return new Position(a.X + b.X, a.Y + b.Y);
+		}
 	}
 
 	[ProtoContract]
@@ -560,19 +565,19 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class MicroTurnStart
+	public class ManeuverStart
 	{
 		[ProtoMember(1)]
 		public PlayerIdentifier ActivePlayer;
 
-		// The maximum number of units that may be used during the microturn
+		// The maximum number of units that may be used during the maneuver
 		[ProtoMember(2)]
 		public int Limit;
 
 		[ProtoMember(3)]
 		public List<int> UnitsAvailable;
 
-		public MicroTurnStart(PlayerIdentifier activePlayer, int limit)
+		public ManeuverStart(PlayerIdentifier activePlayer, int limit)
 		{
 			ActivePlayer = activePlayer;
 			Limit = limit;
@@ -597,7 +602,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class MoveUnitReply
+	public class UnitMove
 	{
 		// This is redundant, but whatever
 		[ProtoMember(1)]
@@ -606,7 +611,7 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public int RemainingMovementPoints;
 
-		public MoveUnitReply(int unitId, int remainingMovementPoints)
+		public UnitMove(int unitId, int remainingMovementPoints)
 		{
 			UnitId = unitId;
 			RemainingMovementPoints = remainingMovementPoints;
@@ -646,7 +651,7 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class AttackUnitReply
+	public class UnitAttack
 	{
 		[ProtoMember(1)]
 		public UnitCasualties AttackerCasualties;
@@ -654,7 +659,7 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public UnitCasualties DefenderCasualties;
 
-		public AttackUnitReply(UnitCasualties attackerCasualties, UnitCasualties defenderCasualties)
+		public UnitAttack(UnitCasualties attackerCasualties, UnitCasualties defenderCasualties)
 		{
 			AttackerCasualties = attackerCasualties;
 			DefenderCasualties = defenderCasualties;
