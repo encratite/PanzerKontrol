@@ -69,6 +69,22 @@ namespace PanzerKontrol
 
 	public class Map
 	{
+		static Position[] HexPositions =
+		{
+			// Northwest
+			new Position(-1, 0),
+			// North
+			new Position(0, -1),
+			// Northeast
+			new Position(1, 0),
+			// Southwest
+			new Position(-1, 1),
+			// South
+			new Position(0, 1),
+			// Southeast
+			new Position(1, 1),
+		};
+
 		public string Name;
 		public List<Hex> Hexes;
 
@@ -105,29 +121,14 @@ namespace PanzerKontrol
 
 		void CreateMovementMap(Position currentPosition, int movementPoints, ref Dictionary<Position, int> map)
 		{
-			Position[] offsets =
-			{
-				// Northwest
-				new Position(-1, 0),
-				// North
-				new Position(0, -1),
-				// Northeast
-				new Position(1, 0),
-				// Southwest
-				new Position(-1, 1),
-				// South
-				new Position(0, 1),
-				// Southeast
-				new Position(1, 1),
-			};
 			List<Hex> neighbours = new List<Hex>();
-			foreach (var offset in offsets)
+			foreach (var offset in HexPositions)
 			{
 				Position neighbourPosition = currentPosition + offset;
 				Hex neighbour = GetHex(neighbourPosition);
 				if (neighbour == null)
 				{
-					// This hex is not a part of the map, skip it
+					// This hex is not part of the map, skip it
 					continue;
 				}
 				if (neighbour.Unit != null)
