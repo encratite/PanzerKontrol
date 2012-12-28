@@ -29,7 +29,7 @@ namespace PanzerKontrol
 		Random Generator;
 		PlayerIdentifier? CurrentMicroTurnPlayer;
 
-		public PlayerIdentifier MicroTurnPlayer
+		public PlayerIdentifier ManeuverPlayer
 		{
 			get
 			{

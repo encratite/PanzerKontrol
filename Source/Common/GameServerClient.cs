@@ -400,7 +400,7 @@ namespace PanzerKontrol
 		void StartFirstRound()
 		{
 			NewTurn();
-			if (Identifier == ActiveGame.MicroTurnPlayer)
+			if (Identifier == ActiveGame.ManeuverPlayer)
 				NewMicroTurn();
 			else
 				Opponent.NewMicroTurn();
@@ -549,7 +549,31 @@ namespace PanzerKontrol
 			MoveUnitRequest request = message.MoveUnitRequest;
 			if (request == null)
 				throw new ClientException("Invalid move unit request");
-			throw new NotImplementedException("MoveUnitRequest");
+			if (Game.ManeuverPlayer != Identifier)
+			{
+				// It's not the current player's maneuver, ignore the request
+				return;
+			}
+			Unit unit = GetUnit(request.UnitId);
+			if (unit == null)
+				throw new ClientException("Invalid unit ID in a move unit request");
+			if (CurrentTurnUnits.Contains(unit))
+				throw new ClientException("Attempted to use the same unit in more than one maneuver per turn");
+			if (CurrentManeuverUnits.Count >= MicroTurnLimit && !CurrentManeuverUnits.Contains(unit))
+				throw new ClientException("Attempted to use more units in a maneuver than is permitted");
+			var map = ActiveGame.Map;
+			var movementMap = map.CreateMovementMap(unit);
+			int newMovementPoints;
+			if (!movementMap.TryGetValue(request.NewPosition, out newMovementPoints))
+				throw new ClientException("The unit can't reach the specified hex");
+			CurrentManeuverUnits.Add(unit);
+			unit.MovementPoints = newMovementPoints;
+			Hex hex = map.GetHex(request.NewPosition);
+			unit.MoveToHex(hex);
+			UnitMove move = new UnitMove(unit.Id, newMovementPoints);
+			ServerToClientMessage moveMessage = new ServerToClientMessage(move);
+			QueueMessage(moveMessage);
+			Opponent.QueueMessage(moveMessage);
 		}
 
 		void OnAttackUnitRequest(ClientToServerMessage message)

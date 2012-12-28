@@ -179,9 +179,12 @@ namespace PanzerKontrol
 		public DeploymentPlan EnemeyDeploymentPlan;
 
 		[ProtoMember(8, IsRequired = false)]
-		public ManeuverStart MicroTurnStart;
+		public ManeuverStart ManeuverStart;
 
 		[ProtoMember(9, IsRequired = false)]
+		public UnitMove UnitMove;
+
+		[ProtoMember(10, IsRequired = false)]
 		public UnitAttack AttackUnitReply;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
@@ -228,13 +231,19 @@ namespace PanzerKontrol
 		public ServerToClientMessage(ManeuverStart microTurnStart)
 		{
 			Type = ServerToClientMessageType.ManeuverStart;
-			MicroTurnStart = microTurnStart;
+			ManeuverStart = microTurnStart;
 		}
 
-		public ServerToClientMessage(UnitAttack reply)
+		public ServerToClientMessage(UnitMove move)
+		{
+			Type = ServerToClientMessageType.UnitMove;
+			UnitMove = move;
+		}
+
+		public ServerToClientMessage(UnitAttack attack)
 		{
 			Type = ServerToClientMessageType.UnitAttack;
-			AttackUnitReply = reply;
+			AttackUnitReply = attack;
 		}
 	}
 
