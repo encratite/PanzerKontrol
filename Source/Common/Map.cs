@@ -69,7 +69,7 @@ namespace PanzerKontrol
 
 	public class Map
 	{
-		static Position[] HexPositions =
+		static Position[] EvenHexOffsets =
 		{
 			// Northwest
 			new Position(-1, 0),
@@ -83,6 +83,22 @@ namespace PanzerKontrol
 			new Position(0, 1),
 			// Southeast
 			new Position(1, 1),
+		};
+
+		static Position[] OddHexOffsets =
+		{
+			// Northwest
+			new Position(-1, -1),
+			// North
+			new Position(0, -1),
+			// Northeast
+			new Position(1, -1),
+			// Southwest
+			new Position(-1, 0),
+			// South
+			new Position(0, 1),
+			// Southeast
+			new Position(1, 0),
 		};
 
 		public string Name;
@@ -121,8 +137,9 @@ namespace PanzerKontrol
 
 		void CreateMovementMap(Position currentPosition, int movementPoints, ref Dictionary<Position, int> map)
 		{
+			var hexOffsets = currentPosition.X % 2 == 0 ? EvenHexOffsets : OddHexOffsets;
 			List<Hex> neighbours = new List<Hex>();
-			foreach (var offset in HexPositions)
+			foreach (var offset in hexOffsets)
 			{
 				Position neighbourPosition = currentPosition + offset;
 				Hex neighbour = GetHex(neighbourPosition);
