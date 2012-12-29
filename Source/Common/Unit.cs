@@ -4,6 +4,7 @@ namespace PanzerKontrol
 {
 	public class Unit
 	{
+		public readonly PlayerIdentifier Owner;
 		public readonly int Id;
 		public readonly Faction Faction;
 		public readonly UnitType Type;
@@ -18,8 +19,9 @@ namespace PanzerKontrol
 		public int MovementPoints;
 		public bool CanPerformAction;
 
-		public Unit(int id, UnitConfiguration configuration, GameServer server)
+		public Unit(PlayerIdentifier owner, int id, UnitConfiguration configuration, GameServer server)
 		{
+			Owner = owner;
 			Id = id;
 			Faction = server.GetFaction(configuration.FactionId);
 			Type = Faction.GetUnitType(configuration.UnitTypeId);

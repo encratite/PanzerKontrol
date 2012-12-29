@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace PanzerKontrol
@@ -65,40 +66,35 @@ namespace PanzerKontrol
 			InitialiseTerrainMovementMap();
 			return TerrainMovementMap[Terrain];
 		}
+
+		public int GetDistance(Hex hex)
+		{
+			Position a = Position;
+			Position b = hex.Position;
+			int dx = Math.Abs(b.X - a.X);
+			int dy = Math.Abs(b.Y - a.Y);
+			int dz = Math.Abs(b.Z - a.Z);
+			int distance = Math.Max(Math.Max(dx, dy), dz);
+			return distance;
+		}
 	}
 
 	public class Map
 	{
-		static Position[] EvenHexOffsets =
+		static Position[] HexOffsets =
 		{
 			// Northwest
-			new Position(-1, 0),
-			// North
 			new Position(0, -1),
+			// North
+			new Position(-1, 0),
 			// Northeast
-			new Position(1, 0),
-			// Southwest
 			new Position(-1, 1),
-			// South
-			new Position(0, 1),
-			// Southeast
-			new Position(1, 1),
-		};
-
-		static Position[] OddHexOffsets =
-		{
-			// Northwest
-			new Position(-1, -1),
-			// North
-			new Position(0, -1),
-			// Northeast
-			new Position(1, -1),
 			// Southwest
-			new Position(-1, 0),
+			new Position(1, -1),
 			// South
-			new Position(0, 1),
-			// Southeast
 			new Position(1, 0),
+			// Southeast
+			new Position(0, 1),
 		};
 
 		public string Name;
@@ -131,15 +127,21 @@ namespace PanzerKontrol
 		public Dictionary<Position, int> CreateMovementMap(Unit unit)
 		{
 			Dictionary<Position, int> map = new Dictionary<Position, int>(new PositionComparer());
-			CreateMovementMap(unit.Hex.Position, unit.MovementPoints, ref map);
+			CreateMovementMap(unit.Hex.Position, unit.MovementPoints, unit.Owner, ref map);
+			// Remove all the hexes occupied by friendly units since those were only permitted for passing through
+			foreach (var position in map.Keys)
+			{
+				Hex hex = GetHex(position);
+				if (hex.Unit != null)
+					map.Remove(position);
+			}
 			return map;
 		}
 
-		void CreateMovementMap(Position currentPosition, int movementPoints, ref Dictionary<Position, int> map)
+		void CreateMovementMap(Position currentPosition, int movementPoints, PlayerIdentifier owner, ref Dictionary<Position, int> map)
 		{
-			var hexOffsets = currentPosition.X % 2 == 0 ? EvenHexOffsets : OddHexOffsets;
 			List<Hex> neighbours = new List<Hex>();
-			foreach (var offset in hexOffsets)
+			foreach (var offset in HexOffsets)
 			{
 				Position neighbourPosition = currentPosition + offset;
 				Hex neighbour = GetHex(neighbourPosition);
@@ -148,9 +150,9 @@ namespace PanzerKontrol
 					// This hex is not part of the map, skip it
 					continue;
 				}
-				if (neighbour.Unit != null)
+				if (neighbour.Unit != null && neighbour.Unit.Owner != owner)
 				{
-					// This hex is already occupied by another unit, skip it
+					// This hex is already occupied by an enemy unit, skip it
 					continue;
 				}
 				int newMovementPoints = movementPoints - neighbour.GetTerrainMovementPoints();
@@ -171,7 +173,7 @@ namespace PanzerKontrol
 				}
 				// Create or update the entry in the movement map
 				map[neighbourPosition] = newMovementPoints;
-				CreateMovementMap(neighbourPosition, newMovementPoints, ref map);
+				CreateMovementMap(neighbourPosition, newMovementPoints, owner, ref map);
 			}
 		}
 	}

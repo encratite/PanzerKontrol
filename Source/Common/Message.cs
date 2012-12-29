@@ -528,6 +528,14 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public int Y;
 
+		public int Z
+		{
+			get
+			{
+				return -X - Y;
+			}
+		}
+
 		public Position(int x, int y)
 		{
 			X = x;

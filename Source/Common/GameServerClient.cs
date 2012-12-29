@@ -349,7 +349,7 @@ namespace PanzerKontrol
 			int pointsSpent = 0;
 			foreach (var unitConfiguration in army.Units)
 			{
-				Unit unit = new Unit(ActiveGame.GetUnitId(), unitConfiguration, Server);
+				Unit unit = new Unit(Identifier.Value, ActiveGame.GetUnitId(), unitConfiguration, Server);
 				pointsSpent += unit.Points;
 				Units.Add(unit);
 			}
@@ -404,6 +404,7 @@ namespace PanzerKontrol
 				NewMicroTurn();
 			else
 				Opponent.NewMicroTurn();
+			throw new NotImplementedException("Start the round timer");
 		}
 
 		#endregion
