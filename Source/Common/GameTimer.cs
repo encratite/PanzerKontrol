@@ -1,4 +1,4 @@
-﻿using System.Timers;
+﻿using System.Threading;
 
 namespace PanzerKontrol
 {
@@ -6,41 +6,34 @@ namespace PanzerKontrol
 	{
 		public delegate void GameTimerHandler();
 
-		Timer Timer;
-		bool Cancelled;
-
+		int Seconds;
 		GameTimerHandler Handler;
+		Thread TimerThread;
+		ManualResetEvent Event;
 
 		public GameTimer(int seconds, GameTimerHandler handler)
 		{
-			Timer = new Timer();
-			Timer.Elapsed += new ElapsedEventHandler(ElapsedEvent);
-			Timer.AutoReset = false;
-			Cancelled = false;
+			Seconds = seconds;
 			Handler = handler;
+			TimerThread = new Thread(Run);
+			Event = new ManualResetEvent(false);
 		}
 
 		public void Start()
 		{
-			Timer.Start();
+			TimerThread.Start();
 		}
 
 		public void Stop()
 		{
-			lock (this)
-			{
-				Timer.Stop();
-				Cancelled = true;
-			}
+			Event.Set();
+			TimerThread.Join();
 		}
 
-		void ElapsedEvent(object source, ElapsedEventArgs arguments)
+		void Run()
 		{
-			lock (this)
-			{
-				if (Cancelled)
-					return;
-			}
+			if (Event.WaitOne(Seconds * 1000))
+				return;
 			Handler();
 		}
 	}
