@@ -175,7 +175,7 @@ namespace PanzerKontrol
 			game.Owner.OnGameStart(game);
 			client.OnGameStart(game);
 			ActiveGames.Add(game);
-			game.StartTimer(game.TimeConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
+			game.StartDeploymentTimer();
 			return true;
 		}
 
@@ -196,19 +196,6 @@ namespace PanzerKontrol
 				case ClientStateType.InGame:
 					LeaveGame(client);
 					break;
-			}
-		}
-
-		#endregion
-
-		#region Timer event handlers
-
-		public void OnDeploymentTimerExpiration(Game game)
-		{
-			lock (this)
-			{
-				game.Owner.OnDeploymentTimerExpiration();
-				game.Opponent.OnDeploymentTimerExpiration();
 			}
 		}
 

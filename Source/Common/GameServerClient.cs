@@ -196,16 +196,6 @@ namespace PanzerKontrol
 			QueueMessage(reply);
 		}
 
-		public void OnDeploymentTimerExpiration()
-		{
-			if (!HasDeployedArmy || !Opponent.HasDeployedArmy)
-			{
-				// One of the players had not deployed their army yet
-				// This means that the timer is responsible for starting the game
-				StartFirstRound();
-			}
-		}
-
 		#endregion
 
 		#region Public utility functions
@@ -225,6 +215,43 @@ namespace PanzerKontrol
 			CurrentTurnUnits.Clear();
 			foreach (var unit in Units)
 				unit.ResetUnitForNewTurn();
+		}
+
+		public ServerToClientMessage MyManeuver()
+		{
+			CurrentManeuverUnits.Clear();
+			ManeuverStart maneuverStart = new ManeuverStart(Identifier.Value, MicroTurnLimit);
+			foreach (var unit in Units)
+			{
+				if (unit.Deployed && !CurrentTurnUnits.Contains(unit))
+					maneuverStart.UnitsAvailable.Add(unit.Id);
+			}
+			ServerToClientMessage message = new ServerToClientMessage(maneuverStart);
+			QueueMessage(message);
+			Opponent.QueueMessage(message);
+			InGameState(GameStateType.MyTurn);
+			throw new NotImplementedException("Need appropriate message types");
+			return message;
+		}
+
+		public void OpponentManeuver(ServerToClientMessage message)
+		{
+			CurrentManeuverUnits.Clear();
+			QueueMessage(message);
+			InGameState(GameStateType.OpponentTurn);
+		}
+
+		public void SendDeploymentInformation()
+		{
+			DeploymentPlan plan = new DeploymentPlan(RequestedFirstTurn);
+			foreach (var unit in Units)
+			{
+				if (!unit.Deployed)
+					continue;
+				UnitPosition unitPosition = new UnitPosition(unit.Id, unit.Hex.Position);
+				plan.Units.Add(unitPosition);
+			}
+			Opponent.QueueMessage(new ServerToClientMessage(plan));
 		}
 
 		#endregion
@@ -375,38 +402,6 @@ namespace PanzerKontrol
 			CurrentManeuverUnits = null;
 		}
 
-		void NewTurn()
-		{
-			ResetUnitsForNewTurn();
-			Opponent.ResetUnitsForNewTurn();
-		}
-
-		void NewMicroTurn()
-		{
-			CurrentManeuverUnits.Clear();
-			ManeuverStart microTurnStart = new ManeuverStart(Identifier.Value, MicroTurnLimit);
-			foreach (var unit in Units)
-			{
-				if (unit.Deployed && !CurrentTurnUnits.Contains(unit))
-					microTurnStart.UnitsAvailable.Add(unit.Id);
-			}
-			ServerToClientMessage message = new ServerToClientMessage(microTurnStart);
-			QueueMessage(message);
-			Opponent.QueueMessage(message);
-			InGameState(GameStateType.MyTurn);
-			throw new NotImplementedException("Need appropriate message types");
-		}
-
-		void StartFirstRound()
-		{
-			NewTurn();
-			if (Identifier == ActiveGame.ManeuverPlayer)
-				NewMicroTurn();
-			else
-				Opponent.NewMicroTurn();
-			throw new NotImplementedException("Start the round timer");
-		}
-
 		#endregion
 
 		#region Client/game state modifiers and expected message type modifiers
@@ -542,7 +537,7 @@ namespace PanzerKontrol
 			PlayerRequestedFirstTurn = plan.RequestedFirstTurn;
 			PlayerHasDeployedArmy = true;
 			if (Opponent.HasDeployedArmy)
-				StartFirstRound();
+				Game.StartGame();
 		}
 
 		void OnMoveUnitRequest(ClientToServerMessage message)

@@ -26,6 +26,7 @@ namespace PanzerKontrol
 
 		Random Generator;
 		PlayerIdentifier? CurrentManeuverPlayer;
+		int ManeuverCounter;
 
 		public PlayerIdentifier ManeuverPlayer
 		{
@@ -56,6 +57,7 @@ namespace PanzerKontrol
 
 			Generator = new Random();
 			CurrentManeuverPlayer = null;
+			ManeuverCounter = 0;
 		}
 
 		public void SetFirstTurn()
@@ -101,9 +103,49 @@ namespace PanzerKontrol
 			StartTimer(TimeConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
 		}
 
-		public void StartTurnTimer()
+		public void StartManeuverTimer()
 		{
-			StartTimer(TimeConfiguration.DeploymentTime, OnManeuverTimerExpiration);
+			StartTimer(TimeConfiguration.ManeuverTime, () => OnManeuverTimerExpiration(ManeuverCounter));
+		}
+
+		public void NewTurn()
+		{
+			Owner.ResetUnitsForNewTurn();
+			Opponent.ResetUnitsForNewTurn();
+			NewManeuver();
+		}
+
+		public void NewManeuver()
+		{
+			if (ManeuverCounter > 0)
+				CurrentManeuverPlayer = CurrentManeuverPlayer.Value == PlayerIdentifier.Player1 ? PlayerIdentifier.Player2 : PlayerIdentifier.Player1;
+			ManeuverCounter++;
+			GameServerClient activePlayer, otherPlayer;
+			if (CurrentManeuverPlayer.Value == PlayerIdentifier.Player1)
+			{
+				activePlayer = Owner;
+				otherPlayer = Opponent;
+			}
+			else
+			{
+				activePlayer = Opponent;
+				otherPlayer = Owner;
+			}
+			var message = activePlayer.MyManeuver();
+			otherPlayer.OpponentManeuver(message);
+			StartManeuverTimer();
+		}
+
+		public void StartGame()
+		{
+			SendDeploymentInformation();
+			NewTurn();
+		}
+
+		public void SendDeploymentInformation()
+		{
+			Owner.SendDeploymentInformation();
+			Opponent.SendDeploymentInformation();
 		}
 
 		void StartTimer(int seconds, GameTimerHandler timerHandler)
@@ -131,11 +173,22 @@ namespace PanzerKontrol
 
 		void OnDeploymentTimerExpiration()
 		{
-			throw new NotImplementedException("OnDeploymentTimerExpiration");
+			if (!Owner.HasDeployedArmy || !Opponent.HasDeployedArmy)
+			{
+				// One of the players had not deployed their army yet
+				// This means that the timer is responsible for starting the game
+				StartGame();
+			}
 		}
 
-		void OnManeuverTimerExpiration()
+		void OnManeuverTimerExpiration(int maneuverCounter)
 		{
+			if (maneuverCounter != ManeuverCounter)
+			{
+				// This was a timer for another maneuver, not the current one
+				// Ignore its expiration
+				return;
+			}
 			throw new NotImplementedException("OnManeuverTimerExpiration");
 		}
 	}

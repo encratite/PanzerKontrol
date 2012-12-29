@@ -337,12 +337,12 @@ namespace PanzerKontrol
 		public int DeploymentTime;
 
 		[ProtoMember(2)]
-		public int TurnTime;
+		public int ManeuverTime;
 
 		public TimeConfiguration()
 		{
 			DeploymentTime = 90;
-			TurnTime = 30;
+			ManeuverTime = 30;
 		}
 	}
 
