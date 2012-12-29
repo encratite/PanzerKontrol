@@ -123,13 +123,13 @@ namespace PanzerKontrol
 			if (request.IsPrivate)
 			{
 				string privateKey = GeneratePrivateKey();
-				game = new Game(client, true, privateKey, request.MapConfiguration, Configuration.TimeConfiguration, map);
+				game = new Game(this, client, true, privateKey, request.MapConfiguration, Configuration.TimeConfiguration, map);
 				PrivateGames[privateKey] = game;
 				return new CreateGameReply(privateKey);
 			}
 			else
 			{
-				game = new Game(client, false, null, request.MapConfiguration, Configuration.TimeConfiguration, map);
+				game = new Game(this, client, false, null, request.MapConfiguration, Configuration.TimeConfiguration, map);
 				PublicGames[client.Name] = game;
 				return new CreateGameReply();
 			}

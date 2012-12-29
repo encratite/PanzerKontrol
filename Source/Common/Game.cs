@@ -6,8 +6,7 @@ namespace PanzerKontrol
 {
 	public class Game
 	{
-		public delegate void GameTimerHandler(Game game);
-
+		delegate void GameTimerHandler();
 		public readonly GameServerClient Owner;
 		public GameServerClient Opponent;
 
@@ -19,26 +18,27 @@ namespace PanzerKontrol
 
 		public readonly Map Map;
 
-		bool GameIsOver;
+		GameServer Server;
 
-		GameTimerHandler TimerHandler;
-		Timer ActiveTimer;
+		bool GameIsOver;
 
 		int UnitIdCounter;
 
 		Random Generator;
-		PlayerIdentifier? CurrentMicroTurnPlayer;
+		PlayerIdentifier? CurrentManeuverPlayer;
 
 		public PlayerIdentifier ManeuverPlayer
 		{
 			get
 			{
-				return CurrentMicroTurnPlayer.Value;
+				return CurrentManeuverPlayer.Value;
 			}
 		}
 
-		public Game(GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, Map map)
+		public Game(GameServer server, GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, Map map)
 		{
+			Server = server;
+
 			Owner = owner;
 			Opponent = null;
 
@@ -51,13 +51,11 @@ namespace PanzerKontrol
 			Map = map;
 
 			GameIsOver = false;
-			TimerHandler = null;
-			ActiveTimer = null;
 
 			UnitIdCounter = 0;
 
 			Generator = new Random();
-			CurrentMicroTurnPlayer = null;
+			CurrentManeuverPlayer = null;
 		}
 
 		public void SetFirstTurn()
@@ -67,12 +65,12 @@ namespace PanzerKontrol
 				if (Opponent.RequestedFirstTurn)
 					SetRandomFirstTurn();
 				else
-					CurrentMicroTurnPlayer = PlayerIdentifier.Player1;
+					CurrentManeuverPlayer = PlayerIdentifier.Player1;
 			}
 			else
 			{
 				if (Opponent.RequestedFirstTurn)
-					CurrentMicroTurnPlayer = PlayerIdentifier.Player2;
+					CurrentManeuverPlayer = PlayerIdentifier.Player2;
 				else
 					SetRandomFirstTurn();
 			}
@@ -88,27 +86,7 @@ namespace PanzerKontrol
 
 		public void GameOver()
 		{
-			lock (this)
-			{
-				GameIsOver = true;
-				if (ActiveTimer != null)
-					ActiveTimer.Stop();
-			}
-		}
-
-		public void StartTimer(int seconds, GameTimerHandler timerHandler)
-		{
-			lock (this)
-			{
-				if (ActiveTimer != null)
-					throw new Exception("Unable to start a new game timer because the old one has not expired yet");
-				TimerHandler = timerHandler;
-
-				ActiveTimer = new Timer(1000 * seconds);
-				ActiveTimer.Elapsed += new ElapsedEventHandler(OnTimerExpiration);
-				ActiveTimer.AutoReset = false;
-				ActiveTimer.Enabled = true;
-			}
+			GameIsOver = true;
 		}
 
 		public int GetUnitId()
@@ -118,22 +96,47 @@ namespace PanzerKontrol
 			return output;
 		}
 
-		void OnTimerExpiration(object source, ElapsedEventArgs arguments)
+		public void StartDeploymentTimer()
 		{
-			lock (this)
-			{
-				ActiveTimer = null;
+			StartTimer(TimeConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
+		}
 
-				if (GameIsOver)
-					TimerHandler = null;
-				else
-					TimerHandler(this);
+		public void StartTurnTimer()
+		{
+			StartTimer(TimeConfiguration.DeploymentTime, OnManeuverTimerExpiration);
+		}
+
+		void StartTimer(int seconds, GameTimerHandler timerHandler)
+		{
+			Timer timer = new Timer(1000 * seconds);
+			ElapsedEventHandler eventHandler = (object source, ElapsedEventArgs arguments) => OnTimerExpiration(timerHandler);
+			timer.Elapsed += eventHandler;
+			timer.AutoReset = false;
+			timer.Enabled = true;
+		}
+
+		void OnTimerExpiration(GameTimerHandler timerHandler)
+		{
+			lock (Server)
+			{
+				if (!GameIsOver)
+					timerHandler();
 			}
 		}
 
 		void SetRandomFirstTurn()
 		{
-			CurrentMicroTurnPlayer = Generator.Next(0, 1) == 1 ? PlayerIdentifier.Player1 : PlayerIdentifier.Player2;
+			CurrentManeuverPlayer = Generator.Next(0, 1) == 1 ? PlayerIdentifier.Player1 : PlayerIdentifier.Player2;
+		}
+
+		void OnDeploymentTimerExpiration()
+		{
+			throw new NotImplementedException("OnDeploymentTimerExpiration");
+		}
+
+		void OnManeuverTimerExpiration()
+		{
+			throw new NotImplementedException("OnManeuverTimerExpiration");
 		}
 	}
 }
