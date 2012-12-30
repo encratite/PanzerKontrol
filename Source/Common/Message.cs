@@ -26,12 +26,12 @@ namespace PanzerKontrol
 		// Submit the deployment plan
 		SubmitDeploymentPlan,
 		// Move a unit
-		MoveUnitRequest,
+		MoveUnit,
 		// Attack a unit
-		AttackUnitRequest,
-		// Ask for the current maneuver to end
+		AttackUnit,
+		// End the current turn
 		// Zero data message
-		EndManeuverRequest,
+		EndTurn,
 	}
 
 	public enum ServerToClientMessageType
@@ -63,8 +63,8 @@ namespace PanzerKontrol
 		OpponentLeftGame,
 		// The deployment phase is over, the enemy deployment plan is revealed
 		EnemyDeployment,
-		// A new maneuver starts
-		ManeuverStart,
+		// A new turn starts
+		NewTurn,
 		// A unit moved
 		UnitMove,
 		// An attack occurred
@@ -143,13 +143,13 @@ namespace PanzerKontrol
 
 		public ClientToServerMessage(MoveUnitRequest request)
 		{
-			Type = ClientToServerMessageType.MoveUnitRequest;
+			Type = ClientToServerMessageType.MoveUnit;
 			MoveUnitRequest = request;
 		}
 
 		public ClientToServerMessage(AttackUnitRequest request)
 		{
-			Type = ClientToServerMessageType.AttackUnitRequest;
+			Type = ClientToServerMessageType.AttackUnit;
 			AttackUnitRequest = request;
 		}
 	}
@@ -179,7 +179,7 @@ namespace PanzerKontrol
 		public DeploymentPlan EnemeyDeploymentPlan;
 
 		[ProtoMember(8, IsRequired = false)]
-		public ManeuverStart ManeuverStart;
+		public NewTurn NewTurn;
 
 		[ProtoMember(9, IsRequired = false)]
 		public UnitMove UnitMove;
@@ -216,10 +216,10 @@ namespace PanzerKontrol
 			ViewPublicGamesReply = reply;
 		}
 
-		public ServerToClientMessage(GameStart reply)
+		public ServerToClientMessage(GameStart start)
 		{
 			Type = ServerToClientMessageType.GameStart;
-			GameStart = reply;
+			GameStart = start;
 		}
 
 		public ServerToClientMessage(DeploymentPlan plan)
@@ -228,10 +228,10 @@ namespace PanzerKontrol
 			EnemeyDeploymentPlan = plan;
 		}
 
-		public ServerToClientMessage(ManeuverStart microTurnStart)
+		public ServerToClientMessage(NewTurn newTurn)
 		{
-			Type = ServerToClientMessageType.ManeuverStart;
-			ManeuverStart = microTurnStart;
+			Type = ServerToClientMessageType.NewTurn;
+			NewTurn = newTurn;
 		}
 
 		public ServerToClientMessage(UnitMove move)
@@ -337,12 +337,12 @@ namespace PanzerKontrol
 		public int DeploymentTime;
 
 		[ProtoMember(2)]
-		public int ManeuverTime;
+		public int TurnTime;
 
 		public TimeConfiguration()
 		{
 			DeploymentTime = 90;
-			ManeuverTime = 30;
+			TurnTime = 60;
 		}
 	}
 
@@ -582,23 +582,14 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class ManeuverStart
+	public class NewTurn
 	{
 		[ProtoMember(1)]
 		public PlayerIdentifier ActivePlayer;
 
-		// The maximum number of units that may be used during the maneuver
-		[ProtoMember(2)]
-		public int Limit;
-
-		[ProtoMember(3)]
-		public List<int> UnitsAvailable;
-
-		public ManeuverStart(PlayerIdentifier activePlayer, int limit)
+		public NewTurn(PlayerIdentifier activePlayer)
 		{
 			ActivePlayer = activePlayer;
-			Limit = limit;
-			UnitsAvailable = new List<int>();
 		}
 	}
 

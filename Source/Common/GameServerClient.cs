@@ -33,9 +33,6 @@ namespace PanzerKontrol
 		// The ratio of unspent points lost upon entering the hidden picking phase
 		const double HiddenPickPointLossRatio = 0.5;
 
-		// The number of units that may be used by a player during a microturn
-		const int MicroTurnLimit = 3;
-
 		GameServer Server;
 		SslStream Stream;
 
@@ -53,7 +50,7 @@ namespace PanzerKontrol
 		HashSet<ClientToServerMessageType> ExpectedMessageTypes;
 		Dictionary<ClientToServerMessageType, MessageHandler> MessageHandlerMap;
 
-		// The name chosen by the player when he logged into the server
+		// The name chosen by the player when they logged onto the server
 		string PlayerName;
 
 		// The faction chosen by this player, for the current lobby or game
@@ -79,12 +76,6 @@ namespace PanzerKontrol
 
 		// Units remaining
 		List<Unit> Units;
-
-		// Units that were used in the current turn
-		HashSet<Unit> CurrentTurnUnits;
-
-		// This is a list of units used during the current maneuver
-		HashSet<Unit> CurrentManeuverUnits;
 
 		#region Read-only accessors
 
@@ -212,31 +203,24 @@ namespace PanzerKontrol
 
 		public void ResetUnitsForNewTurn()
 		{
-			CurrentTurnUnits.Clear();
 			foreach (var unit in Units)
 				unit.ResetUnitForNewTurn();
 		}
 
-		public ServerToClientMessage MyManeuver()
+		public void MyTurn()
 		{
-			CurrentManeuverUnits.Clear();
-			ManeuverStart maneuverStart = new ManeuverStart(Identifier.Value, MicroTurnLimit);
-			foreach (var unit in Units)
-			{
-				if (unit.Deployed && !CurrentTurnUnits.Contains(unit))
-					maneuverStart.UnitsAvailable.Add(unit.Id);
-			}
-			ServerToClientMessage message = new ServerToClientMessage(maneuverStart);
+			ResetUnitsForNewTurn();
+			NewTurn newTurn = new NewTurn(Identifier.Value);
+			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
-			Opponent.QueueMessage(message);
-			InGameState(GameStateType.MyTurn);
-			throw new NotImplementedException("Need appropriate message types");
-			return message;
+			InGameState(GameStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.EndTurn);
 		}
 
-		public void OpponentManeuver(ServerToClientMessage message)
+		public void OpponenTurn()
 		{
-			CurrentManeuverUnits.Clear();
+			ResetUnitsForNewTurn();
+			NewTurn newTurn = new NewTurn(PlayerOpponent.Identifier.Value);
+			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
 			InGameState(GameStateType.OpponentTurn);
 		}
@@ -273,9 +257,9 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.LeaveGameRequest] = OnLeaveGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
-			MessageHandlerMap[ClientToServerMessageType.MoveUnitRequest] = OnMoveUnitRequest;
-			MessageHandlerMap[ClientToServerMessageType.AttackUnitRequest] = OnAttackUnitRequest;
-			MessageHandlerMap[ClientToServerMessageType.EndManeuverRequest] = OnEndManeuverRequest;
+			MessageHandlerMap[ClientToServerMessageType.MoveUnit] = OnMoveUnit;
+			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
+			MessageHandlerMap[ClientToServerMessageType.EndTurn] = OnEndTurn;
 		}
 
 		void QueueMessage(ServerToClientMessage message)
@@ -398,8 +382,6 @@ namespace PanzerKontrol
 			PlayerOpponent = null;
 
 			Units = null;
-			CurrentTurnUnits = null;
-			CurrentManeuverUnits = null;
 		}
 
 		#endregion
@@ -540,29 +522,19 @@ namespace PanzerKontrol
 				Game.StartGame();
 		}
 
-		void OnMoveUnitRequest(ClientToServerMessage message)
+		void OnMoveUnit(ClientToServerMessage message)
 		{
 			MoveUnitRequest request = message.MoveUnitRequest;
 			if (request == null)
 				throw new ClientException("Invalid move unit request");
-			if (Game.ManeuverPlayer != Identifier)
-			{
-				// It's not the current player's maneuver, ignore the request
-				return;
-			}
 			Unit unit = GetUnit(request.UnitId);
 			if (unit == null)
 				throw new ClientException("Invalid unit ID in a move unit request");
-			if (CurrentTurnUnits.Contains(unit))
-				throw new ClientException("Attempted to use the same unit in more than one maneuver per turn");
-			if (CurrentManeuverUnits.Count >= MicroTurnLimit && !CurrentManeuverUnits.Contains(unit))
-				throw new ClientException("Attempted to use more units in a maneuver than is permitted");
 			var map = ActiveGame.Map;
 			var movementMap = map.CreateMovementMap(unit);
 			int newMovementPoints;
 			if (!movementMap.TryGetValue(request.NewPosition, out newMovementPoints))
 				throw new ClientException("The unit can't reach the specified hex");
-			CurrentManeuverUnits.Add(unit);
 			unit.MovementPoints = newMovementPoints;
 			Hex hex = map.GetHex(request.NewPosition);
 			unit.MoveToHex(hex);
@@ -572,7 +544,7 @@ namespace PanzerKontrol
 			Opponent.QueueMessage(moveMessage);
 		}
 
-		void OnAttackUnitRequest(ClientToServerMessage message)
+		void OnAttackUnit(ClientToServerMessage message)
 		{
 			AttackUnitRequest request = message.AttackUnitRequest;
 			if (request == null)
@@ -580,9 +552,9 @@ namespace PanzerKontrol
 			throw new NotImplementedException("OnAttackUnitRequest");
 		}
 
-		void OnEndManeuverRequest(ClientToServerMessage message)
+		void OnEndTurn(ClientToServerMessage message)
 		{
-			throw new NotImplementedException("OnEndMicroTurnRequest");
+			Game.NewTurn();
 		}
 
 		#endregion

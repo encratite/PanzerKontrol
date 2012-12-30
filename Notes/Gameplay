@@ -24,11 +24,3 @@ There are three different ways to win a match:
 3. the enemy surrenders
 A match can also result in a draw.
 This occurs when the maximum number of turns has been played and both players control an equal number of grids on the map.
-
-Now, usually Panzer General style games permit each player to use all their units in one go once it's their turn.
-The problem with this approach is that it leads to considerable "downtime" for the other player who is then forced to wait.
-This is probably boring and makes the game less enjoyable for the players.
-Maps are symmetrical and the only way in which a match is asymmetrical is that one player has the privilege of making the first moves.
-To work around these two issues I propose a system in which each turn is subdivided into "microturns" during which only n units may be used.
-n = 3 might just do the job.
-This would enable players to interact at a greater granularity and also prevents excessive sequential "hit and run" style attacks from four or more units attacking a single target.

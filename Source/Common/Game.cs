@@ -23,18 +23,10 @@ namespace PanzerKontrol
 		bool GameIsOver;
 
 		int UnitIdCounter;
+		int TurnCounter;
 
 		Random Generator;
-		PlayerIdentifier? CurrentManeuverPlayer;
-		int ManeuverCounter;
-
-		public PlayerIdentifier ManeuverPlayer
-		{
-			get
-			{
-				return CurrentManeuverPlayer.Value;
-			}
-		}
+		GameServerClient ActivePlayer;
 
 		public Game(GameServer server, GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, Map map)
 		{
@@ -54,10 +46,10 @@ namespace PanzerKontrol
 			GameIsOver = false;
 
 			UnitIdCounter = 0;
+			TurnCounter = 0;
 
 			Generator = new Random();
-			CurrentManeuverPlayer = null;
-			ManeuverCounter = 0;
+			ActivePlayer = null;
 		}
 
 		public void SetFirstTurn()
@@ -67,12 +59,12 @@ namespace PanzerKontrol
 				if (Opponent.RequestedFirstTurn)
 					SetRandomFirstTurn();
 				else
-					CurrentManeuverPlayer = PlayerIdentifier.Player1;
+					ActivePlayer = Owner;
 			}
 			else
 			{
 				if (Opponent.RequestedFirstTurn)
-					CurrentManeuverPlayer = PlayerIdentifier.Player2;
+					ActivePlayer = Opponent;
 				else
 					SetRandomFirstTurn();
 			}
@@ -103,37 +95,21 @@ namespace PanzerKontrol
 			StartTimer(TimeConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
 		}
 
-		public void StartManeuverTimer()
+		public void StartTurnTimer()
 		{
-			StartTimer(TimeConfiguration.ManeuverTime, () => OnManeuverTimerExpiration(ManeuverCounter));
+			StartTimer(TimeConfiguration.TurnTime, () => OnTurnTimerExpiration(TurnCounter));
 		}
 
 		public void NewTurn()
 		{
-			Owner.ResetUnitsForNewTurn();
-			Opponent.ResetUnitsForNewTurn();
-			NewManeuver();
-		}
-
-		public void NewManeuver()
-		{
-			if (ManeuverCounter > 0)
-				CurrentManeuverPlayer = CurrentManeuverPlayer.Value == PlayerIdentifier.Player1 ? PlayerIdentifier.Player2 : PlayerIdentifier.Player1;
-			ManeuverCounter++;
-			GameServerClient activePlayer, otherPlayer;
-			if (CurrentManeuverPlayer.Value == PlayerIdentifier.Player1)
-			{
-				activePlayer = Owner;
-				otherPlayer = Opponent;
-			}
-			else
-			{
-				activePlayer = Opponent;
-				otherPlayer = Owner;
-			}
-			var message = activePlayer.MyManeuver();
-			otherPlayer.OpponentManeuver(message);
-			StartManeuverTimer();
+			// Only change the active player if it's not the first turn
+			if (TurnCounter > 0)
+				ActivePlayer = object.ReferenceEquals(Owner, ActivePlayer) ? Opponent : Owner;
+			TurnCounter++;
+			GameServerClient otherPlayer = GetOtherClient(ActivePlayer);
+			ActivePlayer.MyTurn();
+			otherPlayer.OpponenTurn();
+			StartTurnTimer();
 		}
 
 		public void StartGame()
@@ -168,7 +144,8 @@ namespace PanzerKontrol
 
 		void SetRandomFirstTurn()
 		{
-			CurrentManeuverPlayer = Generator.Next(0, 1) == 1 ? PlayerIdentifier.Player1 : PlayerIdentifier.Player2;
+			GameServerClient[] players = { Owner, Opponent };
+			ActivePlayer = players[Generator.Next(0, players.Length - 1)];
 		}
 
 		void OnDeploymentTimerExpiration()
@@ -181,15 +158,13 @@ namespace PanzerKontrol
 			}
 		}
 
-		void OnManeuverTimerExpiration(int maneuverCounter)
+		void OnTurnTimerExpiration(int turnCounter)
 		{
-			if (maneuverCounter != ManeuverCounter)
-			{
-				// This was a timer for another maneuver, not the current one
-				// Ignore its expiration
-				return;
-			}
-			throw new NotImplementedException("OnManeuverTimerExpiration");
+			// Check if the timer that expired was the one for the current turn
+			// Ignore it otherwise
+			if (turnCounter == TurnCounter)
+				NewTurn();
+			
 		}
 	}
 }
