@@ -6,7 +6,7 @@ namespace PanzerKontrol
 	{
 		public readonly Unit Unit;
 
-		double Strength;
+		double UnitStrength;
 		double? BaseDamage;
 		double CombatEfficiency;
 		double TotalDamageDealt;
@@ -20,10 +20,18 @@ namespace PanzerKontrol
 			}
 		}
 
+		public double Strength
+		{
+			get
+			{
+				return UnitStrength;
+			}
+		}
+
 		public UnitCombatState(Unit unit, UnitCombat combat)
 		{
 			Unit = unit;
-			Strength = unit.Strength;
+			UnitStrength = unit.Strength;
 			BaseDamage = null;
 			CombatEfficiency = combat.GetCombatEfficiency();
 			TotalDamageDealt = 0.0;
@@ -42,7 +50,7 @@ namespace PanzerKontrol
 
 		public double GetDamage()
 		{
-			double strengthFactor = Math.Pow(Strength, GameConstants.StrengthExponent);
+			double strengthFactor = Math.Pow(UnitStrength, GameConstants.StrengthExponent);
 			double damageDealt = strengthFactor * BaseDamage.Value * CombatEfficiency * GameConstants.DamageMitigation / DamageDivisor;
 			TotalDamageDealt += damageDealt;
 			return damageDealt;
@@ -50,14 +58,14 @@ namespace PanzerKontrol
 
 		public void TakeDamage(double damage)
 		{
-			Strength -= damage;
-			if (Strength < GameConstants.MinimumStrength)
-				Strength = 0.0;
+			UnitStrength -= damage;
+			if (UnitStrength < GameConstants.MinimumStrength)
+				UnitStrength = 0.0;
 		}
 
 		public bool IsAlive()
 		{
-			return Strength > 0.0;
+			return UnitStrength > 0.0;
 		}
 	}
 }

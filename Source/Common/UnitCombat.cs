@@ -124,19 +124,27 @@ namespace PanzerKontrol
 			}
 		}
 
+		double GetStrengthAdjustedDamageFactor(UnitCombatState target, double minimumEfficiency)
+		{
+			double efficiency = minimumEfficiency + target.Strength * (1 - minimumEfficiency);
+			return efficiency;
+		}
+
 		// This is used to calculate the outcome of artillery strikes and attacks of air units on ground units (including casualties to anti-air fire)
 		void Bombard()
 		{
 			int round;
 			for (round = 0; Attacker.IsAlive() && Defender.IsAlive() && round < GameConstants.BombardmentAttacks; round++)
 			{
-				double attackerDamage = Attacker.GetDamage();
+				double bombardmentEfficiency = GetStrengthAdjustedDamageFactor(Defender, GameConstants.BombardmentEfficiencyMinimum);
+				double attackerDamage = bombardmentEfficiency * Attacker.GetDamage();
 				Defender.TakeDamage(attackerDamage);
 				if (AttackType == AttackType.AirAttack)
 				{
 					// Calculate air casualties to anti-air fire
 					foreach (var unit in AntiAirUnits)
 					{
+						double antiAirEfficiency = GetStrengthAdjustedDamageFactor(Attacker, GameConstants.AntiAirEfficiencyMinimum);
 						double antiAirDamage = unit.GetDamage();
 						Attacker.TakeDamage(antiAirDamage);
 					}
