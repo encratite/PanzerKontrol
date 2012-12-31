@@ -11,65 +11,6 @@ namespace PanzerKontrol
 		AirAttack,
 	}
 
-	class UnitCombatState
-	{
-		public readonly Unit Unit;
-
-		double Strength;
-		double? BaseDamage;
-		double CombatEfficiency;
-		double TotalDamageDealt;
-		int DamageDivisor;
-
-		public double DamageDealt
-		{
-			get
-			{
-				return TotalDamageDealt;
-			}
-		}
-
-		public UnitCombatState(Unit unit, UnitCombat combat)
-		{
-			Unit = unit;
-			Strength = unit.Strength;
-			BaseDamage = null;
-			CombatEfficiency = combat.GetCombatEfficiency();
-			TotalDamageDealt = 0.0;
-			DamageDivisor = 1;
-		}
-
-		public void SetDamage(double baseDamage)
-		{
-			BaseDamage = baseDamage;
-		}
-
-		public void SetDamageReduction(int damageDivisor)
-		{
-			DamageDivisor = damageDivisor;
-		}
-
-		public double GetDamage()
-		{
-			double strengthFactor = Math.Pow(Strength, GameConstants.StrengthExponent);
-			double damageDealt = strengthFactor * BaseDamage.Value * CombatEfficiency * GameConstants.DamageMitigation / DamageDivisor;
-			TotalDamageDealt += damageDealt;
-			return damageDealt;
-		}
-
-		public void TakeDamage(double damage)
-		{
-			Strength -= damage;
-			if (Strength < GameConstants.MinimumStrength)
-				Strength = 0.0;
-		}
-
-		public bool IsAlive()
-		{
-			return Strength > 0.0;
-		}
-	}
-
 	class UnitCombat
 	{
 		bool UseRandomisedCombatEfficiency;
@@ -81,6 +22,8 @@ namespace PanzerKontrol
 		List<UnitCombatState> AntiAirUnits;
 
 		AttackType AttackType;
+
+		#region Static constructors
 
 		public static UnitCombat GroundAttack(Unit attacker, Unit defender, bool useRandomisedCombatEfficiency)
 		{
@@ -97,6 +40,10 @@ namespace PanzerKontrol
 			return new UnitCombat(attacker, target, antiAirUnits, AttackType.AirAttack, useRandomisedCombatEfficiency);
 		}
 
+		#endregion
+
+		#region Public utility functions
+
 		public double GetCombatEfficiency()
 		{
 			if (UseRandomisedCombatEfficiency)
@@ -104,6 +51,10 @@ namespace PanzerKontrol
 			else
 				return GameConstants.CombatEfficiencyMean;
 		}
+
+		#endregion
+
+		#region Generic internal functions
 
 		UnitCombat(Unit attacker, Unit defender, List<Unit> antiAirUnits, AttackType attackType, bool useRandomisedCombatEfficiency)
 		{
@@ -192,5 +143,7 @@ namespace PanzerKontrol
 				}
 			}
 		}
+
+		#endregion
 	}
 }
