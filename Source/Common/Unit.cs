@@ -69,5 +69,25 @@ namespace PanzerKontrol
 			else
 				return Stats.SoftDefence.Value * softness + Stats.HardDefence.Value * hardness;
 		}
+
+		public bool IsArtillery()
+		{
+			return Stats.Flags.Contains(UnitFlag.Artillery);
+		}
+
+		public bool IsAirUnit()
+		{
+			return Stats.Flags.Contains(UnitFlag.Air);
+		}
+
+		public bool IsAntiAirUnit()
+		{
+			return Stats.Flags.Contains(UnitFlag.AntiAir);
+		}
+
+		public bool IsAlive()
+		{
+			return Strength > 0.0;
+		}
 	}
 }

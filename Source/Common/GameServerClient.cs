@@ -181,6 +181,11 @@ namespace PanzerKontrol
 			QueueMessage(reply);
 		}
 
+		public void OnUnitDeath(Unit unit)
+		{
+			Units.Remove(unit);
+		}
+
 		#endregion
 
 		#region Public utility functions
@@ -224,6 +229,18 @@ namespace PanzerKontrol
 				plan.Units.Add(unitPosition);
 			}
 			Opponent.QueueMessage(new ServerToClientMessage(plan));
+		}
+
+		// Retrieve a list of anti-air units capable of protecting the target
+		public List<Unit> GetAntiAirUnits(Unit target)
+		{
+			List<Unit> output = new List<Unit>();
+			foreach (var unit in Units)
+			{
+				if (unit.Deployed && unit.IsAntiAirUnit() && unit.Hex.GetDistance(target.Hex) <= unit.Stats.AntiAirRange.Value)
+					output.Add(unit);
+			}
+			return output;
 		}
 
 		#endregion
@@ -524,6 +541,8 @@ namespace PanzerKontrol
 			Unit unit = GetUnit(request.UnitId);
 			if (unit == null)
 				throw new ClientException("Invalid unit ID in a move unit request");
+			if(!unit.Deployed)
+				throw new ClientException("Tried to move an undeployed unit");
 			var map = ActiveGame.Map;
 			var movementMap = map.CreateMovementMap(unit);
 			int newMovementPoints;
@@ -543,7 +562,44 @@ namespace PanzerKontrol
 			AttackUnitRequest request = message.AttackUnitRequest;
 			if (request == null)
 				throw new ClientException("Invalid attack unit request");
-			throw new NotImplementedException("OnAttackUnitRequest");
+			Unit attacker = GetUnit(request.AttackerUnitId);
+			if (attacker == null)
+				throw new ClientException("Invalid attacking unit ID in an attack unit request");
+			if (!attacker.Deployed)
+				throw new ClientException("Tried to attack with an undeployed unit");
+			Unit defender = Opponent.GetUnit(request.DefenderUnitId);
+			if (defender == null)
+				throw new ClientException("Invalid target unit ID in an attack unit request");
+			if (!defender.Deployed)
+				throw new ClientException("Tried to attack an undeployed unit");
+			if(!attacker.CanPerformAction)
+				throw new ClientException("This unit can't perform any more actions this turn");
+			UnitCombat outcome;
+			if (attacker.IsAirUnit())
+			{
+				List<Unit> antiAirUnits = Opponent.GetAntiAirUnits(defender);
+				outcome = new UnitCombat(attacker, defender, true, antiAirUnits);
+			}
+			else
+			{
+				int distance = attacker.Hex.GetDistance(defender.Hex);
+				if(distance > attacker.Stats.Range)
+					throw new ClientException("The target is out of range");
+				outcome = new UnitCombat(attacker, defender, true);
+			}
+			attacker.CanPerformAction = false;
+			attacker.Strength = outcome.AttackerStrength;
+			defender.Strength = outcome.DefenderStrength;
+			if (!attacker.IsAlive())
+				Units.Remove(attacker);
+			if (!defender.IsAlive())
+				Opponent.OnUnitDeath(defender);
+			UnitCasualties attackerCasualties = new UnitCasualties(attacker.Id, attacker.Strength);
+			UnitCasualties defenderCasualties = new UnitCasualties(defender.Id, defender.Strength);
+			UnitAttack report = new UnitAttack(attackerCasualties, defenderCasualties);
+			ServerToClientMessage attackMessage = new ServerToClientMessage(report);
+			QueueMessage(attackMessage);
+			Opponent.QueueMessage(attackMessage);
 		}
 
 		void OnEndTurn(ClientToServerMessage message)

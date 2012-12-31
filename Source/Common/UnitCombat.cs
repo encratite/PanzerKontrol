@@ -23,21 +23,46 @@ namespace PanzerKontrol
 
 		AttackType AttackType;
 
-		#region Static constructors
-
-		public static UnitCombat GroundAttack(Unit attacker, Unit defender, bool useRandomisedCombatEfficiency)
+		public double AttackerStrength
 		{
-			return new UnitCombat(attacker, defender, null, AttackType.GroundAttack, useRandomisedCombatEfficiency);
+			get
+			{
+				return Attacker.Strength;
+			}
 		}
 
-		public static UnitCombat ArtilleryAttack(Unit attacker, Unit target, bool useRandomisedCombatEfficiency)
+		public double DefenderStrength
 		{
-			return new UnitCombat(attacker, target, null, AttackType.ArtilleryAttack, useRandomisedCombatEfficiency);
+			get
+			{
+				return Defender.Strength;
+			}
 		}
 
-		public static UnitCombat AirAttack(Unit attacker, Unit target, List<Unit> antiAirUnits, bool useRandomisedCombatEfficiency)
+		#region Constructors
+
+		public UnitCombat(Unit attacker, Unit defender, bool useRandomisedCombatEfficiency, List<Unit> antiAirUnits = null)
 		{
-			return new UnitCombat(attacker, target, antiAirUnits, AttackType.AirAttack, useRandomisedCombatEfficiency);
+			UseRandomisedCombatEfficiency = useRandomisedCombatEfficiency;
+			Generator = new NormalDistribution(GameConstants.CombatEfficiencyMean, GameConstants.CombatEfficiencyDeviation);
+
+			Attacker = new UnitCombatState(attacker, this);
+			Defender = new UnitCombatState(defender, this);
+
+			if (attacker.IsAirUnit())
+			{
+				AttackType = AttackType.AirAttack;
+				AntiAirUnits = antiAirUnits.Select((Unit x) => new UnitCombatState(x, this)).ToList();
+				foreach (var unit in AntiAirUnits)
+					unit.SetDamage(unit.Unit.Type.Stats.AirAttack.Value);
+			}
+			else if (attacker.IsArtillery())
+				AttackType = AttackType.ArtilleryAttack;
+			else
+				AttackType = AttackType.GroundAttack;
+
+			// Calculate the outcome right away
+			Attack();
 		}
 
 		#endregion
@@ -55,27 +80,6 @@ namespace PanzerKontrol
 		#endregion
 
 		#region Generic internal functions
-
-		UnitCombat(Unit attacker, Unit defender, List<Unit> antiAirUnits, AttackType attackType, bool useRandomisedCombatEfficiency)
-		{
-			UseRandomisedCombatEfficiency = useRandomisedCombatEfficiency;
-			Generator = new NormalDistribution(GameConstants.CombatEfficiencyMean, GameConstants.CombatEfficiencyDeviation);
-
-			Attacker = new UnitCombatState(attacker, this);
-			Defender = new UnitCombatState(defender, this);
-
-			if (antiAirUnits != null)
-			{
-				AntiAirUnits = antiAirUnits.Select((Unit x) => new UnitCombatState(x, this)).ToList();
-				foreach (var unit in AntiAirUnits)
-					unit.SetDamage(unit.Unit.Type.Stats.AirAttack.Value);
-			}
-
-			AttackType = attackType;
-
-			// Calculate the outcome right away
-			Attack();
-		}
 
 		void Attack()
 		{
