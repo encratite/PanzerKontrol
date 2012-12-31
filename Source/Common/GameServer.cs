@@ -116,20 +116,20 @@ namespace PanzerKontrol
 
 		public CreateGameReply OnCreateGameRequest(GameServerClient client, CreateGameRequest request, out Faction faction, out Game game)
 		{
-			Map map = GetMap(request.MapConfiguration.Map);
+			Map map = GetMap(request.GameConfiguration.Map);
 			if (map == null)
 				throw new ClientException("No such map");
 			faction = GetFaction(request.Army.FactionId);
 			if (request.IsPrivate)
 			{
 				string privateKey = GeneratePrivateKey();
-				game = new Game(this, client, true, privateKey, request.MapConfiguration, Configuration.TimeConfiguration, map);
+				game = new Game(this, client, true, privateKey, request.GameConfiguration, map);
 				PrivateGames[privateKey] = game;
 				return new CreateGameReply(privateKey);
 			}
 			else
 			{
-				game = new Game(this, client, false, null, request.MapConfiguration, Configuration.TimeConfiguration, map);
+				game = new Game(this, client, false, null, request.GameConfiguration, map);
 				PublicGames[client.Name] = game;
 				return new CreateGameReply();
 			}
@@ -142,7 +142,7 @@ namespace PanzerKontrol
 			{
 				string ownerName = pair.Key;
 				Game game = pair.Value;
-				PublicGameInformation information = new PublicGameInformation(ownerName, game.MapConfiguration);
+				PublicGameInformation information = new PublicGameInformation(ownerName, game.GameConfiguration);
 				reply.Games.Add(information);
 			}
 			return reply;

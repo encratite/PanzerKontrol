@@ -13,8 +13,7 @@ namespace PanzerKontrol
 		public readonly bool IsPrivate;
 		public readonly string PrivateKey;
 
-		public readonly MapConfiguration MapConfiguration;
-		public readonly TimeConfiguration TimeConfiguration;
+		public readonly GameConfiguration GameConfiguration;
 
 		public readonly Map Map;
 
@@ -28,7 +27,7 @@ namespace PanzerKontrol
 		Random Generator;
 		GameServerClient ActivePlayer;
 
-		public Game(GameServer server, GameServerClient owner, bool isPrivate, string privateKey, MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, Map map)
+		public Game(GameServer server, GameServerClient owner, bool isPrivate, string privateKey, GameConfiguration gameConfiguration, Map map)
 		{
 			Server = server;
 
@@ -38,8 +37,7 @@ namespace PanzerKontrol
 			IsPrivate = isPrivate;
 			PrivateKey = privateKey;
 
-			MapConfiguration = mapConfiguration;
-			TimeConfiguration = timeConfiguration;
+			GameConfiguration = gameConfiguration;
 
 			Map = map;
 
@@ -92,12 +90,12 @@ namespace PanzerKontrol
 
 		public void StartDeploymentTimer()
 		{
-			StartTimer(TimeConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
+			StartTimer(GameConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
 		}
 
 		public void StartTurnTimer()
 		{
-			StartTimer(TimeConfiguration.TurnTime, () => OnTurnTimerExpiration(TurnCounter));
+			StartTimer(GameConfiguration.TurnTime, () => OnTurnTimerExpiration(TurnCounter));
 		}
 
 		public void NewTurn()

@@ -59,5 +59,15 @@ namespace PanzerKontrol
 			Hex = hex;
 			hex.Unit = this;
 		}
+
+		public double GetDamage(Unit target, bool attacking)
+		{
+			double hardness = target.Type.Hardness.Value;
+			double softness = 1 - hardness;
+			if(attacking)
+				return Stats.SoftAttack.Value * softness + Stats.HardAttack.Value * hardness;
+			else
+				return Stats.SoftDefence.Value * softness + Stats.HardDefence.Value * hardness;
+		}
 	}
 }

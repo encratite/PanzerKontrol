@@ -34,16 +34,12 @@ namespace PanzerKontrol
 		// They are separated in this way because they are also used for upgrades.
 		public UnitStats Stats { get; set; }
 
-		// The flags of this unit describe special properties/rules.
-		public List<UnitFlag> Flags { get; set; }
-
 		// Upgrades available for this type of unit.
 		public List<UnitUpgrade> Upgrades { get; set; }
 
 		public UnitType()
 		{
 			Stats = new UnitStats();
-			Flags = new List<UnitFlag>();
 			Upgrades = new List<UnitUpgrade>();
 		}
 

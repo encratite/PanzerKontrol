@@ -14,8 +14,6 @@ namespace PanzerKontrol
 		// Logical length, not physical length
 		public int MaximumNameLength { get; set; }
 
-		public TimeConfiguration TimeConfiguration { get; set; }
-
 		public GameServerConfiguration()
 		{
 			Address = "127.0.0.1";

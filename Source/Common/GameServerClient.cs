@@ -27,12 +27,6 @@ namespace PanzerKontrol
 
 	public class GameServerClient
 	{
-		// The ratio of points that are reserved for the hidden picking phase
-		const double HiddenPickPointRatio = 0.25;
-
-		// The ratio of unspent points lost upon entering the hidden picking phase
-		const double HiddenPickPointLossRatio = 0.5;
-
 		GameServer Server;
 		SslStream Stream;
 
@@ -175,7 +169,7 @@ namespace PanzerKontrol
 		{
 			ActiveGame = game;
 			PlayerHasDeployedArmy = false;
-			GameStart start = new GameStart(game.MapConfiguration, game.TimeConfiguration, GetBaseArmy(), Opponent.GetBaseArmy(), Opponent.Name, ReinforcementPoints.Value);
+			GameStart start = new GameStart(game.GameConfiguration, GetBaseArmy(), Opponent.GetBaseArmy(), Opponent.Name, ReinforcementPoints.Value);
 			QueueMessage(new ServerToClientMessage(start));
 			PlayerOpponent = game.GetOtherClient(this);
 		}
@@ -199,12 +193,6 @@ namespace PanzerKontrol
 		public Unit GetUnit(int id)
 		{
 			return Units.Find((Unit x) => x.Id == id);
-		}
-
-		public void ResetUnitsForNewTurn()
-		{
-			foreach (var unit in Units)
-				unit.ResetUnitForNewTurn();
 		}
 
 		public void MyTurn()
@@ -364,7 +352,7 @@ namespace PanzerKontrol
 				pointsSpent += unit.Points;
 				Units.Add(unit);
 			}
-			int pointsAvailable = ActiveGame.MapConfiguration.Points;
+			int pointsAvailable = ActiveGame.GameConfiguration.Points;
 			if (pointsSpent > pointsAvailable)
 				throw new ClientException("You have spent too many points");
 			ReinforcementPoints = (int)(reinforcementPointsPenaltyFactor * (pointsAvailable - pointsSpent) + reinforcementPointsBaseRatio * pointsAvailable);
@@ -382,6 +370,12 @@ namespace PanzerKontrol
 			PlayerOpponent = null;
 
 			Units = null;
+		}
+
+		void ResetUnitsForNewTurn()
+		{
+			foreach (var unit in Units)
+				unit.ResetUnitForNewTurn();
 		}
 
 		#endregion

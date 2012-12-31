@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -42,8 +43,12 @@ namespace PanzerKontrol
 		// Air units have no movement.
 		public int? Movement { get; set; }
 
+		// The flags of a unit describe special properties/rules.
+		public List<UnitFlag> Flags { get; set; }
+
 		public UnitStats()
 		{
+			Flags = new List<UnitFlag>();
 		}
 
 		public UnitStats Clone()
@@ -76,6 +81,7 @@ namespace PanzerKontrol
 			AntiAirRange = Add(AntiAirRange, stats.AntiAirRange);
 
 			Movement = Add(Movement, stats.Movement);
+			Flags.AddRange(stats.Flags);
 		}
 
 		int? Add(int? x, int? y)

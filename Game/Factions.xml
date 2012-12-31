@@ -17,8 +17,10 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
+            <Flags>
+              <UnitFlag>Infantry</UnitFlag>
+            </Flags>
           </Stats>
-          <Flags />
           <Upgrades>
             <Upgrade>
               <Name>Grenade launchers</Name>
@@ -42,8 +44,10 @@
             <HardDefence>4</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
+            <Flags>
+              <UnitFlag>Infantry</UnitFlag>
+            </Flags>
           </Stats>
-          <Flags />
           <Upgrades>
             <Upgrade>
               <Name>Recoilless rifles</Name>
@@ -77,8 +81,6 @@
             <BombardmentDefence>2</BombardmentDefence>
             <Movement>6</Movement>
           </Stats>
-          <Flags />
-          <Upgrades />
         </Unit>
         <Unit>
           <Name>Darga</Name>
@@ -93,11 +95,10 @@
             <BombardmentDefence>3</BombardmentDefence>
             <Range>3</Range>
             <Movement>3</Movement>
+            <Flags>
+              <UnitFlag>Artillery</UnitFlag>
+            </Flags>
           </Stats>
-          <Flags>
-            <UnitFlag>Artillery</UnitFlag>
-          </Flags>
-          <Upgrades />
         </Unit>
         <Unit>
           <Name>Noyan</Name>
@@ -115,7 +116,6 @@
             <AntiAirRange>3</AntiAirRange>
             <Movement>5</Movement>
           </Stats>
-          <Flags />
           <Upgrades>
             <Upgrade>
               <Name>Advanced search radar</Name>
@@ -145,8 +145,10 @@
             <HardDefence>3</HardDefence>
             <BombardmentDefence>3</BombardmentDefence>
             <Movement>3</Movement>
+            <Flags>
+              <UnitFlag>Infantry</UnitFlag>
+            </Flags>
           </Stats>
-          <Flags />
           <Upgrades>
             <Upgrade>
               <Name>Machine guns</Name>
@@ -181,6 +183,7 @@
             <Movement>3</Movement>
           </Stats>
           <Flags>
+            <UnitFlag>Infantry</UnitFlag>
             <UnitFlag>Engineers</UnitFlag>
           </Flags>
           <Upgrades>
@@ -191,6 +194,9 @@
               <Bonus>
                 <AirAttack>4</AirAttack>
                 <AntiAirRange>2</AntiAirRange>
+                <Flags>
+                  <UnitFlag>AntiAir</UnitFlag>
+                </Flags>
               </Bonus>
             </Upgrade>
           </Upgrades>
@@ -226,7 +232,6 @@
             <BombardmentDefence>5</BombardmentDefence>
             <Movement>5</Movement>
           </Stats>
-          <Flags />
           <Upgrades>
             <Upgrade>
               <Name>Flamethrowers</Name>
@@ -249,11 +254,10 @@
             <SoftAttack>5</SoftAttack>
             <HardAttack>4</HardAttack>
             <AntiAirDefence>3</AntiAirDefence>
+            <Flags>
+              <UnitFlag>Air</UnitFlag>
+            </Flags>
           </Stats>
-          <Flags>
-            <UnitFlag>Air</UnitFlag>
-          </Flags>
-          <Upgrades />
         </Unit>
       </Units>
     </Faction>

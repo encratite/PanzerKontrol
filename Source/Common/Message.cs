@@ -301,18 +301,18 @@ namespace PanzerKontrol
 		public bool IsPrivate;
 
 		[ProtoMember(3)]
-		public MapConfiguration MapConfiguration;
+		public GameConfiguration GameConfiguration;
 
-		public CreateGameRequest(BaseArmy army, bool isPrivate, MapConfiguration mapConfiguration)
+		public CreateGameRequest(BaseArmy army, bool isPrivate, GameConfiguration gameConfiguration)
 		{
 			Army = army;
 			IsPrivate = isPrivate;
-			MapConfiguration = mapConfiguration;
+			GameConfiguration = gameConfiguration;
 		}
 	}
 
 	[ProtoContract]
-	public class MapConfiguration
+	public class GameConfiguration
 	{
 		// This is a part of the filename of the map
 		[ProtoMember(1)]
@@ -322,27 +322,20 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public int Points;
 
-		public MapConfiguration(string map, int points)
+		// The number of seconds players are given to submit a deployment plan
+		[ProtoMember(3)]
+		public int DeploymentTime;
+
+		// The number of seconds players are given to finish a turn
+		[ProtoMember(4)]
+		public int TurnTime;
+
+		public GameConfiguration(string map, int points, int deploymentTime, int turnTime)
 		{
 			Map = map;
 			Points = points;
-		}
-	}
-
-	[ProtoContract]
-	public class TimeConfiguration
-	{
-		// In seconds
-		[ProtoMember(1)]
-		public int DeploymentTime;
-
-		[ProtoMember(2)]
-		public int TurnTime;
-
-		public TimeConfiguration()
-		{
-			DeploymentTime = 90;
-			TurnTime = 60;
+			DeploymentTime = deploymentTime;
+			TurnTime = turnTime;
 		}
 	}
 
@@ -370,12 +363,12 @@ namespace PanzerKontrol
 		public string Owner;
 
 		[ProtoMember(2)]
-		public MapConfiguration MapConfiguration;
+		public GameConfiguration GameConfiguration;
 
-		public PublicGameInformation(string owner, MapConfiguration mapConfiguration)
+		public PublicGameInformation(string owner, GameConfiguration gameConfiguration)
 		{
 			Owner = owner;
-			MapConfiguration = mapConfiguration;
+			GameConfiguration = gameConfiguration;
 		}
 	}
 
@@ -431,27 +424,23 @@ namespace PanzerKontrol
 	public class GameStart
 	{
 		[ProtoMember(1)]
-		public MapConfiguration MapConfiguration;
+		public GameConfiguration GameConfiguration;
 
 		[ProtoMember(2)]
-		public TimeConfiguration TimeConfiguration;
-
-		[ProtoMember(3)]
 		public BaseArmy MyArmy;
 
-		[ProtoMember(4)]
+		[ProtoMember(3)]
 		public BaseArmy EnemyArmy;
 
-		[ProtoMember(5)]
+		[ProtoMember(4)]
 		public string Opponent;
 
-		[ProtoMember(6)]
+		[ProtoMember(5)]
 		public int ReinforcementPoints;
 
-		public GameStart(MapConfiguration mapConfiguration, TimeConfiguration timeConfiguration, BaseArmy myArmy, BaseArmy enemyArmy, string opponent, int reinforcementPoints)
+		public GameStart(GameConfiguration gameConfiguration, BaseArmy myArmy, BaseArmy enemyArmy, string opponent, int reinforcementPoints)
 		{
-			MapConfiguration = mapConfiguration;
-			TimeConfiguration = timeConfiguration;
+			GameConfiguration = gameConfiguration;
 
 			MyArmy = myArmy;
 			EnemyArmy = enemyArmy;
