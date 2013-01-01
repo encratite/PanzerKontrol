@@ -20,6 +20,8 @@ namespace PanzerKontrol
 		public int MovementPoints;
 		public bool CanPerformAction;
 
+		public bool Entrenched;
+
 		public Unit(PlayerIdentifier owner, int id, UnitConfiguration configuration, GameServer server)
 		{
 			Owner = owner;
@@ -44,6 +46,8 @@ namespace PanzerKontrol
 			Hex = null;
 			Strength = 1.0;
 
+			Entrenched = false;
+
 			UpdateStats();
 
 			ResetUnitForNewTurn();
@@ -59,7 +63,10 @@ namespace PanzerKontrol
 		{
 			Hex = hex;
 			hex.Unit = this;
+			// Just for convenience on the first move
 			Deployed = true;
+			// Moving a unit breaks entrenchment
+			Entrenched = false;
 			// Need to update the stats because of the new terrain
 			UpdateStats();
 		}
@@ -94,6 +101,26 @@ namespace PanzerKontrol
 			return Strength > 0.0;
 		}
 
+		public bool CanEntrench()
+		{
+			return Stats.Flags.Contains(UnitFlag.Infantry) && MovementPoints == Stats.Movement && CanPerformAction;
+		}
+
+		public void Entrench()
+		{
+			Entrenched = true;
+			UpdateStats();
+		}
+
+		public void BreakEntrenchment()
+		{
+			if (Entrenched)
+			{
+				Entrenched = false;
+				UpdateStats();
+			}
+		}
+
 		void UpdateStats()
 		{
 			Stats = Type.Stats.Clone();
@@ -103,6 +130,15 @@ namespace PanzerKontrol
 			{
 				UnitStats terrainBonus = UnitCombat.GetTerrainBonus(Hex.Terrain);
 				Stats.Combine(terrainBonus);
+
+				if (Entrenched)
+				{
+					UnitStats entrenchmentBonus = new UnitStats();
+					entrenchmentBonus.SoftDefence = 1;
+					entrenchmentBonus.HardDefence = 1;
+					entrenchmentBonus.BombardmentDefence = 1;
+					Stats.Combine(entrenchmentBonus);
+				}
 			}
 		}
 	}

@@ -24,6 +24,8 @@ namespace PanzerKontrol
 		SubmitInitialDeployment,
 		// Move a unit
 		MoveUnit,
+		// Have a unit entrench
+		EntrenchUnit,
 		// Attack a unit
 		AttackUnit,
 		// Deploy a unit on the battlefield
@@ -66,6 +68,8 @@ namespace PanzerKontrol
 		NewTurn,
 		// A unit moved
 		UnitMove,
+		// A unit entrenched
+		UnitEntrenched,
 		// An attack occurred
 		UnitAttack,
 		// A unit was deployed,
@@ -131,9 +135,12 @@ namespace PanzerKontrol
 		public MoveUnitRequest MoveUnitRequest;
 
 		[ProtoMember(8, IsRequired = false)]
-		public AttackUnitRequest AttackUnitRequest;
+		public EntrenchUnit EntrenchUnit;
 
 		[ProtoMember(9, IsRequired = false)]
+		public AttackUnitRequest AttackUnitRequest;
+
+		[ProtoMember(10, IsRequired = false)]
 		public UnitDeployment UnitDeployment;
 
 		public ClientToServerMessage(ClientToServerMessageType type)
@@ -175,6 +182,12 @@ namespace PanzerKontrol
 		{
 			Type = ClientToServerMessageType.MoveUnit;
 			MoveUnitRequest = request;
+		}
+
+		public ClientToServerMessage(EntrenchUnit entrenchUnit)
+		{
+			Type = ClientToServerMessageType.EntrenchUnit;
+			EntrenchUnit = entrenchUnit;
 		}
 
 		public ClientToServerMessage(AttackUnitRequest request)
@@ -221,12 +234,15 @@ namespace PanzerKontrol
 		public UnitMove UnitMove;
 
 		[ProtoMember(10, IsRequired = false)]
-		public UnitAttack UnitAttack;
+		public EntrenchUnit EntrenchUnit;
 
 		[ProtoMember(11, IsRequired = false)]
-		public UnitDeployment UnitDeployment;
+		public UnitAttack UnitAttack;
 
 		[ProtoMember(12, IsRequired = false)]
+		public UnitDeployment UnitDeployment;
+
+		[ProtoMember(13, IsRequired = false)]
 		public GameEnd GameEnd;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
@@ -280,6 +296,12 @@ namespace PanzerKontrol
 		{
 			Type = ServerToClientMessageType.UnitMove;
 			UnitMove = move;
+		}
+
+		public ServerToClientMessage(EntrenchUnit entrenchUnit)
+		{
+			Type = ServerToClientMessageType.UnitEntrenched;
+			EntrenchUnit = entrenchUnit;
 		}
 
 		public ServerToClientMessage(UnitAttack attack)
@@ -742,6 +764,18 @@ namespace PanzerKontrol
 		{
 			AttackerCasualties = attackerCasualties;
 			DefenderCasualties = defenderCasualties;
+		}
+	}
+
+	[ProtoContract]
+	public class EntrenchUnit
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		public EntrenchUnit(int unitId)
+		{
+			UnitId = unitId;
 		}
 	}
 

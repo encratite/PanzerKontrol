@@ -282,6 +282,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.SubmitInitialDeployment] = OnSubmitInitialDeployment;
 			MessageHandlerMap[ClientToServerMessageType.MoveUnit] = OnMoveUnit;
+			MessageHandlerMap[ClientToServerMessageType.EntrenchUnit] = OnEntrenchUnit;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
 			MessageHandlerMap[ClientToServerMessageType.EndTurn] = OnEndTurn;
 			MessageHandlerMap[ClientToServerMessageType.Surrender] = OnSurrender;
@@ -294,6 +295,12 @@ namespace PanzerKontrol
 				SendQueue.Add(message);
 				SendEvent.Set();
 			}
+		}
+
+		void BroadcastMessage(ServerToClientMessage message)
+		{
+			QueueMessage(message);
+			Opponent.QueueMessage(message);
 		}
 
 		void SetExpectedMessageTypes(HashSet<ClientToServerMessageType> expectedMessageTypes)
@@ -551,7 +558,7 @@ namespace PanzerKontrol
 				throw new ClientException("Invalid move unit request");
 			Unit unit = GetUnit(request.UnitId);
 			if (unit == null)
-				throw new ClientException("Invalid unit ID in a move unit request");
+				throw new ClientException("Encountered an invalid unit ID in a move request");
 			if(!unit.Deployed)
 				throw new ClientException("Tried to move an undeployed unit");
 			var map = ActiveGame.Map;
@@ -563,9 +570,25 @@ namespace PanzerKontrol
 			Hex hex = map.GetHex(request.NewPosition);
 			unit.MoveToHex(hex);
 			UnitMove move = new UnitMove(unit.Id, newMovementPoints);
-			ServerToClientMessage moveMessage = new ServerToClientMessage(move);
-			QueueMessage(moveMessage);
-			Opponent.QueueMessage(moveMessage);
+			ServerToClientMessage confirmation = new ServerToClientMessage(move);
+			BroadcastMessage(confirmation);
+		}
+
+		void OnEntrenchUnit(ClientToServerMessage message)
+		{
+			EntrenchUnit entrenchUnit = message.EntrenchUnit;
+			if (entrenchUnit == null)
+				throw new ClientException("Invalid entrench unit request");
+			Unit unit = GetUnit(entrenchUnit.UnitId);
+			if (unit == null)
+				throw new ClientException("Encountered an invalid unit ID in a move request");
+			if (!unit.Deployed)
+				throw new ClientException("Tried to entrench an undeployed unit");
+			if(!unit.CanEntrench())
+				throw new ClientException("This unit cannot entrench");
+			unit.Entrench();
+			ServerToClientMessage confirmation = new ServerToClientMessage(entrenchUnit);
+			BroadcastMessage(confirmation);
 		}
 
 		void OnAttackUnit(ClientToServerMessage message)
@@ -599,6 +622,8 @@ namespace PanzerKontrol
 				outcome = new UnitCombat(attacker, defender, true);
 			}
 			attacker.CanPerformAction = false;
+			// Attacking a unit breaks entrenchment
+			attacker.BreakEntrenchment();
 			attacker.Strength = outcome.AttackerStrength;
 			defender.Strength = outcome.DefenderStrength;
 			if (!attacker.IsAlive())
@@ -607,10 +632,9 @@ namespace PanzerKontrol
 				Opponent.OnUnitDeath(defender);
 			UnitCasualties attackerCasualties = new UnitCasualties(attacker.Id, attacker.Strength);
 			UnitCasualties defenderCasualties = new UnitCasualties(defender.Id, defender.Strength);
-			UnitAttack report = new UnitAttack(attackerCasualties, defenderCasualties);
-			ServerToClientMessage attackMessage = new ServerToClientMessage(report);
-			QueueMessage(attackMessage);
-			Opponent.QueueMessage(attackMessage);
+			UnitAttack casualties = new UnitAttack(attackerCasualties, defenderCasualties);
+			ServerToClientMessage casualtyMessage = new ServerToClientMessage(casualties);
+			BroadcastMessage(casualtyMessage);
 		}
 
 		void OnDeployUnit(ClientToServerMessage message)
@@ -631,9 +655,8 @@ namespace PanzerKontrol
 			if (hex.Unit != null)
 				throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
 			unit.MoveToHex(hex);
-			ServerToClientMessage deploymentMessage = new ServerToClientMessage(deployment);
-			QueueMessage(deploymentMessage);
-			Opponent.QueueMessage(deploymentMessage);
+			ServerToClientMessage confirmation = new ServerToClientMessage(deployment);
+			BroadcastMessage(confirmation);
 		}
 
 		void OnEndTurn(ClientToServerMessage message)
