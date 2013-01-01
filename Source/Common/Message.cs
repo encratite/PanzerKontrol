@@ -76,10 +76,20 @@ namespace PanzerKontrol
 
 	public enum LoginReplyType
 	{
+		// The player has successfully logged onto the server
 		Success,
+		// The name chosen by the user is too long
 		NameTooLong,
+		// The name chosen by the user is already in use by another use
 		NameInUse,
+		// The version of the client is not compatible with that of the server
 		IncompatibleVersion,
+	}
+
+	public enum PlayerIdentifier
+	{
+		Player1,
+		Player2,
 	}
 
 	public enum GameOutcomeType
@@ -549,6 +559,19 @@ namespace PanzerKontrol
 					unitConfiguration.Upgrades.Add(upgrade.Id.Value);
 				Units.Add(unitConfiguration);
 			}
+		}
+	}
+
+	class PositionComparer : IEqualityComparer<Position>
+	{
+		public bool Equals(Position a, Position b)
+		{
+			return a.X == b.X && a.Y == b.Y;
+		}
+
+		public int GetHashCode(Position position)
+		{
+			return (position.X << 16) | position.Y;
 		}
 	}
 

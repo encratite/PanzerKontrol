@@ -53,6 +53,7 @@
     <Compile Include="GameServerClient.cs" />
     <Compile Include="Exception.cs" />
     <Compile Include="Faction.cs" />
+    <Compile Include="Hex.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="NormalDistribution.cs" />
     <Compile Include="OutputManager.cs" />

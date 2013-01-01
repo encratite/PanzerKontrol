@@ -13,6 +13,9 @@ namespace PanzerKontrol
 
 	class UnitCombat
 	{
+		// These are bonuses for defenders on certain terrain
+		static Dictionary<TerrainType, UnitStats> TerrainBonuses;
+
 		bool UseRandomisedCombatEfficiency;
 		NormalDistribution Generator;
 
@@ -75,6 +78,14 @@ namespace PanzerKontrol
 				return Generator.Get();
 			else
 				return GameConstants.CombatEfficiencyMean;
+		}
+
+		public static UnitStats GetTerrainBonus(TerrainType terrain)
+		{
+			UnitStats output;
+			if (!TerrainBonuses.TryGetValue(terrain, out output))
+				throw new Exception("Unknown terrain");
+			return output;
 		}
 
 		#endregion
@@ -153,6 +164,35 @@ namespace PanzerKontrol
 						Attacker.TakeDamage(antiAirDamage);
 					}
 				}
+			}
+		}
+
+		static void InitialiseTerrainBonuses()
+		{
+			if (TerrainBonuses == null)
+			{
+				UnitStats clear = new UnitStats();
+				UnitStats forest = new UnitStats();
+				forest.SoftDefence = 1;
+				forest.HardDefence = 1;
+				forest.BombardmentDefence = 2;
+				UnitStats mountain = new UnitStats();
+				mountain.SoftDefence = 2;
+				mountain.HardDefence = 2;
+				mountain.BombardmentDefence = 2;
+				UnitStats swamp = new UnitStats();
+				swamp.SoftDefence = 1;
+				swamp.HardDefence = 2;
+				UnitStats hill = new UnitStats();
+				forest.SoftDefence = 1;
+				forest.HardDefence = 1;
+
+				TerrainBonuses = new Dictionary<TerrainType, UnitStats>();
+				TerrainBonuses[TerrainType.Clear] = clear;
+				TerrainBonuses[TerrainType.Forest] = forest;
+				TerrainBonuses[TerrainType.Mountain] = mountain;
+				TerrainBonuses[TerrainType.Swamp] = swamp;
+				TerrainBonuses[TerrainType.Hill] = hill;
 			}
 		}
 

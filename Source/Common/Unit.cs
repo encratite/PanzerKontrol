@@ -9,8 +9,9 @@ namespace PanzerKontrol
 		public readonly Faction Faction;
 		public readonly UnitType Type;
 		public readonly List<UnitUpgrade> Upgrades;
-		public readonly UnitStats Stats;
 		public readonly int Points;
+
+		public UnitStats Stats;
 
 		public bool Deployed;
 		public Hex Hex;
@@ -27,7 +28,6 @@ namespace PanzerKontrol
 			Type = Faction.GetUnitType(configuration.UnitTypeId);
 			Upgrades = new List<UnitUpgrade>();
 			int points = Type.Points;
-			Stats = Type.Stats.Clone();
 			HashSet<int> SlotsOccupied = new HashSet<int>();
 			foreach (var upgradeId in configuration.Upgrades)
 			{
@@ -36,7 +36,6 @@ namespace PanzerKontrol
 					throw new ClientException("An upgrade slot was already occupied");
 				SlotsOccupied.Add(upgrade.Slot);
 				Upgrades.Add(upgrade);
-				Stats.Combine(upgrade.Effect);
 				points += upgrade.Points;
 			}
 			Points = points;
@@ -44,6 +43,8 @@ namespace PanzerKontrol
 			Deployed = false;
 			Hex = null;
 			Strength = 1.0;
+
+			UpdateStats();
 
 			ResetUnitForNewTurn();
 		}
@@ -59,6 +60,8 @@ namespace PanzerKontrol
 			Hex = hex;
 			hex.Unit = this;
 			Deployed = true;
+			// Need to update the stats because of the new terrain
+			UpdateStats();
 		}
 
 		public double GetDamage(Unit target, bool attacking)
@@ -89,6 +92,18 @@ namespace PanzerKontrol
 		public bool IsAlive()
 		{
 			return Strength > 0.0;
+		}
+
+		void UpdateStats()
+		{
+			Stats = Type.Stats.Clone();
+			foreach (var upgrade in Upgrades)
+				Stats.Combine(upgrade.Effect);
+			if (Deployed)
+			{
+				UnitStats terrainBonus = UnitCombat.GetTerrainBonus(Hex.Terrain);
+				Stats.Combine(terrainBonus);
+			}
 		}
 	}
 }
