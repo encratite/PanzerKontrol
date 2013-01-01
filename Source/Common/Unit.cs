@@ -42,15 +42,16 @@ namespace PanzerKontrol
 			}
 			Points = points;
 
-			Deployed = false;
 			Hex = null;
 			Strength = 1.0;
 
 			Entrenched = false;
 
 			UpdateStats();
-
 			ResetUnitForNewTurn();
+
+			// Only air units are automatically "deployed" since they don't need to be placed on the map
+			Deployed = Stats.Flags.Contains(UnitFlag.Air);
 		}
 
 		public void ResetUnitForNewTurn()
