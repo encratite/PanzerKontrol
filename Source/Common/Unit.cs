@@ -58,6 +58,7 @@ namespace PanzerKontrol
 		{
 			Hex = hex;
 			hex.Unit = this;
+			Deployed = true;
 		}
 
 		public double GetDamage(Unit target, bool attacking)

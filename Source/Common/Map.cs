@@ -123,6 +123,11 @@ namespace PanzerKontrol
 			return hex.Deployment != null && hex.Deployment.Value == player;
 		}
 
+		public List<Hex> GetDeploymentZone(PlayerIdentifier player)
+		{
+			return Hexes.FindAll((Hex x) => x.Deployment != null && x.Deployment.Value == player);
+		}
+
 		// This calculates a map of positions a unit can move to (keys) and how movement points are left after entering a hex (values)
 		public Dictionary<Position, int> CreateMovementMap(Unit unit)
 		{

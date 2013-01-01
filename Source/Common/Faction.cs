@@ -16,7 +16,7 @@ namespace PanzerKontrol
 		// The lore.
 		public string Description { get; set; }
 
-		// Units that may be purchased during the picking phase when playing this faction.
+		// Units that may be purchased when playing this faction.
 		public List<UnitType> Units { get; set; }
 
 		public Faction()

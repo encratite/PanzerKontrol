@@ -55,8 +55,8 @@ namespace PanzerKontrol
 		// Reinforcement points remaining for the current game
 		int? ReinforcementPoints;
 
-		// True if the player has submitted a deployment plan
-		bool? PlayerHasDeployedArmy;
+		// True if the player has performed their initial deployment
+		bool? PlayerHasSubmittedInitialDeployment;
 
 		// True if the player requested the first turn privilege
 		bool? PlayerRequestedFirstTurn;
@@ -104,11 +104,11 @@ namespace PanzerKontrol
 			}
 		}
 
-		public bool HasDeployedArmy
+		public bool HasSubmittedInitialDeployment
 		{
 			get
 			{
-				return PlayerHasDeployedArmy.Value;
+				return PlayerHasSubmittedInitialDeployment.Value;
 			}
 		}
 
@@ -175,7 +175,7 @@ namespace PanzerKontrol
 		public void OnGameStart(Game game)
 		{
 			ActiveGame = game;
-			PlayerHasDeployedArmy = false;
+			PlayerHasSubmittedInitialDeployment = false;
 			GameStart start = new GameStart(game.GameConfiguration, GetBaseArmy(), Opponent.GetBaseArmy(), Opponent.Name, ReinforcementPoints.Value);
 			QueueMessage(new ServerToClientMessage(start));
 			PlayerOpponent = game.GetOpponentOf(this);
@@ -208,10 +208,23 @@ namespace PanzerKontrol
 		{
 			return new BaseArmy(PlayerFaction, Units);
 		}
-
+		
 		public Unit GetUnit(int id)
 		{
 			return Units.Find((Unit x) => x.Id == id);
+		}
+
+		public List<UnitPosition> GetDeployment()
+		{
+			List<UnitPosition> output = new List<UnitPosition>();
+			foreach (var unit in Units)
+			{
+				if (!unit.Deployed)
+					continue;
+				UnitPosition unitPosition = new UnitPosition(unit.Id, unit.Hex.Position);
+				output.Add(unitPosition);
+			}
+			return output;
 		}
 
 		public void MyTurn()
@@ -220,7 +233,7 @@ namespace PanzerKontrol
 			NewTurn newTurn = new NewTurn(PlayerIdentifier.Value);
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
-			InGameState(GameStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.EndTurn);
+			InGameState(GameStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.DeployUnit, ClientToServerMessageType.EndTurn, ClientToServerMessageType.Surrender);
 		}
 
 		public void OpponenTurn()
@@ -229,20 +242,13 @@ namespace PanzerKontrol
 			NewTurn newTurn = new NewTurn(PlayerOpponent.PlayerIdentifier.Value);
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
-			InGameState(GameStateType.OpponentTurn);
+			InGameState(GameStateType.OpponentTurn, ClientToServerMessageType.Surrender);
 		}
 
 		public void SendDeploymentInformation()
 		{
-			DeploymentPlan plan = new DeploymentPlan(RequestedFirstTurn);
-			foreach (var unit in Units)
-			{
-				if (!unit.Deployed)
-					continue;
-				UnitPosition unitPosition = new UnitPosition(unit.Id, unit.Hex.Position);
-				plan.Units.Add(unitPosition);
-			}
-			Opponent.QueueMessage(new ServerToClientMessage(plan));
+			InitialDeployment deployment = new InitialDeployment(GetDeployment(), Opponent.GetDeployment());
+			QueueMessage(new ServerToClientMessage(deployment));
 		}
 
 		// Retrieve a list of anti-air units capable of protecting the target
@@ -274,7 +280,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.ViewPublicGamesRequest] = OnViewPublicGamesRequest;
 			MessageHandlerMap[ClientToServerMessageType.JoinGameRequest] = OnJoinGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
-			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
+			MessageHandlerMap[ClientToServerMessageType.SubmitInitialDeployment] = OnSubmitInitialDeployment;
 			MessageHandlerMap[ClientToServerMessageType.MoveUnit] = OnMoveUnit;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
 			MessageHandlerMap[ClientToServerMessageType.EndTurn] = OnEndTurn;
@@ -371,10 +377,10 @@ namespace PanzerKontrol
 
 		void InitialiseArmy(BaseArmy army)
 		{
-			const double reinforcementPointsPenaltyFactor = 0.5;
-			const double reinforcementPointsBaseRatio = 0.3;
-
 			Units = new List<Unit>();
+
+			if (army.Units.Count == 0)
+				throw new ClientException("You cannot play a game with an empty base army");
 
 			int pointsSpent = 0;
 			foreach (var unitConfiguration in army.Units)
@@ -386,7 +392,7 @@ namespace PanzerKontrol
 			int pointsAvailable = ActiveGame.GameConfiguration.Points;
 			if (pointsSpent > pointsAvailable)
 				throw new ClientException("You have spent too many points");
-			ReinforcementPoints = (int)(reinforcementPointsPenaltyFactor * (pointsAvailable - pointsSpent) + reinforcementPointsBaseRatio * pointsAvailable);
+			ReinforcementPoints = (int)(GameConstants.ReinforcementPointsPenaltyFactor * (pointsAvailable - pointsSpent) + GameConstants.ReinforcementPointsBaseRatio * pointsAvailable);
 		}
 
 		void ResetGameState()
@@ -395,7 +401,7 @@ namespace PanzerKontrol
 			ActiveGame = null;
 
 			ReinforcementPoints = null;
-			PlayerHasDeployedArmy = null;
+			PlayerHasSubmittedInitialDeployment = null;
 			PlayerRequestedFirstTurn = null;
 			PlayerIdentifier = null;
 			PlayerOpponent = null;
@@ -494,7 +500,7 @@ namespace PanzerKontrol
 			if (success)
 			{
 				PlayerIdentifier = PanzerKontrol.PlayerIdentifier.Player2;
-				InGameState(GameStateType.Deployment, ClientToServerMessageType.SubmitDeploymentPlan);
+				InGameState(GameStateType.Deployment, ClientToServerMessageType.SubmitInitialDeployment);
 			}
 			else
 			{
@@ -511,18 +517,18 @@ namespace PanzerKontrol
 			QueueMessage(reply);
 		}
 
-		void OnSubmitDeploymentPlan(ClientToServerMessage message)
+		void OnSubmitInitialDeployment(ClientToServerMessage message)
 		{
 			Map map = ActiveGame.Map;
-			DeploymentPlan plan = message.DeploymentPlan;
-			if (plan == null)
-				throw new ClientException("Invalid deployment plan submission");
-			foreach (var unitPosition in plan.Units)
+			InitialDeploymentSubmission deployment = message.InitialDeploymentSubmission;
+			if (deployment == null)
+				throw new ClientException("Invalid initial deployment");
+			foreach (var unitPosition in deployment.Units)
 			{
 				var position = unitPosition.Position;
 				Unit unit = GetUnit(unitPosition.UnitId);
 				if (unit == null)
-					throw new ClientException("Encountered an invalid unit ID in the deployment plan");
+					throw new ClientException("Encountered an invalid unit ID in the initial deployment");
 				if (unit.Deployed)
 					throw new ClientException("Tried to specify the position of a unit that has already been deployed");
 				if (!map.IsDeploymentZone(PlayerIdentifier.Value, position))
@@ -530,12 +536,11 @@ namespace PanzerKontrol
 				Hex hex = map.GetHex(unitPosition.Position);
 				if(hex.Unit != null)
 					throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
-				unit.Deployed = true;
 				unit.MoveToHex(hex);
 			}
-			PlayerRequestedFirstTurn = plan.RequestedFirstTurn;
-			PlayerHasDeployedArmy = true;
-			if (Opponent.HasDeployedArmy)
+			PlayerRequestedFirstTurn = deployment.RequestedFirstTurn;
+			PlayerHasSubmittedInitialDeployment = true;
+			if (Opponent.HasSubmittedInitialDeployment)
 				Game.StartGame();
 		}
 
@@ -570,16 +575,16 @@ namespace PanzerKontrol
 				throw new ClientException("Invalid attack unit request");
 			Unit attacker = GetUnit(request.AttackerUnitId);
 			if (attacker == null)
-				throw new ClientException("Invalid attacking unit ID in an attack unit request");
+				throw new ClientException("Encountered an invalid attacking unit ID in an attack request");
 			if (!attacker.Deployed)
 				throw new ClientException("Tried to attack with an undeployed unit");
 			Unit defender = Opponent.GetUnit(request.DefenderUnitId);
 			if (defender == null)
-				throw new ClientException("Invalid target unit ID in an attack unit request");
+				throw new ClientException("Encountered an invalid target unit ID in an attack request");
 			if (!defender.Deployed)
 				throw new ClientException("Tried to attack an undeployed unit");
 			if(!attacker.CanPerformAction)
-				throw new ClientException("This unit can't perform any more actions this turn");
+				throw new ClientException("This unit cannott perform any more actions this turn");
 			UnitCombat outcome;
 			if (attacker.IsAirUnit())
 			{
@@ -597,7 +602,7 @@ namespace PanzerKontrol
 			attacker.Strength = outcome.AttackerStrength;
 			defender.Strength = outcome.DefenderStrength;
 			if (!attacker.IsAlive())
-				Units.Remove(attacker);
+				OnUnitDeath(attacker);
 			if (!defender.IsAlive())
 				Opponent.OnUnitDeath(defender);
 			UnitCasualties attackerCasualties = new UnitCasualties(attacker.Id, attacker.Strength);
@@ -606,6 +611,29 @@ namespace PanzerKontrol
 			ServerToClientMessage attackMessage = new ServerToClientMessage(report);
 			QueueMessage(attackMessage);
 			Opponent.QueueMessage(attackMessage);
+		}
+
+		void OnDeployUnit(ClientToServerMessage message)
+		{
+			UnitDeployment deployment = message.UnitDeployment;
+			if (deployment == null)
+				throw new ClientException("Invalid unit deployment");
+			Unit unit = GetUnit(deployment.Unit.UnitId);
+			if (unit == null)
+				throw new ClientException("Encountered an invalid unit ID in a deployment request");
+			if (unit.Deployed)
+				throw new ClientException("Tried to deploy a unit that has already been deployed");
+			Hex hex = ActiveGame.Map.GetHex(deployment.Unit.Position);
+			if (hex == null)
+				throw new ClientException("Encountered an invalid deployment position in a deployment request");
+			if (hex.Deployment == null || hex.Deployment.Value != PlayerIdentifier)
+				throw new ClientException("Tried to deploy a unit outside the deployment zone");
+			if (hex.Unit != null)
+				throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
+			unit.MoveToHex(hex);
+			ServerToClientMessage deploymentMessage = new ServerToClientMessage(deployment);
+			QueueMessage(deploymentMessage);
+			Opponent.QueueMessage(deploymentMessage);
 		}
 
 		void OnEndTurn(ClientToServerMessage message)

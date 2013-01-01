@@ -20,12 +20,14 @@ namespace PanzerKontrol
 		// Cancel the offer for a game that was previously created with CreateGameRequest
 		// Zero data message
 		CancelGameRequest,
-		// Submit the deployment plan
-		SubmitDeploymentPlan,
+		// Submit the initial deployment plan
+		SubmitInitialDeployment,
 		// Move a unit
 		MoveUnit,
 		// Attack a unit
 		AttackUnit,
+		// Deploy a unit on the battlefield
+		DeployUnit,
 		// End the current turn
 		// Zero data message
 		EndTurn,
@@ -58,14 +60,16 @@ namespace PanzerKontrol
 		// The game is cancelled
 		// Zero data message
 		OpponentLeftGame,
-		// The deployment phase is over, the enemy deployment plan is revealed
-		EnemyDeployment,
+		// The initial deployment phase is over, the position of all units is revealed
+		InitialDeployment,
 		// A new turn starts
 		NewTurn,
 		// A unit moved
 		UnitMove,
 		// An attack occurred
 		UnitAttack,
+		// A unit was deployed,
+		UnitDeployment,
 		// A game ended
 		GameEnd,
 	}
@@ -111,13 +115,16 @@ namespace PanzerKontrol
 		public JoinGameRequest JoinGameRequest;
 
 		[ProtoMember(6, IsRequired = false)]
-		public DeploymentPlan DeploymentPlan;
+		public InitialDeploymentSubmission InitialDeploymentSubmission;
 
 		[ProtoMember(7, IsRequired = false)]
 		public MoveUnitRequest MoveUnitRequest;
 
 		[ProtoMember(8, IsRequired = false)]
 		public AttackUnitRequest AttackUnitRequest;
+
+		[ProtoMember(9, IsRequired = false)]
+		public UnitDeployment UnitDeployment;
 
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
@@ -148,10 +155,10 @@ namespace PanzerKontrol
 			JoinGameRequest = request;
 		}
 
-		public ClientToServerMessage(DeploymentPlan plan)
+		public ClientToServerMessage(InitialDeploymentSubmission deployment)
 		{
-			Type = ClientToServerMessageType.SubmitDeploymentPlan;
-			DeploymentPlan = plan;
+			Type = ClientToServerMessageType.SubmitInitialDeployment;
+			InitialDeploymentSubmission = deployment;
 		}
 
 		public ClientToServerMessage(MoveUnitRequest request)
@@ -164,6 +171,12 @@ namespace PanzerKontrol
 		{
 			Type = ClientToServerMessageType.AttackUnit;
 			AttackUnitRequest = request;
+		}
+
+		public ClientToServerMessage(UnitDeployment deployment)
+		{
+			Type = ClientToServerMessageType.DeployUnit;
+			UnitDeployment = deployment;
 		}
 	}
 
@@ -189,7 +202,7 @@ namespace PanzerKontrol
 		public GameStart GameStart;
 
 		[ProtoMember(7, IsRequired = false)]
-		public DeploymentPlan EnemeyDeploymentPlan;
+		public InitialDeployment InitialDeployment;
 
 		[ProtoMember(8, IsRequired = false)]
 		public NewTurn NewTurn;
@@ -198,9 +211,12 @@ namespace PanzerKontrol
 		public UnitMove UnitMove;
 
 		[ProtoMember(10, IsRequired = false)]
-		public UnitAttack AttackUnitReply;
+		public UnitAttack UnitAttack;
 
 		[ProtoMember(11, IsRequired = false)]
+		public UnitDeployment UnitDeployment;
+
+		[ProtoMember(12, IsRequired = false)]
 		public GameEnd GameEnd;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
@@ -238,10 +254,10 @@ namespace PanzerKontrol
 			GameStart = start;
 		}
 
-		public ServerToClientMessage(DeploymentPlan plan)
+		public ServerToClientMessage(InitialDeployment deployment)
 		{
-			Type = ServerToClientMessageType.EnemyDeployment;
-			EnemeyDeploymentPlan = plan;
+			Type = ServerToClientMessageType.InitialDeployment;
+			InitialDeployment = deployment;
 		}
 
 		public ServerToClientMessage(NewTurn newTurn)
@@ -259,7 +275,13 @@ namespace PanzerKontrol
 		public ServerToClientMessage(UnitAttack attack)
 		{
 			Type = ServerToClientMessageType.UnitAttack;
-			AttackUnitReply = attack;
+			UnitAttack = attack;
+		}
+
+		public ServerToClientMessage(UnitDeployment deployment)
+		{
+			Type = ServerToClientMessageType.UnitDeployment;
+			UnitDeployment = deployment;
 		}
 
 		public ServerToClientMessage(GameEnd end)
@@ -340,11 +362,11 @@ namespace PanzerKontrol
 		[ProtoMember(1)]
 		public string Map;
 
-		// The number of points that may be spent during the picking phase
+		// The number of points that may be spent on the base army
 		[ProtoMember(2)]
 		public int Points;
 
-		// The number of seconds players are given to submit a deployment plan
+		// The number of seconds players are given to submit an initial deployment
 		[ProtoMember(3)]
 		public int DeploymentTime;
 
@@ -575,9 +597,8 @@ namespace PanzerKontrol
 		}
 	}
 
-	// This data structure is not only used to submit one's own deployment but also to receive the deployment data of the enemy
 	[ProtoContract]
-	public class DeploymentPlan
+	public class InitialDeploymentSubmission
 	{
 		[ProtoMember(1)]
 		public bool RequestedFirstTurn;
@@ -585,10 +606,26 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public List<UnitPosition> Units;
 
-		public DeploymentPlan(bool requestedFirstTurn)
+		public InitialDeploymentSubmission(bool requestedFirstTurn)
 		{
 			RequestedFirstTurn = requestedFirstTurn;
 			Units = new List<UnitPosition>();
+		}
+	}
+
+	[ProtoContract]
+	public class InitialDeployment
+	{
+		[ProtoMember(1)]
+		public List<UnitPosition> MyUnits;
+
+		[ProtoMember(2)]
+		public List<UnitPosition> EnemyUnits;
+
+		public InitialDeployment(List<UnitPosition> myUnits, List<UnitPosition> enemyUnits)
+		{
+			MyUnits = myUnits;
+			EnemyUnits = enemyUnits;
 		}
 	}
 
@@ -682,6 +719,18 @@ namespace PanzerKontrol
 		{
 			AttackerCasualties = attackerCasualties;
 			DefenderCasualties = defenderCasualties;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitDeployment
+	{
+		[ProtoMember(1)]
+		public UnitPosition Unit;
+
+		public UnitDeployment(UnitPosition unit)
+		{
+			Unit = unit;
 		}
 	}
 

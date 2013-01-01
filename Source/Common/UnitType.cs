@@ -21,7 +21,7 @@ namespace PanzerKontrol
 		// A brief description of the purpose/type of this unit.
 		public string Description { get; set; }
 
-		// The cost of points of this unit during the picking phase.
+		// How many points this unit costs.
 		public int Points { get; set; }
 
 		// Particularly powerful units might have a limit per army.

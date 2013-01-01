@@ -1,11 +1,9 @@
-reject empty armies on joining
-force complete deployment on timer expiration
-remove deployment checks on moves/attacks/anti-air etc
 capturing hexes
 entrenchment
 supply
 purchasing units
 purchasing upgrades
 reinforcing units
-limit number of turns
-victory
+domination
+annihiliation
+initial deployment vs. reinforcement zones?
