@@ -68,17 +68,12 @@ namespace PanzerKontrol
 			}
 		}
 
-		public GameServerClient GetOtherClient(GameServerClient client)
+		public GameServerClient GetOpponentOf(GameServerClient client)
 		{
 			if (object.ReferenceEquals(Owner, client))
 				return Opponent;
 			else
 				return Owner;
-		}
-
-		public void GameOver()
-		{
-			GameIsOver = true;
 		}
 
 		public int GetUnitId()
@@ -104,7 +99,7 @@ namespace PanzerKontrol
 			if (TurnCounter > 0)
 				ActivePlayer = object.ReferenceEquals(Owner, ActivePlayer) ? Opponent : Owner;
 			TurnCounter++;
-			GameServerClient otherPlayer = GetOtherClient(ActivePlayer);
+			GameServerClient otherPlayer = GetOpponentOf(ActivePlayer);
 			ActivePlayer.MyTurn();
 			otherPlayer.OpponenTurn();
 			StartTurnTimer();
@@ -114,6 +109,13 @@ namespace PanzerKontrol
 		{
 			SendDeploymentInformation();
 			NewTurn();
+		}
+
+		public void EndGame(GameEnd end)
+		{
+			GameIsOver = true;
+			Owner.OnGameEnd(end);
+			Opponent.OnGameEnd(end);
 		}
 
 		public void SendDeploymentInformation()

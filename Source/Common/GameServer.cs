@@ -179,11 +179,6 @@ namespace PanzerKontrol
 			return true;
 		}
 
-		public void OnLeaveGameRequest(GameServerClient client)
-		{
-			LeaveGame(client);	
-		}
-
 		public void OnClientTermination(GameServerClient client)
 		{
 			Clients.Remove(client);
@@ -194,9 +189,15 @@ namespace PanzerKontrol
 					break;
 
 				case ClientStateType.InGame:
-					LeaveGame(client);
+					OnGameEnd(client.Game, GameOutcomeType.Desertion, client.Game.GetOpponentOf(client));
 					break;
 			}
+		}
+
+		public void OnGameEnd(Game game, GameOutcomeType outcome, GameServerClient winner = null)
+		{
+			ActiveGames.Remove(game);
+			game.EndGame(new GameEnd(outcome, winner));
 		}
 
 		#endregion
@@ -283,14 +284,6 @@ namespace PanzerKontrol
 				PrivateGames.Remove(game.Owner.Name);
 			else
 				PublicGames.Remove(game.PrivateKey);
-		}
-
-		void LeaveGame(GameServerClient client)
-		{
-			Game game = client.Game;
-			game.GameOver();
-			ActiveGames.Remove(game);
-			client.Opponent.OnOpponentLeftGame();
 		}
 
 		#endregion

@@ -1,10 +1,12 @@
+make SSL optional
+reject empty armies on joining
+force complete deployment on timer expiration
+remove deployment checks on moves/attacks/anti-air etc
 capturing hexes
 entrenchment
 supply
-late deployment
 purchasing units
 purchasing upgrades
 reinforcing units
-surrender
 limit number of turns
 victory

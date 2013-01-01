@@ -62,8 +62,8 @@ namespace PanzerKontrol
 		// True if the player requested the first turn privilege
 		bool? PlayerRequestedFirstTurn;
 
-		// Indicates the starting position of the player on the map
-		PlayerIdentifier? Identifier;
+		// A numeric identifier used in the messaging system
+		PlayerIdentifier? PlayerIdentifier;
 
 		// The opponent in the active game
 		GameServerClient PlayerOpponent;
@@ -129,6 +129,14 @@ namespace PanzerKontrol
 			}
 		}
 
+		public PlayerIdentifier Identifier
+		{
+			get
+			{
+				return PlayerIdentifier.Value;
+			}
+		}
+
 		#endregion
 
 		#region Construction and startup
@@ -171,7 +179,7 @@ namespace PanzerKontrol
 			PlayerHasDeployedArmy = false;
 			GameStart start = new GameStart(game.GameConfiguration, GetBaseArmy(), Opponent.GetBaseArmy(), Opponent.Name, ReinforcementPoints.Value);
 			QueueMessage(new ServerToClientMessage(start));
-			PlayerOpponent = game.GetOtherClient(this);
+			PlayerOpponent = game.GetOpponentOf(this);
 		}
 
 		public void OnOpponentLeftGame()
@@ -184,6 +192,13 @@ namespace PanzerKontrol
 		public void OnUnitDeath(Unit unit)
 		{
 			Units.Remove(unit);
+		}
+
+		public void OnGameEnd(GameEnd end)
+		{
+			LoggedInState();
+			ServerToClientMessage message = new ServerToClientMessage(end);
+			QueueMessage(message);
 		}
 
 		#endregion
@@ -203,7 +218,7 @@ namespace PanzerKontrol
 		public void MyTurn()
 		{
 			ResetUnitsForNewTurn();
-			NewTurn newTurn = new NewTurn(Identifier.Value);
+			NewTurn newTurn = new NewTurn(PlayerIdentifier.Value);
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
 			InGameState(GameStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.EndTurn);
@@ -212,7 +227,7 @@ namespace PanzerKontrol
 		public void OpponenTurn()
 		{
 			ResetUnitsForNewTurn();
-			NewTurn newTurn = new NewTurn(PlayerOpponent.Identifier.Value);
+			NewTurn newTurn = new NewTurn(PlayerOpponent.PlayerIdentifier.Value);
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
 			InGameState(GameStateType.OpponentTurn);
@@ -260,11 +275,11 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.ViewPublicGamesRequest] = OnViewPublicGamesRequest;
 			MessageHandlerMap[ClientToServerMessageType.JoinGameRequest] = OnJoinGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
-			MessageHandlerMap[ClientToServerMessageType.LeaveGameRequest] = OnLeaveGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.SubmitDeploymentPlan] = OnSubmitDeploymentPlan;
 			MessageHandlerMap[ClientToServerMessageType.MoveUnit] = OnMoveUnit;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
 			MessageHandlerMap[ClientToServerMessageType.EndTurn] = OnEndTurn;
+			MessageHandlerMap[ClientToServerMessageType.Surrender] = OnSurrender;
 		}
 
 		void QueueMessage(ServerToClientMessage message)
@@ -365,7 +380,7 @@ namespace PanzerKontrol
 			int pointsSpent = 0;
 			foreach (var unitConfiguration in army.Units)
 			{
-				Unit unit = new Unit(Identifier.Value, ActiveGame.GetUnitId(), unitConfiguration, Server);
+				Unit unit = new Unit(PlayerIdentifier.Value, ActiveGame.GetUnitId(), unitConfiguration, Server);
 				pointsSpent += unit.Points;
 				Units.Add(unit);
 			}
@@ -383,7 +398,7 @@ namespace PanzerKontrol
 			ReinforcementPoints = null;
 			PlayerHasDeployedArmy = null;
 			PlayerRequestedFirstTurn = null;
-			Identifier = null;
+			PlayerIdentifier = null;
 			PlayerOpponent = null;
 
 			Units = null;
@@ -424,7 +439,7 @@ namespace PanzerKontrol
 			ClientState = ClientStateType.InGame;
 			GameState = gameState;
 			var expectedMessageTypes = new HashSet<ClientToServerMessageType>(gameMessageTypes);
-			expectedMessageTypes.Add(ClientToServerMessageType.LeaveGameRequest);
+			expectedMessageTypes.Add(ClientToServerMessageType.Surrender);
 			SetExpectedMessageTypes(expectedMessageTypes);
 		}
 
@@ -460,7 +475,7 @@ namespace PanzerKontrol
 			InitialiseArmy(request.Army);
 			CreateGameReply reply = Server.OnCreateGameRequest(this, request, out PlayerFaction, out ActiveGame);
 			QueueMessage(new ServerToClientMessage(reply));
-			Identifier = PlayerIdentifier.Player1;
+			PlayerIdentifier = PanzerKontrol.PlayerIdentifier.Player1;
 			WaitingForOpponentState();
 		}
 
@@ -479,7 +494,7 @@ namespace PanzerKontrol
 			bool success = Server.OnJoinGameRequest(this, request);
 			if (success)
 			{
-				Identifier = PlayerIdentifier.Player2;
+				PlayerIdentifier = PanzerKontrol.PlayerIdentifier.Player2;
 				InGameState(GameStateType.Deployment, ClientToServerMessageType.SubmitDeploymentPlan);
 			}
 			else
@@ -497,14 +512,6 @@ namespace PanzerKontrol
 			QueueMessage(reply);
 		}
 
-		void OnLeaveGameRequest(ClientToServerMessage message)
-		{
-			Server.OnLeaveGameRequest(this);
-			LoggedInState();
-			ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.LeaveGameConfirmation);
-			QueueMessage(reply);
-		}
-
 		void OnSubmitDeploymentPlan(ClientToServerMessage message)
 		{
 			Map map = ActiveGame.Map;
@@ -519,7 +526,7 @@ namespace PanzerKontrol
 					throw new ClientException("Encountered an invalid unit ID in the deployment plan");
 				if (unit.Deployed)
 					throw new ClientException("Tried to specify the position of a unit that has already been deployed");
-				if (!map.IsDeploymentZone(Identifier.Value, position))
+				if (!map.IsDeploymentZone(PlayerIdentifier.Value, position))
 					throw new ClientException("Tried to deploy units outside the player's deployment zone");
 				Hex hex = map.GetHex(unitPosition.Position);
 				if(hex.Unit != null)
@@ -605,6 +612,11 @@ namespace PanzerKontrol
 		void OnEndTurn(ClientToServerMessage message)
 		{
 			Game.NewTurn();
+		}
+
+		void OnSurrender(ClientToServerMessage message)
+		{
+			Server.OnGameEnd(ActiveGame, GameOutcomeType.Surrender, Opponent);
 		}
 
 		#endregion

@@ -20,9 +20,6 @@ namespace PanzerKontrol
 		// Cancel the offer for a game that was previously created with CreateGameRequest
 		// Zero data message
 		CancelGameRequest,
-		// The client requests to leave a game it is currently in
-		// Zero data message
-		LeaveGameRequest,
 		// Submit the deployment plan
 		SubmitDeploymentPlan,
 		// Move a unit
@@ -32,6 +29,9 @@ namespace PanzerKontrol
 		// End the current turn
 		// Zero data message
 		EndTurn,
+		// The player wishes to surrender
+		// Zero data message
+		Surrender,
 	}
 
 	public enum ServerToClientMessageType
@@ -54,9 +54,6 @@ namespace PanzerKontrol
 		// The servers confirms that the offer for a game that was previously created with CreateGameRequest, is now cancelled
 		// Zero data message
 		CancelGameConfirmation,
-		// Confirm the LeaveGameRequest of the client
-		// Zero data message
-		LeaveGameConfirmation,
 		// The opponent has left the game
 		// The game is cancelled
 		// Zero data message
@@ -69,6 +66,8 @@ namespace PanzerKontrol
 		UnitMove,
 		// An attack occurred
 		UnitAttack,
+		// A game ended
+		GameEnd,
 	}
 
 	public enum LoginReplyType
@@ -77,6 +76,20 @@ namespace PanzerKontrol
 		NameTooLong,
 		NameInUse,
 		IncompatibleVersion,
+	}
+
+	public enum GameOutcomeType
+	{
+		// The maximum number of turns has been played and one of the players had more map control at the end of the game
+		Domination,
+		// One army was completely destroyed
+		Annihilation,
+		// A player surrendered
+		Surrender,
+		// A player forfeited the match by leaving the game
+		Desertion,
+		// The maximum number of turns has been played and both players controlled the same number of hexes at the end
+		Draw,
 	}
 
 	[ProtoContract]
@@ -187,6 +200,9 @@ namespace PanzerKontrol
 		[ProtoMember(10, IsRequired = false)]
 		public UnitAttack AttackUnitReply;
 
+		[ProtoMember(11, IsRequired = false)]
+		public GameEnd GameEnd;
+
 		public ServerToClientMessage(ServerToClientMessageType type)
 		{
 			Type = type;
@@ -244,6 +260,12 @@ namespace PanzerKontrol
 		{
 			Type = ServerToClientMessageType.UnitAttack;
 			AttackUnitReply = attack;
+		}
+
+		public ServerToClientMessage(GameEnd end)
+		{
+			Type = ServerToClientMessageType.GameEnd;
+			GameEnd = end;
 		}
 	}
 
@@ -660,6 +682,24 @@ namespace PanzerKontrol
 		{
 			AttackerCasualties = attackerCasualties;
 			DefenderCasualties = defenderCasualties;
+		}
+	}
+
+	[ProtoContract]
+	public class GameEnd
+	{
+		[ProtoMember(1)]
+		public GameOutcomeType Outcome;
+
+		// There isn't always a winner
+		[ProtoMember(2, IsRequired = false)]
+		public PlayerIdentifier? Winner;
+
+		public GameEnd(GameOutcomeType outcome, GameServerClient winner = null)
+		{
+			Outcome = outcome;
+			if (winner != null)
+				Winner = winner.Identifier;
 		}
 	}
 }
