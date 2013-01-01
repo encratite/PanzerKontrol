@@ -538,7 +538,7 @@ namespace PanzerKontrol
 					throw new ClientException("Encountered an invalid unit ID in the initial deployment");
 				if (unit.Deployed)
 					throw new ClientException("Tried to specify the position of a unit that has already been deployed");
-				if (!map.IsDeploymentZone(PlayerIdentifier.Value, position))
+				if (!map.IsInInitialDeploymentZone(PlayerIdentifier.Value, position))
 					throw new ClientException("Tried to deploy units outside the player's deployment zone");
 				Hex hex = map.GetHex(unitPosition.Position);
 				if(hex.Unit != null)
@@ -650,7 +650,7 @@ namespace PanzerKontrol
 			Hex hex = ActiveGame.Map.GetHex(deployment.Unit.Position);
 			if (hex == null)
 				throw new ClientException("Encountered an invalid deployment position in a deployment request");
-			if (hex.Deployment == null || hex.Deployment.Value != PlayerIdentifier)
+			if (hex.InitialDeploymentZone == null || hex.InitialDeploymentZone.Value != PlayerIdentifier)
 				throw new ClientException("Tried to deploy a unit outside the deployment zone");
 			if (hex.Unit != null)
 				throw new ClientException("Tried to deploy a unit on a hex that is already occupied");

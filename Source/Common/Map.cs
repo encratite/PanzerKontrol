@@ -41,15 +41,15 @@ namespace PanzerKontrol
 			return output;
 		}
 
-		public bool IsDeploymentZone(PlayerIdentifier player, Position position)
+		public bool IsInInitialDeploymentZone(PlayerIdentifier player, Position position)
 		{
 			Hex hex = GetHex(position);
-			return hex.Deployment != null && hex.Deployment.Value == player;
+			return hex.InitialDeploymentZone != null && hex.InitialDeploymentZone.Value == player;
 		}
 
-		public List<Hex> GetDeploymentZone(PlayerIdentifier player)
+		public List<Hex> GetInitialDeploymentZone(PlayerIdentifier player)
 		{
-			return Hexes.FindAll((Hex x) => x.Deployment != null && x.Deployment.Value == player);
+			return Hexes.FindAll((Hex x) => x.InitialDeploymentZone != null && x.InitialDeploymentZone.Value == player);
 		}
 
 		// This calculates a map of positions a unit can move to (keys) and how movement points are left after entering a hex (values)
