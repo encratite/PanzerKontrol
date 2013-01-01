@@ -24,6 +24,7 @@ namespace PanzerKontrol
 		const int PrivateKeyLength = 32;
 
 		GameServerConfiguration Configuration;
+		bool UseTLS;
 
 		bool ShuttingDown;
  
@@ -50,6 +51,7 @@ namespace PanzerKontrol
 			OutputManager = outputManager;
 
 			Configuration = configuration;
+			UseTLS = configuration.CertificatePath != null;
 
 			ShuttingDown = false;
 
@@ -57,7 +59,10 @@ namespace PanzerKontrol
 
 			IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(configuration.Address), configuration.Port);
 			Listener = new TcpListener(endpoint);
-			Certificate = new X509Certificate(configuration.CertificatePath);
+			if (UseTLS)
+				Certificate = new X509Certificate(configuration.CertificatePath);
+			else
+				Certificate = null;
 			Clients = new List<GameServerClient>();
 
 			LoadFactions();
@@ -75,10 +80,17 @@ namespace PanzerKontrol
 				Socket socket = Listener.AcceptSocket();
 				lock (this)
 				{
-					NetworkStream stream = new NetworkStream(socket);
-					SslStream secureStream = new SslStream(stream, false, AcceptAnyCertificate, null);
-					secureStream.AuthenticateAsServer(Certificate, false, SslProtocols.Tls12, false);
-					GameServerClient client = new GameServerClient(secureStream, this);
+					Stream clientStream;
+					NetworkStream networkStream = new NetworkStream(socket);
+					if (UseTLS)
+					{
+						SslStream secureStream = new SslStream(networkStream, false, AcceptAnyCertificate, null);
+						secureStream.AuthenticateAsServer(Certificate, false, SslProtocols.Tls12, false);
+						clientStream = secureStream;
+					}
+					else
+						clientStream = networkStream;
+					GameServerClient client = new GameServerClient(clientStream, this);
 					Clients.Add(client);
 				}
 			}

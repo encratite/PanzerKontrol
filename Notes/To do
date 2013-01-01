@@ -1,4 +1,3 @@
-make SSL optional
 reject empty armies on joining
 force complete deployment on timer expiration
 remove deployment checks on moves/attacks/anti-air etc

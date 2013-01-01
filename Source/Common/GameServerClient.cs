@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Security;
-using System.Net.Sockets;
+using System.IO;
 using System.Threading;
 
 using ProtoBuf;
@@ -28,7 +27,7 @@ namespace PanzerKontrol
 	public class GameServerClient
 	{
 		GameServer Server;
-		SslStream Stream;
+		Stream Stream;
 
 		Thread ReceivingThread;
 		Thread SendingThread;
@@ -141,7 +140,7 @@ namespace PanzerKontrol
 
 		#region Construction and startup
 
-		public GameServerClient(SslStream stream, GameServer server)
+		public GameServerClient(Stream stream, GameServer server)
 		{
 			Stream = stream;
 			Server = server;

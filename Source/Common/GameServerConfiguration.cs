@@ -6,6 +6,7 @@ namespace PanzerKontrol
 	{
 		public string Address { get; set; }
 		public int Port { get; set; }
+		// Optional
 		public string CertificatePath { get; set; }
 
 		public string FactionsPath { get; set; }
@@ -18,7 +19,7 @@ namespace PanzerKontrol
 		{
 			Address = "127.0.0.1";
 			Port = 45489;
-			CertificatePath = "ServerCertificate.pk12";
+			CertificatePath = null;
 			FactionsPath = "Factions.xml";
 			MapsPath = "Maps";
 
