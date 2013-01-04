@@ -473,7 +473,7 @@ namespace PanzerKontrol
 		[ProtoMember(3, IsRequired = false)]
 		public string Owner;
 
-		// Private games joined using the private key that was shared
+		// Private games are joined using the private key that was shared
 		[ProtoMember(4, IsRequired = false)]
 		public string PrivateKey;
 
