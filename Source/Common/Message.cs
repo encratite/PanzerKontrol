@@ -620,9 +620,19 @@ namespace PanzerKontrol
 			Y = y;
 		}
 
+		public bool SamePosition(Position otherPosition)
+		{
+			return X == otherPosition.X && Y == otherPosition.Y;
+		}
+
 		public static Position operator +(Position a, Position b)
 		{
 			return new Position(a.X + b.X, a.Y + b.Y);
+		}
+
+		public static Position operator -(Position a, Position b)
+		{
+			return new Position(a.X - b.X, a.Y - b.Y);
 		}
 	}
 

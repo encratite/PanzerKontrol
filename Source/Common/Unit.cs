@@ -76,10 +76,20 @@ namespace PanzerKontrol
 		{
 			double hardness = target.Type.Hardness.Value;
 			double softness = 1 - hardness;
-			if(attacking)
+			if (attacking)
 				return Stats.SoftAttack.Value * softness + Stats.HardAttack.Value * hardness;
 			else
-				return Stats.SoftDefence.Value * softness + Stats.HardDefence.Value * hardness;
+			{
+				int bonus = 0;
+				int hexOffsetIndex = Map.GetHexOffsetIndex(target.Hex, Hex);
+				RiverEdge riverEdge = Hex.RiverEdges[hexOffsetIndex];
+				if (riverEdge != null)
+				{
+					// Ground attacks across rivers cause defenders to receive a bonus
+					bonus = 1;
+				}
+				return (Stats.SoftDefence.Value + bonus) * softness + (Stats.HardDefence.Value + bonus) * hardness;
+			}
 		}
 
 		public bool IsArtillery()

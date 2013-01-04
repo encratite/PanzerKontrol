@@ -27,9 +27,13 @@ namespace PanzerKontrol
 		[XmlIgnore]
 		public Unit Unit;
 
+		[XmlIgnore]
+		public RiverEdge[] RiverEdges;
+
 		public Hex()
 		{
 			Unit = null;
+			RiverEdges = new RiverEdge[6];
 		}
 
 		static void InitialiseTerrainMovementMap()

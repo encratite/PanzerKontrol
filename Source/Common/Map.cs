@@ -1,8 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace PanzerKontrol
 {
+	public class RiverEdge
+	{
+		public bool IsBridge;
+
+		public Position Position1;
+		public Position Position2;
+
+		public RiverEdge()
+		{
+		}
+	}
+
 	public class Map
 	{
 		static Position[] HexOffsets =
@@ -24,6 +37,8 @@ namespace PanzerKontrol
 		public string Name;
 		public List<Hex> Hexes;
 
+		public List<RiverEdge> Rivers;
+
 		[XmlIgnore]
 		Dictionary<Position, Hex> PositionMap;
 
@@ -32,6 +47,15 @@ namespace PanzerKontrol
 			PositionMap = new Dictionary<Position, Hex>(new PositionComparer());
 			foreach (var hex in Hexes)
 				PositionMap[hex.Position] = hex;
+			foreach (var riverEdge in Rivers)
+			{
+				Hex hex1 = GetHex(riverEdge.Position1);
+				Hex hex2 = GetHex(riverEdge.Position2);
+				if (hex1 == null || hex2 == null)
+					throw new Exception("Encountered invalid river data in a map");
+				SetHexRiverData(hex1, hex2, riverEdge);
+				SetHexRiverData(hex2, hex1, riverEdge);
+			}
 		}
 
 		public Hex GetHex(Position position)
@@ -56,7 +80,7 @@ namespace PanzerKontrol
 		public Dictionary<Position, int> CreateMovementMap(Unit unit)
 		{
 			Dictionary<Position, int> map = new Dictionary<Position, int>(new PositionComparer());
-			CreateMovementMap(unit.Hex.Position, unit.MovementPoints, unit.Owner, ref map);
+			CreateMovementMap(unit, unit.Hex, unit.MovementPoints, unit.Owner, ref map);
 			// Remove all the hexes occupied by friendly units since those were only permitted for passing through
 			foreach (var position in map.Keys)
 			{
@@ -67,24 +91,51 @@ namespace PanzerKontrol
 			return map;
 		}
 
-		void CreateMovementMap(Position currentPosition, int movementPoints, PlayerIdentifier owner, ref Dictionary<Position, int> map)
+		void CreateMovementMap(Unit unit, Hex currentHex, int movementPoints, PlayerIdentifier owner, ref Dictionary<Position, int> map)
 		{
 			List<Hex> neighbours = new List<Hex>();
-			foreach (var offset in HexOffsets)
+			for(int i = 0; i < HexOffsets.Length; i++)
 			{
-				Position neighbourPosition = currentPosition + offset;
-				Hex neighbour = GetHex(neighbourPosition);
-				if (neighbour == null)
+				RiverEdge riverEdge = currentHex.RiverEdges[i];
+				Position offset = HexOffsets[i];
+				Position neighbourPosition = currentHex.Position + offset;
+				Hex neighbourHex = GetHex(neighbourPosition);
+				if (neighbourHex == null)
 				{
 					// This hex is not part of the map, skip it
 					continue;
 				}
-				if (neighbour.Unit != null && neighbour.Unit.Owner != owner)
+				if (neighbourHex.Unit != null && neighbourHex.Unit.Owner != owner)
 				{
 					// This hex is already occupied by an enemy unit, skip it
 					continue;
 				}
-				int newMovementPoints = movementPoints - neighbour.GetTerrainMovementPoints();
+				int terrainMovementPoints = neighbourHex.GetTerrainMovementPoints();
+				int movementPointsLost;
+				if (riverEdge != null && !riverEdge.IsBridge)
+				{
+					// It's a move across a river without a bridge
+					// This is only possible under special circumstances
+					// The unit must have its full movement points and it will lose all of them after the crossing
+					int maximumMovementPoints = unit.Stats.Movement.Value;
+					if (movementPoints < maximumMovementPoints)
+					{
+						// The unit had already moved so it can't cross the river
+						continue;
+					}
+					if (movementPoints < terrainMovementPoints)
+					{
+						// This is an extraordinarily rare case but it means that the unit can't cross the river because it couldn't enter the target terrain type, even if the river wasn't there
+						continue;
+					}
+					movementPointsLost = maximumMovementPoints;
+				}
+				else
+				{
+					// It's either a regular move without a river or a move across a bridge
+					movementPointsLost = terrainMovementPoints;
+				}
+				int newMovementPoints = movementPoints - movementPointsLost;
 				if (newMovementPoints < 0)
 				{
 					// The unit doesn't have enough movement points left to enter this hex
@@ -102,8 +153,23 @@ namespace PanzerKontrol
 				}
 				// Create or update the entry in the movement map
 				map[neighbourPosition] = newMovementPoints;
-				CreateMovementMap(neighbourPosition, newMovementPoints, owner, ref map);
+				CreateMovementMap(unit, neighbourHex, newMovementPoints, owner, ref map);
 			}
+		}
+
+		public static int GetHexOffsetIndex(Hex hex1, Hex hex2)
+		{
+			Position difference = hex2.Position - hex2.Position;
+			int index = Array.FindIndex(HexOffsets, (Position x) => x.SamePosition(difference));
+			if (index < 0)
+				throw new Exception("Encountered an invalid hex offset difference in a river edge pair");
+			return index;
+		}
+
+		void SetHexRiverData(Hex target, Hex neighbour, RiverEdge edge)
+		{
+			int index = GetHexOffsetIndex(target, neighbour);
+			target.RiverEdges[index] = edge;
 		}
 	}
 }
