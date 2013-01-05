@@ -446,7 +446,7 @@ namespace PanzerKontrol
 						}
 						foreach (var emptyRegionHex in capturedRegion)
 						{
-							pathHex.Owner = PlayerIdentifier.Value;
+							emptyRegionHex.Owner = PlayerIdentifier.Value;
 							move.Captures.Add(emptyRegionHex.Position);
 						}
 					}
