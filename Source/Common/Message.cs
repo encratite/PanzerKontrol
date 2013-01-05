@@ -815,7 +815,7 @@ namespace PanzerKontrol
 		[ProtoMember(2, IsRequired = false)]
 		public PlayerIdentifier? Winner;
 
-		public GameEnd(GameOutcomeType outcome, GameServerClient winner = null)
+		public GameEnd(GameOutcomeType outcome, ServerClient winner = null)
 		{
 			Outcome = outcome;
 			if (winner != null)

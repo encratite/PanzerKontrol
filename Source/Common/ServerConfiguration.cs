@@ -2,7 +2,7 @@
 
 namespace PanzerKontrol
 {
-	public class GameServerConfiguration
+	public class ServerConfiguration
 	{
 		public string Address { get; set; }
 		public int Port { get; set; }
@@ -15,7 +15,7 @@ namespace PanzerKontrol
 		// Logical length, not physical length
 		public int MaximumNameLength { get; set; }
 
-		public GameServerConfiguration()
+		public ServerConfiguration()
 		{
 			Address = "127.0.0.1";
 			Port = 45489;

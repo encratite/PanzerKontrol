@@ -13,7 +13,7 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
-	public class GameServer
+	public class Server
 	{
 		public const PrefixStyle Prefix = PrefixStyle.Fixed32BigEndian;
 
@@ -23,14 +23,14 @@ namespace PanzerKontrol
 
 		const int PrivateKeyLength = 32;
 
-		GameServerConfiguration Configuration;
+		ServerConfiguration Configuration;
 		bool UseTLS;
 
 		bool ShuttingDown;
  
 		TcpListener Listener;
 		X509Certificate Certificate;
-		List<GameServerClient> Clients;
+		List<ServerClient> Clients;
 
 		List<Faction> Factions;
 		List<Map> Maps;
@@ -46,7 +46,7 @@ namespace PanzerKontrol
 
 		#region Construction and startup
 
-		public GameServer(GameServerConfiguration configuration, OutputManager outputManager)
+		public Server(ServerConfiguration configuration, OutputManager outputManager)
 		{
 			OutputManager = outputManager;
 
@@ -63,7 +63,7 @@ namespace PanzerKontrol
 				Certificate = new X509Certificate(configuration.CertificatePath);
 			else
 				Certificate = null;
-			Clients = new List<GameServerClient>();
+			Clients = new List<ServerClient>();
 
 			LoadFactions();
 			LoadMaps();
@@ -90,7 +90,7 @@ namespace PanzerKontrol
 					}
 					else
 						clientStream = networkStream;
-					GameServerClient client = new GameServerClient(clientStream, this);
+					ServerClient client = new ServerClient(clientStream, this);
 					Clients.Add(client);
 				}
 			}
@@ -126,7 +126,7 @@ namespace PanzerKontrol
 			return reply;
 		}
 
-		public CreateGameReply OnCreateGameRequest(GameServerClient client, CreateGameRequest request, out Faction faction, out Game game)
+		public CreateGameReply OnCreateGameRequest(ServerClient client, CreateGameRequest request, out Faction faction, out Game game)
 		{
 			Map map = GetMap(request.GameConfiguration.Map);
 			if (map == null)
@@ -160,12 +160,12 @@ namespace PanzerKontrol
 			return reply;
 		}
 
-		public void OnCancelGameRequest(GameServerClient client)
+		public void OnCancelGameRequest(ServerClient client)
 		{
 			CancelGame(client);
 		}
 
-		public bool OnJoinGameRequest(GameServerClient client, JoinGameRequest request)
+		public bool OnJoinGameRequest(ServerClient client, JoinGameRequest request)
 		{
 			Game game;
 			if (request.IsPrivate)
@@ -191,7 +191,7 @@ namespace PanzerKontrol
 			return true;
 		}
 
-		public void OnClientTermination(GameServerClient client)
+		public void OnClientTermination(ServerClient client)
 		{
 			Clients.Remove(client);
 			switch (client.State)
@@ -206,7 +206,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public void OnGameEnd(Game game, GameOutcomeType outcome, GameServerClient winner = null)
+		public void OnGameEnd(Game game, GameOutcomeType outcome, ServerClient winner = null)
 		{
 			ActiveGames.Remove(game);
 			game.EndGame(new GameEnd(outcome, winner));
@@ -263,7 +263,7 @@ namespace PanzerKontrol
 
 		bool NameIsInUse(string name)
 		{
-			GameServerClient client = Clients.Find((GameServerClient x) => x.Name == name);
+			ServerClient client = Clients.Find((ServerClient x) => x.Name == name);
 			return client != null;
 		}
 
@@ -289,7 +289,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		void CancelGame(GameServerClient client)
+		void CancelGame(ServerClient client)
 		{
 			Game game = client.Game;
 			if (game.IsPrivate)

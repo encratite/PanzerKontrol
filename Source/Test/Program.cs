@@ -6,8 +6,8 @@ namespace Test
 	{
 		static void GenerateConfiguration()
 		{
-			var configuration = new GameServerConfiguration();
-			var serialiser = new Nil.Serialiser<GameServerConfiguration>("Configuration.xml");
+			var configuration = new ServerConfiguration();
+			var serialiser = new Nil.Serialiser<ServerConfiguration>("Configuration.xml");
 			serialiser.Store(configuration);
 		}
 

@@ -7,8 +7,8 @@ namespace PanzerKontrol
 	public class Game
 	{
 		delegate void GameTimerHandler();
-		public readonly GameServerClient Owner;
-		public GameServerClient Opponent;
+		public readonly ServerClient Owner;
+		public ServerClient Opponent;
 
 		public readonly bool IsPrivate;
 		public readonly string PrivateKey;
@@ -17,7 +17,7 @@ namespace PanzerKontrol
 
 		public readonly Map Map;
 
-		GameServer Server;
+		Server Server;
 
 		bool GameIsOver;
 
@@ -25,9 +25,9 @@ namespace PanzerKontrol
 		int TurnCounter;
 
 		Random Generator;
-		GameServerClient ActivePlayer;
+		ServerClient ActivePlayer;
 
-		public Game(GameServer server, GameServerClient owner, bool isPrivate, string privateKey, GameConfiguration gameConfiguration, Map map)
+		public Game(Server server, ServerClient owner, bool isPrivate, string privateKey, GameConfiguration gameConfiguration, Map map)
 		{
 			Server = server;
 
@@ -68,7 +68,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public GameServerClient GetOpponentOf(GameServerClient client)
+		public ServerClient GetOpponentOf(ServerClient client)
 		{
 			if (object.ReferenceEquals(Owner, client))
 				return Opponent;
@@ -99,7 +99,7 @@ namespace PanzerKontrol
 			if (TurnCounter > 0)
 				ActivePlayer = object.ReferenceEquals(Owner, ActivePlayer) ? Opponent : Owner;
 			TurnCounter++;
-			GameServerClient otherPlayer = GetOpponentOf(ActivePlayer);
+			ServerClient otherPlayer = GetOpponentOf(ActivePlayer);
 			ActivePlayer.MyTurn();
 			otherPlayer.OpponenTurn();
 			StartTurnTimer();
@@ -144,7 +144,7 @@ namespace PanzerKontrol
 
 		void SetRandomFirstTurn()
 		{
-			GameServerClient[] players = { Owner, Opponent };
+			ServerClient[] players = { Owner, Opponent };
 			ActivePlayer = players[Generator.Next(0, players.Length - 1)];
 		}
 

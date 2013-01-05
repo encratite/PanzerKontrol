@@ -11,7 +11,7 @@ namespace PanzerKontrol
 		AirAttack,
 	}
 
-	class UnitCombat
+	class Combat
 	{
 		// These are bonuses for defenders on certain terrain
 		static Dictionary<TerrainType, UnitStats> TerrainBonuses;
@@ -44,7 +44,7 @@ namespace PanzerKontrol
 
 		#region Constructors
 
-		public UnitCombat(Unit attacker, Unit defender, bool useRandomisedCombatEfficiency, List<Unit> antiAirUnits = null)
+		public Combat(Unit attacker, Unit defender, bool useRandomisedCombatEfficiency, List<Unit> antiAirUnits = null)
 		{
 			UseRandomisedCombatEfficiency = useRandomisedCombatEfficiency;
 			Generator = new NormalDistribution(GameConstants.CombatEfficiencyMean, GameConstants.CombatEfficiencyDeviation);

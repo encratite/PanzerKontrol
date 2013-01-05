@@ -28,7 +28,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public UnitCombatState(Unit unit, UnitCombat combat)
+		public UnitCombatState(Unit unit, Combat combat)
 		{
 			Unit = unit;
 			UnitStrength = unit.Strength;

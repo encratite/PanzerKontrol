@@ -24,9 +24,9 @@ namespace PanzerKontrol
 
 	delegate void MessageHandler(ClientToServerMessage message);
 
-	public class GameServerClient
+	public class ServerClient
 	{
-		GameServer Server;
+		Server Server;
 		Stream Stream;
 
 		Thread ReceivingThread;
@@ -65,7 +65,7 @@ namespace PanzerKontrol
 		PlayerIdentifier? PlayerIdentifier;
 
 		// The opponent in the active game
-		GameServerClient PlayerOpponent;
+		ServerClient PlayerOpponent;
 
 		// Units remaining
 		List<Unit> Units;
@@ -120,7 +120,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public GameServerClient Opponent
+		public ServerClient Opponent
 		{
 			get
 			{
@@ -140,7 +140,7 @@ namespace PanzerKontrol
 
 		#region Construction and startup
 
-		public GameServerClient(Stream stream, GameServer server)
+		public ServerClient(Stream stream, Server server)
 		{
 			Stream = stream;
 			Server = server;
@@ -322,7 +322,7 @@ namespace PanzerKontrol
 
 		void ReceiveMessages()
 		{
-			var enumerator = Serializer.DeserializeItems<ClientToServerMessage>(Stream, GameServer.Prefix, 0);
+			var enumerator = Serializer.DeserializeItems<ClientToServerMessage>(Stream, Server.Prefix, 0);
 			foreach (var message in enumerator)
 			{
 				try
@@ -363,7 +363,7 @@ namespace PanzerKontrol
 					SendEvent.Reset();
 				}
 				foreach (var message in queue)
-					Serializer.SerializeWithLengthPrefix<ServerToClientMessage>(Stream, message, GameServer.Prefix);
+					Serializer.SerializeWithLengthPrefix<ServerToClientMessage>(Stream, message, Server.Prefix);
 			}
 		}
 
@@ -640,19 +640,19 @@ namespace PanzerKontrol
 			if (!defender.Deployed)
 				throw new ClientException("Tried to attack an undeployed unit");
 			if(!attacker.CanPerformAction)
-				throw new ClientException("This unit cannott perform any more actions this turn");
-			UnitCombat outcome;
+				throw new ClientException("This unit cannot perform any more actions this turn");
+			Combat outcome;
 			if (attacker.IsAirUnit())
 			{
 				List<Unit> antiAirUnits = Opponent.GetAntiAirUnits(defender);
-				outcome = new UnitCombat(attacker, defender, true, antiAirUnits);
+				outcome = new Combat(attacker, defender, true, antiAirUnits);
 			}
 			else
 			{
 				int distance = attacker.Hex.GetDistance(defender.Hex);
 				if(distance > attacker.Stats.Range)
 					throw new ClientException("The target is out of range");
-				outcome = new UnitCombat(attacker, defender, true);
+				outcome = new Combat(attacker, defender, true);
 			}
 			attacker.CanPerformAction = false;
 			// Attacking a unit breaks entrenchment

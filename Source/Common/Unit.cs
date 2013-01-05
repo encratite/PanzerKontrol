@@ -22,7 +22,7 @@ namespace PanzerKontrol
 
 		public bool Entrenched;
 
-		public Unit(PlayerIdentifier owner, int id, UnitConfiguration configuration, GameServer server)
+		public Unit(PlayerIdentifier owner, int id, UnitConfiguration configuration, Server server)
 		{
 			Owner = owner;
 			Id = id;
@@ -139,7 +139,7 @@ namespace PanzerKontrol
 				Stats.Combine(upgrade.Effect);
 			if (Deployed)
 			{
-				UnitStats terrainBonus = UnitCombat.GetTerrainBonus(Hex.Terrain);
+				UnitStats terrainBonus = Combat.GetTerrainBonus(Hex.Terrain);
 				Stats.Combine(terrainBonus);
 
 				if (Entrenched)
