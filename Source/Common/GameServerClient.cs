@@ -563,13 +563,19 @@ namespace PanzerKontrol
 				throw new ClientException("Tried to move an undeployed unit");
 			var map = ActiveGame.Map;
 			var movementMap = map.CreateMovementMap(unit);
-			int newMovementPoints;
-			if (!movementMap.TryGetValue(request.NewPosition, out newMovementPoints))
+			Path pathUsed;
+			if (!movementMap.TryGetValue(request.NewPosition, out pathUsed))
 				throw new ClientException("The unit can't reach the specified hex");
-			unit.MovementPoints = newMovementPoints;
+			unit.MovementPoints = pathUsed.MovementPointsLeft;
 			Hex hex = map.GetHex(request.NewPosition);
 			unit.MoveToHex(hex);
-			UnitMove move = new UnitMove(unit.Id, newMovementPoints);
+			UnitMove move = new UnitMove(unit.Id, pathUsed.MovementPointsLeft);
+			// Capture hexes
+			foreach (var capturedHex in pathUsed.Hexes)
+			{
+				capturedHex.Owner = PlayerIdentifier;
+				move.Captures.Add(capturedHex.Position);
+			}
 			ServerToClientMessage confirmation = new ServerToClientMessage(move);
 			BroadcastMessage(confirmation);
 		}
@@ -652,6 +658,8 @@ namespace PanzerKontrol
 				throw new ClientException("Encountered an invalid deployment position in a deployment request");
 			if (hex.InitialDeploymentZone == null || hex.InitialDeploymentZone.Value != PlayerIdentifier)
 				throw new ClientException("Tried to deploy a unit outside the deployment zone");
+			if (hex.Owner == null || hex.Owner.Value != PlayerIdentifier)
+				throw new ClientException("Tried to deploy a unit in a deployment zone that is currently not controlled by the player");
 			if (hex.Unit != null)
 				throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
 			unit.MoveToHex(hex);

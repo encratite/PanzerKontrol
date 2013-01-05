@@ -722,10 +722,14 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public int RemainingMovementPoints;
 
+		[ProtoMember(3)]
+		public List<Position> Captures;
+
 		public UnitMove(int unitId, int remainingMovementPoints)
 		{
 			UnitId = unitId;
 			RemainingMovementPoints = remainingMovementPoints;
+			Captures = new List<Position>();
 		}
 	}
 

@@ -19,10 +19,15 @@ namespace PanzerKontrol
 
 		public Position Position;
 		public TerrainType Terrain;
+
 		// This hex is part of a player's initial deployment zone iff Deployment != null
 		public PlayerIdentifier? InitialDeploymentZone;
+
 		// This hex is part of a player's reinforcement zone iff Reinforcement != null
 		public PlayerIdentifier? ReinforcementZone;
+
+		// Players compete for control of the map and the initial ownership is also stored in the map data.
+		public PlayerIdentifier? Owner;
 
 		[XmlIgnore]
 		public Unit Unit;

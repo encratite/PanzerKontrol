@@ -16,6 +16,26 @@ namespace PanzerKontrol
 		}
 	}
 
+	public class Path
+	{
+		public List<Hex> Hexes;
+		public int MovementPointsLeft;
+
+		public Path(int movementPointsLeft)
+		{
+			Hexes = new List<Hex>();
+			MovementPointsLeft = movementPointsLeft;
+		}
+
+		public Path(Path currentPath, Hex newHex, int movementPointsLeft)
+		{
+			Hexes = new List<Hex>();
+			Hexes.AddRange(currentPath.Hexes);
+			Hexes.Add(newHex);
+			MovementPointsLeft = movementPointsLeft;
+		}
+	}
+
 	public class Map
 	{
 		static Position[] HexOffsets =
@@ -76,11 +96,12 @@ namespace PanzerKontrol
 			return Hexes.FindAll((Hex x) => x.InitialDeploymentZone != null && x.InitialDeploymentZone.Value == player);
 		}
 
-		// This calculates a map of positions a unit can move to (keys) and how movement points are left after entering a hex (values)
-		public Dictionary<Position, int> CreateMovementMap(Unit unit)
+		// This calculates a map of positions a unit can move to (keys) and best paths discovered (values)
+		public Dictionary<Position, Path> CreateMovementMap(Unit unit)
 		{
-			Dictionary<Position, int> map = new Dictionary<Position, int>(new PositionComparer());
-			CreateMovementMap(unit, unit.Hex, unit.MovementPoints, unit.Owner, ref map);
+			var map = new Dictionary<Position, Path>(new PositionComparer());
+			Path path = new Path(unit.MovementPoints);
+			CreateMovementMap(unit, unit.Hex, path, unit.Owner, ref map);
 			// Remove all the hexes occupied by friendly units since those were only permitted for passing through
 			foreach (var position in map.Keys)
 			{
@@ -91,7 +112,7 @@ namespace PanzerKontrol
 			return map;
 		}
 
-		void CreateMovementMap(Unit unit, Hex currentHex, int movementPoints, PlayerIdentifier owner, ref Dictionary<Position, int> map)
+		void CreateMovementMap(Unit unit, Hex currentHex, Path currentPath, PlayerIdentifier owner, ref Dictionary<Position, Path> map)
 		{
 			List<Hex> neighbours = new List<Hex>();
 			for(int i = 0; i < HexOffsets.Length; i++)
@@ -118,12 +139,12 @@ namespace PanzerKontrol
 					// This is only possible under special circumstances
 					// The unit must have its full movement points and it will lose all of them after the crossing
 					int maximumMovementPoints = unit.Stats.Movement.Value;
-					if (movementPoints < maximumMovementPoints)
+					if (currentPath.MovementPointsLeft < maximumMovementPoints)
 					{
 						// The unit had already moved so it can't cross the river
 						continue;
 					}
-					if (movementPoints < terrainMovementPoints)
+					if (currentPath.MovementPointsLeft < terrainMovementPoints)
 					{
 						// This is an extraordinarily rare case but it means that the unit can't cross the river because it couldn't enter the target terrain type, even if the river wasn't there
 						continue;
@@ -135,25 +156,26 @@ namespace PanzerKontrol
 					// It's either a regular move without a river or a move across a bridge
 					movementPointsLost = terrainMovementPoints;
 				}
-				int newMovementPoints = movementPoints - movementPointsLost;
+				int newMovementPoints = currentPath.MovementPointsLeft - movementPointsLost;
 				if (newMovementPoints < 0)
 				{
 					// The unit doesn't have enough movement points left to enter this hex
 					continue;
 				}
-				int previousMovementPoints;
-				if (map.TryGetValue(neighbourPosition, out previousMovementPoints))
+				Path previousPath;
+				if (map.TryGetValue(neighbourPosition, out previousPath))
 				{
 					// This neighbouring hex was already analysed by a previous recursive call to this function, check if we can even improve on what it calculated
-					if (previousMovementPoints <= newMovementPoints)
+					if (previousPath.MovementPointsLeft <= newMovementPoints)
 					{
 						// The solution is inferior or just as good, skip it
 						continue;
 					}
 				}
 				// Create or update the entry in the movement map
-				map[neighbourPosition] = newMovementPoints;
-				CreateMovementMap(unit, neighbourHex, newMovementPoints, owner, ref map);
+				Path newPath = new Path(currentPath, neighbourHex, newMovementPoints);
+				map[neighbourPosition] = newPath;
+				CreateMovementMap(unit, neighbourHex, newPath, owner, ref map);
 			}
 		}
 

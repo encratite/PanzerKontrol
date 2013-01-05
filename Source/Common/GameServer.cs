@@ -272,7 +272,7 @@ namespace PanzerKontrol
 			string output = "";
 			while (output.Length < length)
 			{
-				output += Path.GetRandomFileName();
+				output += System.IO.Path.GetRandomFileName();
 				output = output.Replace(".", "");
 			}
 			output = output.Substring(0, length);
