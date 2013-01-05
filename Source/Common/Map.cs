@@ -38,7 +38,7 @@ namespace PanzerKontrol
 
 	public class Map
 	{
-		static Position[] HexOffsets =
+		public static Position[] HexOffsets =
 		{
 			// Northwest
 			new Position(0, -1),
@@ -114,7 +114,6 @@ namespace PanzerKontrol
 
 		void CreateMovementMap(Unit unit, Hex currentHex, Path currentPath, PlayerIdentifier owner, ref Dictionary<Position, Path> map)
 		{
-			List<Hex> neighbours = new List<Hex>();
 			for(int i = 0; i < HexOffsets.Length; i++)
 			{
 				RiverEdge riverEdge = currentHex.RiverEdges[i];
@@ -192,6 +191,64 @@ namespace PanzerKontrol
 		{
 			int index = GetHexOffsetIndex(target, neighbour);
 			target.RiverEdges[index] = edge;
+		}
+
+		public List<Hex> GetIndirectlyCapturedRegion(Hex seed, PlayerIdentifier conqueror)
+		{
+			if (seed.Owner == conqueror)
+			{
+				// This can't be the seed of an empty region as it is already owned by the player
+				return null;
+			}
+			List<Hex> capturedRegion = new List<Hex>();
+			// Initially only the seed is virtually captured
+			capturedRegion.Add(seed);
+			HashSet<Hex> scannedHexes = new HashSet<Hex>(new HexComparer());
+			// Perform depth-first search to determine the size of the region
+			if (IsValidIndirectCapture(seed, conqueror, ref capturedRegion, ref scannedHexes))
+				return capturedRegion;
+			else
+				return null;
+		}
+
+		bool IsValidIndirectCapture(Hex currentHex, PlayerIdentifier conqueror, ref List<Hex> capturedRegion, ref HashSet<Hex> scannedHexes)
+		{
+			foreach (var offset in HexOffsets)
+			{
+				Position neighbourPosition = currentHex.Position + offset;
+				Hex neighbourHex = GetHex(neighbourPosition);
+				if (neighbourHex == null)
+				{
+					// Hit the edge of the map, neighbour does not exist
+					continue;
+				}
+				if(scannedHexes.Contains(neighbourHex))
+				{
+					// This hex has already been scanned
+					continue;
+				}
+				scannedHexes.Add(neighbourHex);
+				if (neighbourHex.Owner == conqueror)
+				{
+					// This hex is already owned by the player
+					continue;
+				}
+				if (neighbourHex.Unit != null)
+				{
+					// An enemy unit is occupying a hex in this region so it can't be captured
+					return false;
+				}
+				if (scannedHexes.Count >= GameConstants.IndirectCaptureLimit)
+				{
+					// This hex passed the criteria but the region is already too large to be captured indirectly
+					return false;
+				}
+				capturedRegion.Add(neighbourHex);
+				bool isEmptyRegion = IsValidIndirectCapture(neighbourHex, conqueror, ref capturedRegion, ref scannedHexes);
+				if (!isEmptyRegion)
+					return false;
+			}
+			return true;
 		}
 	}
 }

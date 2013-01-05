@@ -15,5 +15,6 @@
 		public const double BombardmentEfficiencyMinimum = 0.3;
 		public const double BombardmentAttacks = 25;
 		public const double AntiAirEfficiencyMinimum = 0.5;
+		public const int IndirectCaptureLimit = 3;
 	}
 }

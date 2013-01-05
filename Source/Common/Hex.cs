@@ -13,6 +13,26 @@ namespace PanzerKontrol
 		Hill,
 	}
 
+	public class HexComparer : IEqualityComparer<Hex>
+	{
+		PositionComparer Comparer;
+
+		public HexComparer()
+		{
+			Comparer = new PositionComparer();
+		}
+
+		public bool Equals(Hex a, Hex b)
+		{
+			return Comparer.Equals(a.Position, b.Position);
+		}
+
+		public int GetHashCode(Hex hex)
+		{
+			return Comparer.GetHashCode(hex.Position);
+		}
+	}
+
 	public class Hex
 	{
 		static Dictionary<TerrainType, int> TerrainMovementMap;

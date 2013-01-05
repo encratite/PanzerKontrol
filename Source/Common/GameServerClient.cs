@@ -422,6 +422,38 @@ namespace PanzerKontrol
 				unit.ResetUnitForNewTurn();
 		}
 
+		void CaptureHexes(Path path, UnitMove move)
+		{
+			var map = ActiveGame.Map;
+			// Capture hexes
+			foreach (var pathHex in path.Hexes)
+			{
+				if (pathHex.Owner != PlayerIdentifier.Value)
+				{
+					// Direct capture
+					pathHex.Owner = PlayerIdentifier.Value;
+					move.Captures.Add(pathHex.Position);
+					// Check for indirect captures
+					foreach (var offset in Map.HexOffsets)
+					{
+						Position neighbourPosition = pathHex.Position + offset;
+						Hex neighbourHex = map.GetHex(neighbourPosition);
+						List<Hex> capturedRegion = map.GetIndirectlyCapturedRegion(neighbourHex, PlayerIdentifier.Value);
+						if (capturedRegion == null)
+						{
+							// No region to capture could be found
+							continue;
+						}
+						foreach (var emptyRegionHex in capturedRegion)
+						{
+							pathHex.Owner = PlayerIdentifier.Value;
+							move.Captures.Add(emptyRegionHex.Position);
+						}
+					}
+				}
+			}
+		}
+
 		#endregion
 
 		#region Client/game state modifiers and expected message type modifiers
@@ -570,12 +602,7 @@ namespace PanzerKontrol
 			Hex hex = map.GetHex(request.NewPosition);
 			unit.MoveToHex(hex);
 			UnitMove move = new UnitMove(unit.Id, pathUsed.MovementPointsLeft);
-			// Capture hexes
-			foreach (var capturedHex in pathUsed.Hexes)
-			{
-				capturedHex.Owner = PlayerIdentifier;
-				move.Captures.Add(capturedHex.Position);
-			}
+			CaptureHexes(pathUsed, move);
 			ServerToClientMessage confirmation = new ServerToClientMessage(move);
 			BroadcastMessage(confirmation);
 		}
