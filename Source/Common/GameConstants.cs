@@ -51,7 +51,7 @@
 		// As units move on the battlefield they capture not only the hex grids they passed but possibly also others which can be captured indirectly
 		// The conditions for indirect captures are:
 		// - the capturing unit must be entering a region (that means a connected group of hexes that are currently not owned by the player) that is currently not occupied by any other units
-		// - the region must not exceed the number of hexe grids specified by this constant
+		// - the size of the region must not exceed the number of hex grids specified by this constant
 		public const int IndirectCaptureLimit = 3;
 	}
 }
