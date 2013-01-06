@@ -36,10 +36,10 @@ namespace PanzerKontrol
 		List<Map> Maps;
 
 		// The keys are the names of players used to join public games
-		Dictionary<string, Game> PublicGames;
+		Dictionary<string, ServerGame> PublicGames;
 
 		// The keys are the randomly generated private strings required to join private games
-		Dictionary<string, Game> PrivateGames;
+		Dictionary<string, ServerGame> PrivateGames;
 
 		// Games that are currently being played
 		List<Game> ActiveGames;
@@ -68,8 +68,8 @@ namespace PanzerKontrol
 			LoadFactions();
 			LoadMaps();
 
-			PublicGames = new Dictionary<string, Game>();
-			PrivateGames = new Dictionary<string, Game>();
+			PublicGames = new Dictionary<string, ServerGame>();
+			PrivateGames = new Dictionary<string, ServerGame>();
 			ActiveGames = new List<Game>();
 		}
 
@@ -126,22 +126,21 @@ namespace PanzerKontrol
 			return reply;
 		}
 
-		public CreateGameReply OnCreateGameRequest(ServerClient client, CreateGameRequest request, out Faction faction, out Game game)
+		public CreateGameReply OnCreateGameRequest(ServerClient client, CreateGameRequest request, out ServerGame game)
 		{
 			Map map = GetMap(request.GameConfiguration.Map);
 			if (map == null)
 				throw new ClientException("No such map");
-			faction = GetFaction(request.Army.FactionId);
 			if (request.IsPrivate)
 			{
 				string privateKey = GeneratePrivateKey();
-				game = new Game(this, client, true, privateKey, request.GameConfiguration, map);
+				game = new ServerGame(this, client, true, privateKey, request.GameConfiguration, map);
 				PrivateGames[privateKey] = game;
 				return new CreateGameReply(privateKey);
 			}
 			else
 			{
-				game = new Game(this, client, false, null, request.GameConfiguration, map);
+				game = new ServerGame(this, client, false, null, request.GameConfiguration, map);
 				PublicGames[client.Name] = game;
 				return new CreateGameReply();
 			}
@@ -165,9 +164,8 @@ namespace PanzerKontrol
 			CancelGame(client);
 		}
 
-		public bool OnJoinGameRequest(ServerClient client, JoinGameRequest request)
+		public bool OnJoinGameRequest(ServerClient client, JoinGameRequest request, out ServerGame game)
 		{
-			Game game;
 			if (request.IsPrivate)
 			{
 				string key = request.PrivateKey;
@@ -182,10 +180,7 @@ namespace PanzerKontrol
 					return false;
 				PublicGames.Remove(key);
 			}
-			game.Opponent = client;
-			game.SetFirstTurn();
-			game.Owner.OnGameStart(game);
-			client.OnGameStart(game);
+			
 			ActiveGames.Add(game);
 			game.StartDeploymentTimer();
 			return true;
@@ -196,17 +191,21 @@ namespace PanzerKontrol
 			Clients.Remove(client);
 			switch (client.State)
 			{
-				case ClientStateType.WaitingForOpponent:
+				case ClientState.WaitingForOpponent:
 					CancelGame(client);
 					break;
 
-				case ClientStateType.InGame:
-					OnGameEnd(client.Game, GameOutcomeType.Desertion, client.Game.GetOpponentOf(client));
+				case ClientState.InGame:
+					OnGameEnd(client.Game, GameOutcomeType.Desertion, client.Opponent);
+					break;
+
+				default:
+					// Not an issue
 					break;
 			}
 		}
 
-		public void OnGameEnd(Game game, GameOutcomeType outcome, ServerClient winner = null)
+		public void OnGameEnd(ServerGame game, GameOutcomeType outcome, ServerClient winner = null)
 		{
 			ActiveGames.Remove(game);
 			game.EndGame(new GameEnd(outcome, winner));
@@ -291,7 +290,7 @@ namespace PanzerKontrol
 
 		void CancelGame(ServerClient client)
 		{
-			Game game = client.Game;
+			ServerGame game = client.Game;
 			if (game.IsPrivate)
 				PrivateGames.Remove(game.Owner.Name);
 			else

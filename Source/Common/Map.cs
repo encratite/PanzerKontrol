@@ -101,7 +101,7 @@ namespace PanzerKontrol
 		{
 			var map = new Dictionary<Position, Path>(new PositionComparer());
 			Path path = new Path(unit.MovementPoints);
-			CreateMovementMap(unit, unit.Hex, path, unit.Owner, ref map);
+			CreateMovementMap(unit, unit.Hex, path, unit.Owner.Identifier, map);
 			// Remove all the hexes occupied by friendly units since those were only permitted for passing through
 			foreach (var position in map.Keys)
 			{
@@ -112,7 +112,7 @@ namespace PanzerKontrol
 			return map;
 		}
 
-		void CreateMovementMap(Unit unit, Hex currentHex, Path currentPath, PlayerIdentifier owner, ref Dictionary<Position, Path> map)
+		void CreateMovementMap(Unit unit, Hex currentHex, Path currentPath, PlayerIdentifier owner, Dictionary<Position, Path> map)
 		{
 			for(int i = 0; i < HexOffsets.Length; i++)
 			{
@@ -125,7 +125,7 @@ namespace PanzerKontrol
 					// This hex is not part of the map, skip it
 					continue;
 				}
-				if (neighbourHex.Unit != null && neighbourHex.Unit.Owner != owner)
+				if (neighbourHex.Unit != null && neighbourHex.Unit.Owner.Identifier != owner)
 				{
 					// This hex is already occupied by an enemy unit, skip it
 					continue;
@@ -174,7 +174,7 @@ namespace PanzerKontrol
 				// Create or update the entry in the movement map
 				Path newPath = new Path(currentPath, neighbourHex, newMovementPoints);
 				map[neighbourPosition] = newPath;
-				CreateMovementMap(unit, neighbourHex, newPath, owner, ref map);
+				CreateMovementMap(unit, neighbourHex, newPath, owner, map);
 			}
 		}
 
@@ -205,13 +205,13 @@ namespace PanzerKontrol
 			capturedRegion.Add(seed);
 			HashSet<Hex> scannedHexes = new HashSet<Hex>(new HexComparer());
 			// Perform depth-first search to determine the size of the region
-			if (IsValidIndirectCapture(seed, conqueror, ref capturedRegion, ref scannedHexes))
+			if (IsValidIndirectCapture(seed, conqueror, capturedRegion, scannedHexes))
 				return capturedRegion;
 			else
 				return null;
 		}
 
-		bool IsValidIndirectCapture(Hex currentHex, PlayerIdentifier conqueror, ref List<Hex> capturedRegion, ref HashSet<Hex> scannedHexes)
+		bool IsValidIndirectCapture(Hex currentHex, PlayerIdentifier conqueror, List<Hex> capturedRegion, HashSet<Hex> scannedHexes)
 		{
 			foreach (var offset in HexOffsets)
 			{
@@ -244,7 +244,7 @@ namespace PanzerKontrol
 					return false;
 				}
 				capturedRegion.Add(neighbourHex);
-				bool isEmptyRegion = IsValidIndirectCapture(neighbourHex, conqueror, ref capturedRegion, ref scannedHexes);
+				bool isEmptyRegion = IsValidIndirectCapture(neighbourHex, conqueror, capturedRegion, scannedHexes);
 				if (!isEmptyRegion)
 					return false;
 			}

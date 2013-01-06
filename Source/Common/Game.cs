@@ -1,170 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Timers;
-
-namespace PanzerKontrol
+﻿namespace PanzerKontrol
 {
 	public class Game
 	{
-		delegate void GameTimerHandler();
-		public readonly ServerClient Owner;
-		public ServerClient Opponent;
-
-		public readonly bool IsPrivate;
-		public readonly string PrivateKey;
+		const int PlayerCount = 2;
 
 		public readonly GameConfiguration GameConfiguration;
-
 		public readonly Map Map;
+		protected PlayerState[] Players;
+		protected bool GameIsOver;
+		protected int TurnCounter;
 
-		Server Server;
-
-		bool GameIsOver;
-
-		int UnitIdCounter;
-		int TurnCounter;
-
-		Random Generator;
-		ServerClient ActivePlayer;
-
-		public Game(Server server, ServerClient owner, bool isPrivate, string privateKey, GameConfiguration gameConfiguration, Map map)
+		public Game(GameConfiguration gameConfiguration, Map map)
 		{
-			Server = server;
-
-			Owner = owner;
-			Opponent = null;
-
-			IsPrivate = isPrivate;
-			PrivateKey = privateKey;
-
 			GameConfiguration = gameConfiguration;
-
 			Map = map;
-
+			Players = new PlayerState[PlayerCount];
 			GameIsOver = false;
-
-			UnitIdCounter = 0;
 			TurnCounter = 0;
-
-			Generator = new Random();
-			ActivePlayer = null;
-		}
-
-		public void SetFirstTurn()
-		{
-			if (Owner.RequestedFirstTurn)
-			{
-				if (Opponent.RequestedFirstTurn)
-					SetRandomFirstTurn();
-				else
-					ActivePlayer = Owner;
-			}
-			else
-			{
-				if (Opponent.RequestedFirstTurn)
-					ActivePlayer = Opponent;
-				else
-					SetRandomFirstTurn();
-			}
-		}
-
-		public ServerClient GetOpponentOf(ServerClient client)
-		{
-			if (object.ReferenceEquals(Owner, client))
-				return Opponent;
-			else
-				return Owner;
-		}
-
-		public int GetUnitId()
-		{
-			int output = UnitIdCounter;
-			UnitIdCounter++;
-			return output;
-		}
-
-		public void StartDeploymentTimer()
-		{
-			StartTimer(GameConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
-		}
-
-		public void StartTurnTimer()
-		{
-			StartTimer(GameConfiguration.TurnTime, () => OnTurnTimerExpiration(TurnCounter));
 		}
 
 		public void NewTurn()
 		{
 			// Only change the active player if it's not the first turn
 			if (TurnCounter > 0)
-				ActivePlayer = object.ReferenceEquals(Owner, ActivePlayer) ? Opponent : Owner;
+			{
+				foreach (var player in Players)
+					player.FlipTurnState();
+			}
 			TurnCounter++;
-			ServerClient otherPlayer = GetOpponentOf(ActivePlayer);
-			ActivePlayer.MyTurn();
-			otherPlayer.OpponenTurn();
-			StartTurnTimer();
-		}
-
-		public void StartGame()
-		{
-			SendDeploymentInformation();
-			NewTurn();
-		}
-
-		public void EndGame(GameEnd end)
-		{
-			GameIsOver = true;
-			Owner.OnGameEnd(end);
-			Opponent.OnGameEnd(end);
-		}
-
-		public void SendDeploymentInformation()
-		{
-			Owner.SendDeploymentInformation();
-			Opponent.SendDeploymentInformation();
-		}
-
-		void StartTimer(int seconds, GameTimerHandler timerHandler)
-		{
-			Timer timer = new Timer(1000 * seconds);
-			ElapsedEventHandler eventHandler = (object source, ElapsedEventArgs arguments) => OnTimerExpiration(timerHandler);
-			timer.Elapsed += eventHandler;
-			timer.AutoReset = false;
-			timer.Enabled = true;
-		}
-
-		void OnTimerExpiration(GameTimerHandler timerHandler)
-		{
-			lock (Server)
-			{
-				if (!GameIsOver)
-					timerHandler();
-			}
-		}
-
-		void SetRandomFirstTurn()
-		{
-			ServerClient[] players = { Owner, Opponent };
-			ActivePlayer = players[Generator.Next(0, players.Length - 1)];
-		}
-
-		void OnDeploymentTimerExpiration()
-		{
-			if (!Owner.HasSubmittedInitialDeployment || !Opponent.HasSubmittedInitialDeployment)
-			{
-				// One of the players had not deployed their army yet
-				// This means that the timer is responsible for starting the game
-				StartGame();
-			}
-		}
-
-		void OnTurnTimerExpiration(int turnCounter)
-		{
-			// Check if the timer that expired was the one for the current turn
-			// Ignore it otherwise
-			if (turnCounter == TurnCounter)
-				NewTurn();
-			
 		}
 	}
 }

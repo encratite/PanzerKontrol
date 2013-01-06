@@ -4,7 +4,7 @@ namespace PanzerKontrol
 {
 	public class Unit
 	{
-		public readonly PlayerIdentifier Owner;
+		public readonly PlayerState Owner;
 		public readonly int Id;
 		public readonly Faction Faction;
 		public readonly UnitType Type;
@@ -22,7 +22,7 @@ namespace PanzerKontrol
 
 		public bool Entrenched;
 
-		public Unit(PlayerIdentifier owner, int id, UnitConfiguration configuration, Server server)
+		public Unit(PlayerState owner, int id, UnitConfiguration configuration, Server server)
 		{
 			Owner = owner;
 			Id = id;
