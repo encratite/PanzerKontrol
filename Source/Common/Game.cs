@@ -6,6 +6,7 @@
 
 		public readonly GameConfiguration GameConfiguration;
 		public readonly Map Map;
+
 		protected PlayerState[] Players;
 		protected bool GameIsOver;
 		protected int TurnCounter;

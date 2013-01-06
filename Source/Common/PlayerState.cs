@@ -33,14 +33,13 @@ namespace PanzerKontrol
 		// Reinforcement points remaining for the current game
 		int _ReinforcementPoints;
 
-		// True if the player requested the first turn privilege
-		public bool RequestedFirstTurn;
-
 		// Units remaining
 		List<Unit> Units;
 
 		// The opponent of this player
 		public PlayerState Opponent;
+
+		#region Accessors
 
 		public int ReinforcementPoints
 		{
@@ -58,6 +57,8 @@ namespace PanzerKontrol
 			}
 		}
 
+		#endregion
+
 		public PlayerState(Game game, Faction faction, PlayerIdentifier identifier)
 		{
 			Game = game;
@@ -65,102 +66,7 @@ namespace PanzerKontrol
 			Identifier = identifier;
 		}
 
-		public void SetTurnStates()
-		{
-			State = PlayerStateType.MyTurn;
-			Opponent.State = PlayerStateType.OpponentTurn;
-		}
-
-		public void FlipTurnState()
-		{
-			State = State == PlayerStateType.MyTurn ? PlayerStateType.OpponentTurn : PlayerStateType.MyTurn;
-		}
-
-		public void OnUnitDeath(Unit unit)
-		{
-			Units.Remove(unit);
-		}
-
-		public BaseArmy GetBaseArmy()
-		{
-			return new BaseArmy(Faction, Units);
-		}
-
-		public Unit GetUnit(int id)
-		{
-			return Units.Find((Unit x) => x.Id == id);
-		}
-
-		public List<UnitPosition> GetDeployment()
-		{
-			List<UnitPosition> output = new List<UnitPosition>();
-			foreach (var unit in Units)
-			{
-				if (!unit.Deployed)
-					continue;
-				UnitPosition unitPosition = new UnitPosition(unit.Id, unit.Hex.Position);
-				output.Add(unitPosition);
-			}
-			return output;
-		}
-
-		// Retrieve a list of anti-air units capable of protecting the target
-		public List<Unit> GetAntiAirUnits(Unit target)
-		{
-			List<Unit> output = new List<Unit>();
-			foreach (var unit in Units)
-			{
-				if (unit.Deployed && unit.IsAntiAirUnit() && unit.Hex.GetDistance(target.Hex) <= unit.Stats.AntiAirRange.Value)
-					output.Add(unit);
-			}
-			return output;
-		}
-
-		public void InitialiseArmy(List<Unit> units, int reinforcementPoints)
-		{
-			Units = units;
-			_ReinforcementPoints = reinforcementPoints;
-		}
-
-		public void ResetUnitsForNewTurn()
-		{
-			foreach (var unit in Units)
-				unit.ResetUnitForNewTurn();
-		}
-
-		List<Hex> CaptureHexes(Path path)
-		{
-			List<Hex> captures = new List<Hex>();
-			var map = Game.Map;
-			// Capture hexes
-			foreach (var pathHex in path.Hexes)
-			{
-				if (pathHex.Owner != Identifier)
-				{
-					// Direct capture
-					pathHex.Owner = Identifier;
-					captures.Add(pathHex);
-					// Check for indirect captures
-					foreach (var offset in Map.HexOffsets)
-					{
-						Position neighbourPosition = pathHex.Position + offset;
-						Hex neighbourHex = map.GetHex(neighbourPosition);
-						List<Hex> capturedRegion = map.GetIndirectlyCapturedRegion(neighbourHex, Identifier);
-						if (capturedRegion == null)
-						{
-							// No region to capture could be found
-							continue;
-						}
-						foreach (var emptyRegionHex in capturedRegion)
-						{
-							emptyRegionHex.Owner = Identifier;
-							captures.Add(emptyRegionHex);
-						}
-					}
-				}
-			}
-			return captures;
-		}
+		#region Main player state modifiers
 
 		public void InitialUnitDeployment(Unit unit, Position position)
 		{
@@ -245,5 +151,112 @@ namespace PanzerKontrol
 				throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
 			unit.MoveToHex(hex);
 		}
+
+		#endregion
+
+		#region Public utility functions
+
+		public void SetTurnStates()
+		{
+			State = PlayerStateType.MyTurn;
+			Opponent.State = PlayerStateType.OpponentTurn;
+		}
+
+		public void FlipTurnState()
+		{
+			State = State == PlayerStateType.MyTurn ? PlayerStateType.OpponentTurn : PlayerStateType.MyTurn;
+		}
+
+		public BaseArmy GetBaseArmy()
+		{
+			return new BaseArmy(Faction, Units);
+		}
+
+		public Unit GetUnit(int id)
+		{
+			return Units.Find((Unit x) => x.Id == id);
+		}
+
+		public List<UnitPosition> GetDeployment()
+		{
+			List<UnitPosition> output = new List<UnitPosition>();
+			foreach (var unit in Units)
+			{
+				if (!unit.Deployed)
+					continue;
+				UnitPosition unitPosition = new UnitPosition(unit.Id, unit.Hex.Position);
+				output.Add(unitPosition);
+			}
+			return output;
+		}
+
+		// Retrieve a list of anti-air units capable of protecting the target
+		public List<Unit> GetAntiAirUnits(Unit target)
+		{
+			List<Unit> output = new List<Unit>();
+			foreach (var unit in Units)
+			{
+				if (unit.Deployed && unit.IsAntiAirUnit() && unit.Hex.GetDistance(target.Hex) <= unit.Stats.AntiAirRange.Value)
+					output.Add(unit);
+			}
+			return output;
+		}
+
+		public void InitialiseArmy(List<Unit> units, int reinforcementPoints)
+		{
+			Units = units;
+			_ReinforcementPoints = reinforcementPoints;
+		}
+
+		public void ResetUnitsForNewTurn()
+		{
+			foreach (var unit in Units)
+				unit.ResetUnitForNewTurn();
+		}
+
+		public void OnUnitDeath(Unit unit)
+		{
+			Units.Remove(unit);
+		}
+
+		#endregion
+
+		#region Generic internal functions
+
+		List<Hex> CaptureHexes(Path path)
+		{
+			List<Hex> captures = new List<Hex>();
+			var map = Game.Map;
+			// Capture hexes
+			foreach (var pathHex in path.Hexes)
+			{
+				if (pathHex.Owner != Identifier)
+				{
+					// Direct capture
+					pathHex.Owner = Identifier;
+					captures.Add(pathHex);
+					// Check for indirect captures
+					foreach (var offset in Map.HexOffsets)
+					{
+						Position neighbourPosition = pathHex.Position + offset;
+						Hex neighbourHex = map.GetHex(neighbourPosition);
+						List<Hex> capturedRegion = map.GetIndirectlyCapturedRegion(neighbourHex, Identifier);
+						if (capturedRegion == null)
+						{
+							// No region to capture could be found
+							continue;
+						}
+						foreach (var emptyRegionHex in capturedRegion)
+						{
+							emptyRegionHex.Owner = Identifier;
+							captures.Add(emptyRegionHex);
+						}
+					}
+				}
+			}
+			return captures;
+		}
+
+		#endregion
 	}
 }

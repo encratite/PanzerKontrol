@@ -26,6 +26,8 @@ namespace PanzerKontrol
 
 		AttackType AttackType;
 
+		#region Public read-only accessors
+
 		public double AttackerStrength
 		{
 			get
@@ -42,7 +44,9 @@ namespace PanzerKontrol
 			}
 		}
 
-		#region Constructors
+		#endregion
+
+		#region Construction
 
 		public Combat(Unit attacker, Unit defender, bool useRandomisedCombatEfficiency, List<Unit> antiAirUnits = null)
 		{
@@ -117,6 +121,9 @@ namespace PanzerKontrol
 			}
 		}
 
+		// Ground attacks have certain requirements for for losses on both sides
+		// Attacks continue until the winner has taken at least 10% casualties and the loser has taken 30% casualties
+		// This is used to cause a moderate number of casualties on both sides while still using a Lanchester's Law style system
 		bool TargetDamageReached()
 		{
 			double[] damage = { Attacker.DamageDealt, Defender.DamageDealt };
@@ -139,6 +146,8 @@ namespace PanzerKontrol
 			}
 		}
 
+		// This multiplier is used for attacks that become weaker as the target becomes smaller (i.e. diminishes in strength)
+		// This includes artillery fire, attacks by air units and anti-air fire
 		double GetStrengthAdjustedDamageFactor(UnitCombatState target, double minimumEfficiency)
 		{
 			double efficiency = minimumEfficiency + target.Strength * (1 - minimumEfficiency);
@@ -146,6 +155,7 @@ namespace PanzerKontrol
 		}
 
 		// This is used to calculate the outcome of artillery strikes and attacks of air units on ground units (including casualties to anti-air fire)
+		// The name may be somewhat misleading
 		void Bombard()
 		{
 			int round;
@@ -167,25 +177,31 @@ namespace PanzerKontrol
 			}
 		}
 
+		// Defenders are granted defence bonuses based on the terrain they are in
 		static void InitialiseTerrainBonuses()
 		{
 			if (TerrainBonuses == null)
 			{
 				UnitStats clear = new UnitStats();
+
 				UnitStats forest = new UnitStats();
 				forest.SoftDefence = 1;
 				forest.HardDefence = 1;
 				forest.BombardmentDefence = 2;
+
 				UnitStats mountain = new UnitStats();
 				mountain.SoftDefence = 2;
 				mountain.HardDefence = 2;
 				mountain.BombardmentDefence = 2;
+
 				UnitStats swamp = new UnitStats();
 				swamp.SoftDefence = 1;
 				swamp.HardDefence = 2;
+
 				UnitStats hill = new UnitStats();
-				forest.SoftDefence = 1;
-				forest.HardDefence = 1;
+				hill.SoftDefence = 1;
+				hill.HardDefence = 1;
+				hill.BombardmentDefence = 1;
 
 				TerrainBonuses = new Dictionary<TerrainType, UnitStats>();
 				TerrainBonuses[TerrainType.Clear] = clear;

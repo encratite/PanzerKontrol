@@ -53,6 +53,9 @@ namespace PanzerKontrol
 		// The opponent in the current game
 		ServerClient _Opponent;
 
+		// True if the player requested the first turn privilege
+		public bool _RequestedFirstTurn;
+
 		#region Read-only accessors
 
 		public string Name
@@ -103,6 +106,14 @@ namespace PanzerKontrol
 			}
 		}
 
+		public bool RequestedFirstTurn
+		{
+			get
+			{
+				return _RequestedFirstTurn;
+			}
+		}
+
 		#endregion
 
 		#region Construction and startup
@@ -141,9 +152,9 @@ namespace PanzerKontrol
 
 		public void OnGameStart(ServerGame game, ServerClient opponent)
 		{
+			_Opponent = opponent;
 			GameStart start = new GameStart(game.GameConfiguration, PlayerState.GetBaseArmy(), Opponent.PlayerState.GetBaseArmy(), Opponent.Name, PlayerState.ReinforcementPoints);
 			QueueMessage(new ServerToClientMessage(start));
-			_Opponent = opponent;
 		}
 
 		public void OnPostGameStart()
@@ -196,6 +207,11 @@ namespace PanzerKontrol
 		public bool IsDeploying()
 		{
 			return _PlayerState.State == PlayerStateType.DeployingUnits;
+		}
+
+		public bool IsMyTurn()
+		{
+			return _PlayerState.State == PlayerStateType.MyTurn;
 		}
 
 		#endregion
@@ -402,6 +418,8 @@ namespace PanzerKontrol
 			CreateGameRequest request = message.CreateGameRequest;
 			if (request == null)
 				throw new ClientException("Invalid game creation request");
+			// Defaults to false so lazy/afk players lose the first turn privilege
+			_RequestedFirstTurn = false;
 			InitialiseArmy(request.Army);
 			Faction faction = Server.GetFaction(request.Army.FactionId);
 			CreateGameReply reply = Server.OnCreateGameRequest(this, request, out _Game);
@@ -421,6 +439,8 @@ namespace PanzerKontrol
 			JoinGameRequest request = message.JoinGameRequest;
 			if (request == null)
 				throw new ClientException("Invalid join game request");
+			// Defaults to false so lazy/afk players lose the first turn privilege
+			_RequestedFirstTurn = false;
 			InitialiseArmy(request.Army);
 			Faction faction = Server.GetFaction(request.Army.FactionId);
 			bool success = Server.OnJoinGameRequest(this, request, out _Game);
@@ -434,6 +454,7 @@ namespace PanzerKontrol
 				ServerToClientMessage reply = new ServerToClientMessage(ServerToClientMessageType.NoSuchGame);
 				QueueMessage(reply);
 			}
+			Game.OnOpponentFound(this);
 		}
 
 		void OnCancelGameRequest(ClientToServerMessage message)
@@ -457,7 +478,7 @@ namespace PanzerKontrol
 					throw new ClientException("Encountered an invalid unit ID in the initial deployment");
 				PlayerState.InitialUnitDeployment(unit, unitPosition.Position);
 			}
-			PlayerState.RequestedFirstTurn = deployment.RequestedFirstTurn;
+			_RequestedFirstTurn = deployment.RequestedFirstTurn;
 			PlayerState.State = PlayerStateType.HasDeployedUnits;
 			if (!Opponent.IsDeploying())
 			{

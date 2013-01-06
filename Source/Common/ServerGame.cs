@@ -15,6 +15,8 @@ namespace PanzerKontrol
 
 		int UnitIdCounter;
 
+		#region Public read-only accessors
+
 		public ServerClient Opponent
 		{
 			get
@@ -23,6 +25,8 @@ namespace PanzerKontrol
 			}
 		}
 
+		#endregion
+
 		public ServerGame(Server server, ServerClient owner, bool isPrivate, string privateKey, GameConfiguration gameConfiguration, Map map)
 			: base(gameConfiguration, map)
 		{
@@ -30,19 +34,63 @@ namespace PanzerKontrol
 
 			Owner = owner;
 
-			UnitIdCounter = 0;
+			IsPrivate = isPrivate;
+			PrivateKey = privateKey;
 
-			throw new NotImplementedException("ActivePlayer.MyTurn(); otherPlayer.OpponenTurn(); StartTurnTimer();");
+			UnitIdCounter = 0;
+		}
+
+		#region Public functions
+
+		public int GetUnitId()
+		{
+			int output = UnitIdCounter;
+			UnitIdCounter++;
+			return output;
 		}
 
 		public void OnOpponentFound(ServerClient opponent)
 		{
 			_Opponent = opponent;
-			SetFirstTurn();
+			// Set the player states in the base game object so they can be used for turn state flipping
+			Players[0] = Owner.PlayerState;
+			Players[1] = Opponent.PlayerState;
 			Owner.OnGameStart(this, _Opponent);
 			_Opponent.OnGameStart(this, Owner);
+			// This is used to connect the player states of both players
+			// This isn't done in OnGameStart because the _Opponent fields aren't set at that point yet
 			Owner.OnPostGameStart();
 			_Opponent.OnPostGameStart();
+			// There is a time limit on how long the deployment may take
+			// If it expires without a player deploying any units they will likely quickly lose control of the map and can only deploy units later
+			StartDeploymentTimer();
+		}
+
+		public void StartGame()
+		{
+			Owner.SendDeploymentInformation();
+			Opponent.SendDeploymentInformation();
+			SetFirstTurn();
+			NewTurn();
+		}
+
+		public new void NewTurn()
+		{
+			base.NewTurn();
+			ServerClient activeClient, inactiveClient;
+			if (Owner.PlayerState.State == PlayerStateType.MyTurn)
+			{
+				activeClient = Owner;
+				inactiveClient = Opponent;
+			}
+			else
+			{
+				activeClient = Opponent;
+				inactiveClient = Owner;
+			}
+			activeClient.MyTurn();
+			inactiveClient.OpponentTurn();
+			StartTurnTimer();
 		}
 
 		public void EndGame(GameEnd end)
@@ -52,44 +100,48 @@ namespace PanzerKontrol
 			_Opponent.OnGameEnd(end);
 		}
 
-		public void SetFirstTurn()
+		#endregion
+
+		#region Generic internal functions
+
+		void SetFirstTurn()
 		{
-			if (Owner.PlayerState.RequestedFirstTurn)
+			if (Owner.RequestedFirstTurn)
 			{
-				if (_Opponent.PlayerState.RequestedFirstTurn)
+				if (Opponent.RequestedFirstTurn)
 					SetRandomFirstTurn();
 				else
 					Owner.PlayerState.SetTurnStates();
 			}
 			else
 			{
-				if (_Opponent.PlayerState.RequestedFirstTurn)
-					_Opponent.PlayerState.SetTurnStates();
+				if (Opponent.RequestedFirstTurn)
+					Opponent.PlayerState.SetTurnStates();
 				else
 					SetRandomFirstTurn();
 			}
 		}
 
-		public int GetUnitId()
+		void SetRandomFirstTurn()
 		{
-			int output = UnitIdCounter;
-			UnitIdCounter++;
-			return output;
+			Random generator = new Random();
+			ServerClient[] players = { Owner, _Opponent };
+			ServerClient winner = players[generator.Next(0, players.Length - 1)];
+			winner.PlayerState.SetTurnStates();
 		}
+
+		#endregion
+
+		#region Timer functions
 
 		public void StartDeploymentTimer()
 		{
 			StartTimer(GameConfiguration.DeploymentTime, OnDeploymentTimerExpiration);
 		}
 
-		public void StartTurnTimer()
+		void StartTurnTimer()
 		{
 			StartTimer(GameConfiguration.TurnTime, () => OnTurnTimerExpiration(TurnCounter));
-		}
-
-		public void StartGame()
-		{
-			throw new NotImplementedException("Send deployment information, start new turn");
 		}
 
 		void StartTimer(int seconds, GameTimerHandler timerHandler)
@@ -128,12 +180,6 @@ namespace PanzerKontrol
 				NewTurn();
 		}
 
-		void SetRandomFirstTurn()
-		{
-			Random generator = new Random();
-			ServerClient[] players = { Owner, _Opponent };
-			ServerClient winner = players[generator.Next(0, players.Length - 1)];
-			winner.PlayerState.SetTurnStates();
-		}
+		#endregion
 	}
 }
