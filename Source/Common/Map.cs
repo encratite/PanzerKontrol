@@ -62,6 +62,8 @@ namespace PanzerKontrol
 		[XmlIgnore]
 		Dictionary<Position, Hex> PositionMap;
 
+		#region Generic public functions
+
 		public void Initialise()
 		{
 			PositionMap = new Dictionary<Position, Hex>(new PositionComparer());
@@ -111,6 +113,50 @@ namespace PanzerKontrol
 			}
 			return map;
 		}
+
+		public static int GetHexOffsetIndex(Hex hex1, Hex hex2)
+		{
+			Position difference = hex2.Position - hex2.Position;
+			int index = Array.FindIndex(HexOffsets, (Position x) => x.SamePosition(difference));
+			if (index < 0)
+				throw new Exception("Encountered an invalid hex offset difference in a river edge pair");
+			return index;
+		}
+
+
+		public List<Hex> GetIndirectlyCapturedRegion(Hex seed, PlayerIdentifier conqueror)
+		{
+			if (seed.Owner == conqueror)
+			{
+				// This can't be the seed of an empty region as it is already owned by the player
+				return null;
+			}
+			List<Hex> capturedRegion = new List<Hex>();
+			// Initially only the seed is virtually captured
+			capturedRegion.Add(seed);
+			HashSet<Hex> scannedHexes = new HashSet<Hex>(new HexComparer());
+			// Perform depth-first search to determine the size of the region
+			if (IsValidIndirectCapture(seed, conqueror, capturedRegion, scannedHexes))
+				return capturedRegion;
+			else
+				return null;
+		}
+
+		// Determines how much of the map is controlled by each player
+		public Dictionary<PlayerIdentifier, int> GetMapControl()
+		{
+			var output = new Dictionary<PlayerIdentifier, int>();
+			foreach (var hex in Hexes)
+			{
+				if (hex.Owner != null)
+					output[hex.Owner.Value]++;
+			}
+			return output;
+		}
+
+		#endregion
+
+		#region Generic internal functions
 
 		void CreateMovementMap(Unit unit, Hex currentHex, Path currentPath, PlayerIdentifier owner, Dictionary<Position, Path> map)
 		{
@@ -178,37 +224,10 @@ namespace PanzerKontrol
 			}
 		}
 
-		public static int GetHexOffsetIndex(Hex hex1, Hex hex2)
-		{
-			Position difference = hex2.Position - hex2.Position;
-			int index = Array.FindIndex(HexOffsets, (Position x) => x.SamePosition(difference));
-			if (index < 0)
-				throw new Exception("Encountered an invalid hex offset difference in a river edge pair");
-			return index;
-		}
-
 		void SetHexRiverData(Hex target, Hex neighbour, RiverEdge edge)
 		{
 			int index = GetHexOffsetIndex(target, neighbour);
 			target.RiverEdges[index] = edge;
-		}
-
-		public List<Hex> GetIndirectlyCapturedRegion(Hex seed, PlayerIdentifier conqueror)
-		{
-			if (seed.Owner == conqueror)
-			{
-				// This can't be the seed of an empty region as it is already owned by the player
-				return null;
-			}
-			List<Hex> capturedRegion = new List<Hex>();
-			// Initially only the seed is virtually captured
-			capturedRegion.Add(seed);
-			HashSet<Hex> scannedHexes = new HashSet<Hex>(new HexComparer());
-			// Perform depth-first search to determine the size of the region
-			if (IsValidIndirectCapture(seed, conqueror, capturedRegion, scannedHexes))
-				return capturedRegion;
-			else
-				return null;
 		}
 
 		bool IsValidIndirectCapture(Hex currentHex, PlayerIdentifier conqueror, List<Hex> capturedRegion, HashSet<Hex> scannedHexes)
@@ -222,7 +241,7 @@ namespace PanzerKontrol
 					// Hit the edge of the map, neighbour does not exist
 					continue;
 				}
-				if(scannedHexes.Contains(neighbourHex))
+				if (scannedHexes.Contains(neighbourHex))
 				{
 					// This hex has already been scanned
 					continue;
@@ -250,5 +269,7 @@ namespace PanzerKontrol
 			}
 			return true;
 		}
+
+		#endregion
 	}
 }

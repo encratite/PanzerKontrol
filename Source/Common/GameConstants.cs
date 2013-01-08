@@ -53,5 +53,18 @@
 		// - the capturing unit must be entering a region (that means a connected group of hexes that are currently not owned by the player) that is currently not occupied by any other units
 		// - the size of the region must not exceed the number of hex grids specified by this constant
 		public const int IndirectCaptureLimit = 3;
+
+		// Game configuration constraints to avoid pathological cases
+		public const int PointsMinimum = 100;
+		public const int PointsMaximum = 5000;
+
+		public const int TurnLimitMinimum = 3;
+		public const int TurnLimitMaximum = 100;
+
+		public const int DeploymentTimeMinimum = 15;
+		public const int DeploymentTimeMaximum = 180;
+
+		public const int TurnTimeMinimum = 10;
+		public const int TurnTimeMaximum = 120;
 	}
 }

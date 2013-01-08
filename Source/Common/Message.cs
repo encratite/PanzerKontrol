@@ -102,6 +102,8 @@ namespace PanzerKontrol
 		Domination,
 		// One army was completely destroyed
 		Annihilation,
+		// Both armies were completely destroyed, a very rare form of draw
+		MutualAnnihilation,
 		// A player surrendered
 		Surrender,
 		// A player forfeited the match by leaving the game
@@ -398,18 +400,25 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public int Points;
 
-		// The number of seconds players are given to submit an initial deployment
+		// This is the maximum number of turns that the game may last (where one full turn involves both player making their moves)
+		// Once this number of turns has been played the number of hexes controlled by each player is evaluated to determine the winner
+		// This can also result in a draw
 		[ProtoMember(3)]
+		public int TurnLimit;
+
+		// The number of seconds players are given to submit an initial deployment
+		[ProtoMember(4)]
 		public int DeploymentTime;
 
 		// The number of seconds players are given to finish a turn
-		[ProtoMember(4)]
+		[ProtoMember(5)]
 		public int TurnTime;
 
-		public GameConfiguration(string map, int points, int deploymentTime, int turnTime)
+		public GameConfiguration(string map, int points, int turnLimit, int deploymentTime, int turnTime)
 		{
 			Map = map;
 			Points = points;
+			TurnLimit = turnLimit;
 			DeploymentTime = deploymentTime;
 			TurnTime = turnTime;
 		}

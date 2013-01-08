@@ -219,6 +219,11 @@ namespace PanzerKontrol
 			Units.Remove(unit);
 		}
 
+		public bool HasUnitsLeft()
+		{
+			return Units.Count > 0;
+		}
+
 		#endregion
 
 		#region Generic internal functions

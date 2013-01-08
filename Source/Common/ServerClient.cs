@@ -356,6 +356,22 @@ namespace PanzerKontrol
 			PlayerState.InitialiseArmy(units, reinforcementPoints);
 		}
 
+		bool HasUnitsLeft()
+		{
+			return PlayerState.HasUnitsLeft();
+		}
+
+		// Check if one or both armies have been fully destroyed
+		void AnnihilationCheck()
+		{
+			if (HasUnitsLeft() && !Opponent.HasUnitsLeft())
+				Server.OnGameEnd(Game, GameOutcomeType.Annihilation, this);
+			else if (HasUnitsLeft() && !Opponent.HasUnitsLeft())
+				Server.OnGameEnd(Game, GameOutcomeType.Annihilation, Opponent);
+			else
+				Server.OnGameEnd(Game, GameOutcomeType.MutualAnnihilation);
+		}
+
 		#endregion
 
 		#region Client/game state modifiers and expected message type modifiers
@@ -536,6 +552,7 @@ namespace PanzerKontrol
 			UnitAttack casualties = new UnitAttack(attackerCasualties, defenderCasualties);
 			ServerToClientMessage casualtyMessage = new ServerToClientMessage(casualties);
 			BroadcastMessage(casualtyMessage);
+			AnnihilationCheck();
 		}
 
 		void OnDeployUnit(ClientToServerMessage message)

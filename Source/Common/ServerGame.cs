@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Timers;
 
 namespace PanzerKontrol
@@ -77,20 +79,37 @@ namespace PanzerKontrol
 		public new void NewTurn()
 		{
 			base.NewTurn();
-			ServerClient activeClient, inactiveClient;
-			if (Owner.PlayerState.State == PlayerStateType.MyTurn)
+			if (MicroTurnCounter <= 2 * GameConfiguration.TurnLimit)
 			{
-				activeClient = Owner;
-				inactiveClient = Opponent;
+				// The game continues, more turns have to be played
+				ServerClient activeClient, inactiveClient;
+				if (Owner.PlayerState.State == PlayerStateType.MyTurn)
+				{
+					activeClient = Owner;
+					inactiveClient = Opponent;
+				}
+				else
+				{
+					activeClient = Opponent;
+					inactiveClient = Owner;
+				}
+				activeClient.MyTurn();
+				inactiveClient.OpponentTurn();
+				StartTurnTimer();
 			}
 			else
 			{
-				activeClient = Opponent;
-				inactiveClient = Owner;
+				// The maximum number of turns have been played, it's time to evaluate the map control to determine the winner of the game
+				Dictionary<PlayerIdentifier, int> mapControl = Map.GetMapControl();
+				int captures1 = mapControl[PlayerIdentifier.Player1];
+				int captures2 = mapControl[PlayerIdentifier.Player2];
+				if (captures1 > captures2)
+					Server.OnGameEnd(this, GameOutcomeType.Domination, GetClient(PlayerIdentifier.Player1));
+				else if(captures2 > captures1)
+					Server.OnGameEnd(this, GameOutcomeType.Domination, GetClient(PlayerIdentifier.Player2));
+				else
+					Server.OnGameEnd(this, GameOutcomeType.Draw);
 			}
-			activeClient.MyTurn();
-			inactiveClient.OpponentTurn();
-			StartTurnTimer();
 		}
 
 		public void EndGame(GameEnd end)
@@ -141,7 +160,7 @@ namespace PanzerKontrol
 
 		void StartTurnTimer()
 		{
-			StartTimer(GameConfiguration.TurnTime, () => OnTurnTimerExpiration(TurnCounter));
+			StartTimer(GameConfiguration.TurnTime, () => OnTurnTimerExpiration(MicroTurnCounter));
 		}
 
 		void StartTimer(int seconds, GameTimerHandler timerHandler)
@@ -176,8 +195,17 @@ namespace PanzerKontrol
 		{
 			// Check if the timer that expired was the one for the current turn
 			// Ignore it otherwise
-			if (turnCounter == TurnCounter)
+			if (turnCounter == MicroTurnCounter)
 				NewTurn();
+		}
+
+		ServerClient GetClient(PlayerIdentifier identifier)
+		{
+			ServerClient[] clients = { Owner, Opponent };
+			ServerClient output = clients.First((ServerClient x) => x.Identifier == identifier);
+			if (output == null)
+				throw new Exception("Unable to find a client matching a numeric identifier");
+			return output;
 		}
 
 		#endregion

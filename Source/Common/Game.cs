@@ -9,7 +9,7 @@
 
 		protected PlayerState[] Players;
 		protected bool GameIsOver;
-		protected int TurnCounter;
+		protected int MicroTurnCounter;
 
 		public Game(GameConfiguration gameConfiguration, Map map)
 		{
@@ -17,18 +17,18 @@
 			Map = map;
 			Players = new PlayerState[PlayerCount];
 			GameIsOver = false;
-			TurnCounter = 0;
+			MicroTurnCounter = 0;
 		}
 
 		public void NewTurn()
 		{
-			// Only change the active player if it's not the first turn
-			if (TurnCounter > 0)
+			// Only change the active player if it's not the first micro turn
+			if (MicroTurnCounter > 0)
 			{
 				foreach (var player in Players)
 					player.FlipTurnState();
 			}
-			TurnCounter++;
+			MicroTurnCounter++;
 		}
 	}
 }

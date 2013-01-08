@@ -131,6 +131,7 @@ namespace PanzerKontrol
 			Map map = GetMap(request.GameConfiguration.Map);
 			if (map == null)
 				throw new ClientException("No such map");
+			ValidateGameConfiguration(request.GameConfiguration);
 			if (request.IsPrivate)
 			{
 				string privateKey = GeneratePrivateKey();
@@ -295,6 +296,26 @@ namespace PanzerKontrol
 				PrivateGames.Remove(game.Owner.Name);
 			else
 				PublicGames.Remove(game.PrivateKey);
+		}
+
+		void ValidateGameConfiguration(GameConfiguration configuration)
+		{
+			if (configuration.Points < GameConstants.PointsMinimum)
+				throw new ClientException("Number of points specified too low");
+			if (configuration.Points > GameConstants.PointsMaximum)
+				throw new ClientException("Number of points specified too high");
+			if (configuration.TurnLimit < GameConstants.TurnLimitMinimum)
+				throw new ClientException("Maximum number of turns specified too low");
+			if (configuration.TurnLimit > GameConstants.TurnLimitMaximum)
+				throw new ClientException("Maximum number of turns specified too high");
+			if (configuration.DeploymentTime > GameConstants.DeploymentTimeMinimum)
+				throw new ClientException("Deployment time limit specified too low");
+			if (configuration.DeploymentTime > GameConstants.DeploymentTimeMaximum)
+				throw new ClientException("Deployment time limit specified too high");
+			if (configuration.TurnTime > GameConstants.TurnTimeMinimum)
+				throw new ClientException("Deployment time limit specified too low");
+			if (configuration.TurnTime > GameConstants.TurnTimeMaximum)
+				throw new ClientException("Deployment time limit specified too high");
 		}
 
 		#endregion
