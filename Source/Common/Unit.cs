@@ -144,11 +144,7 @@ namespace PanzerKontrol
 				Strength -= GameConstants.InfantryAttritionDamage;
 			else
 				Strength -= GameConstants.MotorisedAttritionDamage;
-			if (Strength < GameConstants.MinimumStrength)
-			{
-				// The unit was destroyed because it ran out of supplies
-				Strength = 0.0;
-			}
+			Strength = Math.Max(Strength, GameConstants.MinimumStrength);
 			// Units that have run out of supply are unable to perform actions
 			CanPerformAction = false;
 		}
