@@ -66,5 +66,9 @@
 
 		public const int TurnTimeMinimum = 10;
 		public const int TurnTimeMaximum = 120;
+
+		// Units who are unsupplied for more than one micro turn start taking attrition damage
+		public const double InfantryAttritionDamage = 0.1;
+		public const double MotorisedAttritionDamage = 0.15;
 	}
 }

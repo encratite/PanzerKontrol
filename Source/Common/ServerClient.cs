@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 using ProtoBuf;
@@ -180,22 +181,22 @@ namespace PanzerKontrol
 
 		#region Public utility functions
 
-		public void MyTurn()
+		public void ResetUnits()
 		{
-			PlayerState.ResetUnitsForNewTurn();
-			NewTurn newTurn = new NewTurn(Identifier);
-			ServerToClientMessage message = new ServerToClientMessage(newTurn);
-			QueueMessage(message);
-			InGameState(PlayerStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.DeployUnit, ClientToServerMessageType.EndTurn);
+			PlayerState.ResetUnits();
 		}
 
-		public void OpponentTurn()
+		public void NewTurn(bool isMyTurn, List<Unit> attritionUnits)
 		{
-			PlayerState.ResetUnitsForNewTurn();
-			NewTurn newTurn = new NewTurn(Opponent.Identifier);
+			var attritionCasualties = attritionUnits.Select((Unit x) => new UnitCasualties(x.Id, x.Strength, !x.CanPerformAction)).ToList();
+			var identifier = isMyTurn ? Identifier : Opponent.Identifier;
+			NewTurn newTurn = new NewTurn(identifier, attritionCasualties);
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
-			InGameState(PlayerStateType.OpponentTurn);
+			if(isMyTurn)
+				InGameState(PlayerStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.DeployUnit, ClientToServerMessageType.EndTurn);
+			else
+				InGameState(PlayerStateType.OpponentTurn);
 		}
 
 		public void SendDeploymentInformation()

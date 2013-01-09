@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PanzerKontrol
 {
@@ -21,6 +22,9 @@ namespace PanzerKontrol
 		public bool CanPerformAction;
 
 		public bool Entrenched;
+
+		// The number of small turns a unit has been out of supply
+		public int AttritionDuration;
 
 		public Unit(PlayerState owner, int id, UnitConfiguration configuration, Server server)
 		{
@@ -46,6 +50,8 @@ namespace PanzerKontrol
 			Strength = 1.0;
 
 			Entrenched = false;
+
+			AttritionDuration = 0;
 
 			UpdateStats();
 			ResetUnitForNewTurn();
@@ -130,6 +136,21 @@ namespace PanzerKontrol
 				Entrenched = false;
 				UpdateStats();
 			}
+		}
+
+		public void TakeAttritionDamage()
+		{
+			if (Stats.Flags.Contains(UnitFlag.Infantry))
+				Strength -= GameConstants.InfantryAttritionDamage;
+			else
+				Strength -= GameConstants.MotorisedAttritionDamage;
+			if (Strength < GameConstants.MinimumStrength)
+			{
+				// The unit was destroyed because it ran out of supplies
+				Strength = 0.0;
+			}
+			// Units that have run out of supply are unable to perform actions
+			CanPerformAction = false;
 		}
 
 		void UpdateStats()

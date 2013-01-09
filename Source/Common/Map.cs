@@ -62,13 +62,24 @@ namespace PanzerKontrol
 		[XmlIgnore]
 		Dictionary<Position, Hex> PositionMap;
 
+		[XmlIgnore]
+		Dictionary<PlayerIdentifier, List<Hex> > SupplySources;
+
 		#region Generic public functions
 
 		public void Initialise()
 		{
 			PositionMap = new Dictionary<Position, Hex>(new PositionComparer());
+			SupplySources = new Dictionary<PlayerIdentifier, List<Hex> >();
+			// Clumsy but whatever
+			SupplySources[PlayerIdentifier.Player1] = new List<Hex>();
+			SupplySources[PlayerIdentifier.Player2] = new List<Hex>();
 			foreach (var hex in Hexes)
+			{
 				PositionMap[hex.Position] = hex;
+				if (hex.SupplySource != null)
+					SupplySources[hex.SupplySource.Value].Add(hex);
+			}
 			foreach (var riverEdge in Rivers)
 			{
 				Hex hex1 = GetHex(riverEdge.Position1);
@@ -154,9 +165,31 @@ namespace PanzerKontrol
 			return output;
 		}
 
+		// Determines which parts of the map are currently being supplied
+		public HashSet<Hex> GetSupplyMap(PlayerIdentifier identifier)
+		{
+			var output = new HashSet<Hex>(new HexComparer());
+			foreach (var supplySource in SupplySources[identifier])
+				CreatePartialSupplyMap(supplySource, identifier, output);
+			return output;
+		}
+
 		#endregion
 
 		#region Generic internal functions
+
+		List<Hex> GetNeighbours(Hex target)
+		{
+			var output = new List<Hex>();
+			foreach (var offset in HexOffsets)
+			{
+				Position neighbourPosition = target.Position + offset;
+				Hex neighbour = GetHex(neighbourPosition);
+				if (neighbour != null)
+					output.Add(neighbour);
+			}
+			return output;
+		}
 
 		void CreateMovementMap(Unit unit, Hex currentHex, Path currentPath, PlayerIdentifier owner, Dictionary<Position, Path> map)
 		{
@@ -232,27 +265,20 @@ namespace PanzerKontrol
 
 		bool IsValidIndirectCapture(Hex currentHex, PlayerIdentifier conqueror, List<Hex> capturedRegion, HashSet<Hex> scannedHexes)
 		{
-			foreach (var offset in HexOffsets)
+			foreach (var neighbour in GetNeighbours(currentHex))
 			{
-				Position neighbourPosition = currentHex.Position + offset;
-				Hex neighbourHex = GetHex(neighbourPosition);
-				if (neighbourHex == null)
-				{
-					// Hit the edge of the map, neighbour does not exist
-					continue;
-				}
-				if (scannedHexes.Contains(neighbourHex))
+				if (scannedHexes.Contains(neighbour))
 				{
 					// This hex has already been scanned
 					continue;
 				}
-				scannedHexes.Add(neighbourHex);
-				if (neighbourHex.Owner == conqueror)
+				scannedHexes.Add(neighbour);
+				if (neighbour.Owner == conqueror)
 				{
 					// This hex is already owned by the player
 					continue;
 				}
-				if (neighbourHex.Unit != null)
+				if (neighbour.Unit != null)
 				{
 					// An enemy unit is occupying a hex in this region so it can't be captured
 					return false;
@@ -262,12 +288,31 @@ namespace PanzerKontrol
 					// This hex passed the criteria but the region is already too large to be captured indirectly
 					return false;
 				}
-				capturedRegion.Add(neighbourHex);
-				bool isEmptyRegion = IsValidIndirectCapture(neighbourHex, conqueror, capturedRegion, scannedHexes);
+				capturedRegion.Add(neighbour);
+				bool isEmptyRegion = IsValidIndirectCapture(neighbour, conqueror, capturedRegion, scannedHexes);
 				if (!isEmptyRegion)
 					return false;
 			}
 			return true;
+		}
+
+		void CreatePartialSupplyMap(Hex currentPosition, PlayerIdentifier identifier, HashSet<Hex> suppliedHexes)
+		{
+			foreach (var neighbour in GetNeighbours(currentPosition))
+			{
+				if (suppliedHexes.Contains(neighbour))
+				{
+					// We've reached a part of the map that has already been covered by previous searches
+					continue;
+				}
+				if (neighbour.Owner != identifier)
+				{
+					// Only hexes that are owned by the player can be supplied
+					continue;
+				}
+				suppliedHexes.Add(neighbour);
+				CreatePartialSupplyMap(neighbour, identifier, suppliedHexes);
+			}
 		}
 
 		#endregion

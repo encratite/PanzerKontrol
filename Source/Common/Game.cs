@@ -1,4 +1,6 @@
-﻿namespace PanzerKontrol
+﻿using System.Collections.Generic;
+
+namespace PanzerKontrol
 {
 	public class Game
 	{
@@ -9,7 +11,7 @@
 
 		protected PlayerState[] Players;
 		protected bool GameIsOver;
-		protected int MicroTurnCounter;
+		protected int SmallTurnCounter;
 
 		public Game(GameConfiguration gameConfiguration, Map map)
 		{
@@ -17,18 +19,29 @@
 			Map = map;
 			Players = new PlayerState[PlayerCount];
 			GameIsOver = false;
-			MicroTurnCounter = 0;
+			SmallTurnCounter = 0;
 		}
 
 		public void NewTurn()
 		{
 			// Only change the active player if it's not the first micro turn
-			if (MicroTurnCounter > 0)
+			if (SmallTurnCounter > 0)
 			{
 				foreach (var player in Players)
 					player.FlipTurnState();
 			}
-			MicroTurnCounter++;
+			SmallTurnCounter++;
+		}
+
+		public List<Unit> EvaluateSupply()
+		{
+			var attritionUnits = new List<Unit>();
+			foreach (var player in Players)
+			{
+				var supplyMap = Map.GetSupplyMap(player.Identifier);
+				player.EvaluateSupply(supplyMap, attritionUnits);
+			}
+			return attritionUnits;
 		}
 	}
 }

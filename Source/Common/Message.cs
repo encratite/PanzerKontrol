@@ -699,9 +699,13 @@ namespace PanzerKontrol
 		[ProtoMember(1)]
 		public PlayerIdentifier ActivePlayer;
 
-		public NewTurn(PlayerIdentifier activePlayer)
+		[ProtoMember(2)]
+		public List<UnitCasualties> AttritionCasualties;
+
+		public NewTurn(PlayerIdentifier activePlayer, List<UnitCasualties> attritionCasualties)
 		{
 			ActivePlayer = activePlayer;
+			AttritionCasualties = attritionCasualties;
 		}
 	}
 
@@ -767,10 +771,22 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public double NewStrength;
 
+		// Indicates if a unit is exhausted from attrition and is unable to perform an action
+		[ProtoMember(3, IsRequired = false)]
+		public bool? Exhausted;
+
 		public UnitCasualties(int unitId, double newStrength)
 		{
 			UnitId = unitId;
 			NewStrength = newStrength;
+			Exhausted = null;
+		}
+
+		public UnitCasualties(int unitId, double newStrength, bool exhausted)
+		{
+			UnitId = unitId;
+			NewStrength = newStrength;
+			Exhausted = exhausted;
 		}
 	}
 

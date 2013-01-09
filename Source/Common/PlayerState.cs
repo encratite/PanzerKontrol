@@ -208,7 +208,7 @@ namespace PanzerKontrol
 			_ReinforcementPoints = reinforcementPoints;
 		}
 
-		public void ResetUnitsForNewTurn()
+		public void ResetUnits()
 		{
 			foreach (var unit in Units)
 				unit.ResetUnitForNewTurn();
@@ -222,6 +222,31 @@ namespace PanzerKontrol
 		public bool HasUnitsLeft()
 		{
 			return Units.Count > 0;
+		}
+
+		public void EvaluateSupply(HashSet<Hex> supplyMap, List<Unit> attritionUnits)
+		{
+			foreach (var unit in Units)
+			{
+				if (supplyMap.Contains(unit.Hex))
+				{
+					// The unit received new supplies
+					unit.AttritionDuration = 0;
+				}
+				else
+				{
+					unit.AttritionDuration++;
+					if (unit.AttritionDuration > 1)
+					{
+						// The unit is subjected to attrition
+						// It will take casualties and loses the ability to perform an action
+						unit.TakeAttritionDamage();
+						if (!unit.IsAlive())
+							OnUnitDeath(unit);
+					}
+					attritionUnits.Add(unit);
+				}
+			}
 		}
 
 		#endregion

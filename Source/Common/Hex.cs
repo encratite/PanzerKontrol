@@ -40,6 +40,9 @@ namespace PanzerKontrol
 		public Position Position;
 		public TerrainType Terrain;
 
+		// This hex is a supply source of a player
+		public PlayerIdentifier? SupplySource;
+
 		// This hex is part of a player's initial deployment zone iff Deployment != null
 		public PlayerIdentifier? InitialDeploymentZone;
 

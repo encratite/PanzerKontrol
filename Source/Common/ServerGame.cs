@@ -79,7 +79,7 @@ namespace PanzerKontrol
 		public new void NewTurn()
 		{
 			base.NewTurn();
-			if (MicroTurnCounter <= 2 * GameConfiguration.TurnLimit)
+			if (SmallTurnCounter <= 2 * GameConfiguration.TurnLimit)
 			{
 				// The game continues, more turns have to be played
 				ServerClient activeClient, inactiveClient;
@@ -93,8 +93,11 @@ namespace PanzerKontrol
 					activeClient = Opponent;
 					inactiveClient = Owner;
 				}
-				activeClient.MyTurn();
-				inactiveClient.OpponentTurn();
+				activeClient.ResetUnits();
+				inactiveClient.ResetUnits();
+				var attritionUnits = EvaluateSupply();
+				activeClient.NewTurn(true, attritionUnits);
+				inactiveClient.NewTurn(false, attritionUnits);
 				StartTurnTimer();
 			}
 			else
@@ -160,7 +163,7 @@ namespace PanzerKontrol
 
 		void StartTurnTimer()
 		{
-			StartTimer(GameConfiguration.TurnTime, () => OnTurnTimerExpiration(MicroTurnCounter));
+			StartTimer(GameConfiguration.TurnTime, () => OnTurnTimerExpiration(SmallTurnCounter));
 		}
 
 		void StartTimer(int seconds, GameTimerHandler timerHandler)
@@ -195,7 +198,7 @@ namespace PanzerKontrol
 		{
 			// Check if the timer that expired was the one for the current turn
 			// Ignore it otherwise
-			if (turnCounter == MicroTurnCounter)
+			if (turnCounter == SmallTurnCounter)
 				NewTurn();
 		}
 
