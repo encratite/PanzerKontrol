@@ -103,7 +103,7 @@ namespace PanzerKontrol
 		public Faction GetFaction(int factionId)
 		{
 			if (factionId < 0 || factionId >= Factions.Count)
-				throw new ClientException("Invalid faction ID specified");
+				throw new ServerClientException("Invalid faction ID specified");
 			return Factions[factionId];
 		}
 
@@ -130,7 +130,7 @@ namespace PanzerKontrol
 		{
 			Map map = GetMap(request.GameConfiguration.Map);
 			if (map == null)
-				throw new ClientException("No such map");
+				throw new ServerClientException("No such map");
 			ValidateGameConfiguration(request.GameConfiguration);
 			if (request.IsPrivate)
 			{
@@ -301,21 +301,21 @@ namespace PanzerKontrol
 		void ValidateGameConfiguration(GameConfiguration configuration)
 		{
 			if (configuration.Points < GameConstants.PointsMinimum)
-				throw new ClientException("Number of points specified too low");
+				throw new ServerClientException("Number of points specified too low");
 			if (configuration.Points > GameConstants.PointsMaximum)
-				throw new ClientException("Number of points specified too high");
+				throw new ServerClientException("Number of points specified too high");
 			if (configuration.TurnLimit < GameConstants.TurnLimitMinimum)
-				throw new ClientException("Maximum number of turns specified too low");
+				throw new ServerClientException("Maximum number of turns specified too low");
 			if (configuration.TurnLimit > GameConstants.TurnLimitMaximum)
-				throw new ClientException("Maximum number of turns specified too high");
+				throw new ServerClientException("Maximum number of turns specified too high");
 			if (configuration.DeploymentTime > GameConstants.DeploymentTimeMinimum)
-				throw new ClientException("Deployment time limit specified too low");
+				throw new ServerClientException("Deployment time limit specified too low");
 			if (configuration.DeploymentTime > GameConstants.DeploymentTimeMaximum)
-				throw new ClientException("Deployment time limit specified too high");
+				throw new ServerClientException("Deployment time limit specified too high");
 			if (configuration.TurnTime > GameConstants.TurnTimeMinimum)
-				throw new ClientException("Deployment time limit specified too low");
+				throw new ServerClientException("Deployment time limit specified too low");
 			if (configuration.TurnTime > GameConstants.TurnTimeMaximum)
-				throw new ClientException("Deployment time limit specified too high");
+				throw new ServerClientException("Deployment time limit specified too high");
 		}
 
 		#endregion

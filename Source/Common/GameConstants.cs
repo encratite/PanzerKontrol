@@ -31,9 +31,11 @@
 		// This exponent is an attempt at implementing a light Lanchester's Law style effect in the combat system where damaged units become disproportionally more weak than undamaged ones
 		public const double StrengthExponent = 0.95;
 
+		public const double FullUnitStrength = 1.0;
+
 		// This means that a unit whose strength has fallen below 5% has been destroyed and is removed from the battlefield
 		// This limit is useful to prevent the existence of excessively useless ultra low strength units that can also cause excessive number of iterations in the ground attack system due to the target damage requirements in the combat system
-		public const double MinimumStrength = 0.05;
+		public const double MinimumUnitStrength = 0.05;
 
 		// Artillery fire and air attacks on ground targets become increasingly less effective as units lose strength
 		// This means that it's generally best to use attacks of this type against targets that are still at full strength (1.0) as their area of effect damage reaches their full potential
@@ -70,5 +72,14 @@
 		// Units who are unsupplied for more than one micro turn start taking attrition damage
 		public const double InfantryAttritionDamage = 0.1;
 		public const double MotorisedAttritionDamage = 0.15;
+
+		// Only up to a certain limit of a unit strength may be replenished by reinforcements per turn
+		// The limit depends on the type of the unit
+		// Motorised units aren't as easy to reinforce
+		public const double InfantryReinforcementsMaximum = 0.6;
+		public const double MotorisedReinforcementsMaximum = 0.4;
+
+		// Reinforcing is slightly cheaper than purchasing a new unit, it costs only 80% to obtain the same amount of unit strength
+		public const double ReinforcementCostMitigation = 0.8;
 	}
 }

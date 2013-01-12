@@ -30,6 +30,8 @@ namespace PanzerKontrol
 		AttackUnit,
 		// Deploy a unit on the battlefield
 		DeployUnit,
+		// Reinforce a unit that has suffered casualties
+		ReinforceUnit,
 		// End the current turn
 		// Zero data message
 		EndTurn,
@@ -72,8 +74,10 @@ namespace PanzerKontrol
 		UnitEntrenched,
 		// An attack occurred
 		UnitAttack,
-		// A unit was deployed,
-		UnitDeployment,
+		// A unit was deployed
+		UnitDeployed,
+		// A unit was reinforced
+		UnitReinforced,
 		// A game ended
 		GameEnd,
 	}
@@ -137,13 +141,16 @@ namespace PanzerKontrol
 		public MoveUnitRequest MoveUnitRequest;
 
 		[ProtoMember(8, IsRequired = false)]
-		public EntrenchUnit EntrenchUnit;
+		public UnitEntrenched EntrenchUnit;
 
 		[ProtoMember(9, IsRequired = false)]
 		public AttackUnitRequest AttackUnitRequest;
 
 		[ProtoMember(10, IsRequired = false)]
 		public UnitDeployment UnitDeployment;
+
+		[ProtoMember(11, IsRequired = false)]
+		public ReinforceUnitRequest ReinforceUnitRequest;
 
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
@@ -186,7 +193,7 @@ namespace PanzerKontrol
 			MoveUnitRequest = request;
 		}
 
-		public ClientToServerMessage(EntrenchUnit entrenchUnit)
+		public ClientToServerMessage(UnitEntrenched entrenchUnit)
 		{
 			Type = ClientToServerMessageType.EntrenchUnit;
 			EntrenchUnit = entrenchUnit;
@@ -202,6 +209,12 @@ namespace PanzerKontrol
 		{
 			Type = ClientToServerMessageType.DeployUnit;
 			UnitDeployment = deployment;
+		}
+
+		public ClientToServerMessage(ReinforceUnitRequest request)
+		{
+			Type = ClientToServerMessageType.ReinforceUnit;
+			ReinforceUnitRequest = request;
 		}
 	}
 
@@ -236,13 +249,16 @@ namespace PanzerKontrol
 		public UnitMove UnitMove;
 
 		[ProtoMember(10, IsRequired = false)]
-		public EntrenchUnit EntrenchUnit;
+		public UnitEntrenched UnitEntrenched;
 
 		[ProtoMember(11, IsRequired = false)]
 		public UnitAttack UnitAttack;
 
 		[ProtoMember(12, IsRequired = false)]
 		public UnitDeployment UnitDeployment;
+
+		[ProtoMember(13, IsRequired = false)]
+		public UnitReinforced UnitReinforced;
 
 		[ProtoMember(13, IsRequired = false)]
 		public GameEnd GameEnd;
@@ -300,10 +316,10 @@ namespace PanzerKontrol
 			UnitMove = move;
 		}
 
-		public ServerToClientMessage(EntrenchUnit entrenchUnit)
+		public ServerToClientMessage(UnitEntrenched unitEntrenched)
 		{
 			Type = ServerToClientMessageType.UnitEntrenched;
-			EntrenchUnit = entrenchUnit;
+			UnitEntrenched = unitEntrenched;
 		}
 
 		public ServerToClientMessage(UnitAttack attack)
@@ -314,8 +330,14 @@ namespace PanzerKontrol
 
 		public ServerToClientMessage(UnitDeployment deployment)
 		{
-			Type = ServerToClientMessageType.UnitDeployment;
+			Type = ServerToClientMessageType.UnitDeployed;
 			UnitDeployment = deployment;
+		}
+
+		public ServerToClientMessage(UnitReinforced unitReinforced)
+		{
+			Type = ServerToClientMessageType.UnitReinforced;
+			UnitReinforced = unitReinforced;
 		}
 
 		public ServerToClientMessage(GameEnd end)
@@ -807,12 +829,12 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class EntrenchUnit
+	public class UnitEntrenched
 	{
 		[ProtoMember(1)]
 		public int UnitId;
 
-		public EntrenchUnit(int unitId)
+		public UnitEntrenched(int unitId)
 		{
 			UnitId = unitId;
 		}
@@ -827,6 +849,38 @@ namespace PanzerKontrol
 		public UnitDeployment(UnitPosition unit)
 		{
 			Unit = unit;
+		}
+	}
+
+	[ProtoContract]
+	public class ReinforceUnitRequest
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		public ReinforceUnitRequest(int unitId)
+		{
+			UnitId = unitId;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitReinforced
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public double NewStrength;
+
+		[ProtoMember(3)]
+		public int ReinforcementPointsRemaining;
+
+		public UnitReinforced(int unitId, double newStrength, int reinforcementPointsRemaining)
+		{
+			UnitId = unitId;
+			NewStrength = newStrength;
+			ReinforcementPointsRemaining = reinforcementPointsRemaining;
 		}
 	}
 

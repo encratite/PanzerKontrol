@@ -59,7 +59,7 @@ namespace PanzerKontrol
 		public void TakeDamage(double damage)
 		{
 			UnitStrength -= damage;
-			if (UnitStrength < GameConstants.MinimumStrength)
+			if (UnitStrength < GameConstants.MinimumUnitStrength)
 				UnitStrength = 0.0;
 		}
 

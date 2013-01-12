@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PanzerKontrol
 {
@@ -71,23 +72,23 @@ namespace PanzerKontrol
 		public void InitialUnitDeployment(Unit unit, Position position)
 		{
 			if (unit.Deployed)
-				throw new ClientException("Tried to specify the position of a unit that has already been deployed");
+				throw new GameException("Tried to specify the position of a unit that has already been deployed");
 			if (!Map.IsInInitialDeploymentZone(Identifier, position))
-				throw new ClientException("Tried to deploy units outside the player's deployment zone");
+				throw new GameException("Tried to deploy units outside the player's deployment zone");
 			Hex hex = Map.GetHex(position);
 			if (hex.Unit != null)
-				throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
+				throw new GameException("Tried to deploy a unit on a hex that is already occupied");
 			unit.MoveToHex(hex);
 		}
 
 		public void MoveUnit(Unit unit, Position newPosition, out int movementPointsLeft, out List<Hex> captures)
 		{
 			if (!unit.Deployed)
-				throw new ClientException("Tried to move an undeployed unit");
+				throw new GameException("Tried to move an undeployed unit");
 			var movementMap = Map.CreateMovementMap(unit);
 			Path pathUsed;
 			if (!movementMap.TryGetValue(newPosition, out pathUsed))
-				throw new ClientException("The unit can't reach the specified hex");
+				throw new GameException("The unit can't reach the specified hex");
 			unit.MovementPoints = pathUsed.MovementPointsLeft;
 			Hex hex = Map.GetHex(newPosition);
 			unit.MoveToHex(hex);
@@ -98,20 +99,20 @@ namespace PanzerKontrol
 		public void EntrenchUnit(Unit unit)
 		{
 			if (!unit.Deployed)
-				throw new ClientException("Tried to entrench an undeployed unit");
+				throw new GameException("Tried to entrench an undeployed unit");
 			if (!unit.CanEntrench())
-				throw new ClientException("This unit cannot entrench");
+				throw new GameException("This unit cannot entrench");
 			unit.Entrench();
 		}
 
 		public void AttackUnit(Unit attacker, Unit defender)
 		{
 			if (!attacker.Deployed)
-				throw new ClientException("Tried to attack with an undeployed unit");
+				throw new GameException("Tried to attack with an undeployed unit");
 			if (!defender.Deployed)
-				throw new ClientException("Tried to attack an undeployed unit");
+				throw new GameException("Tried to attack an undeployed unit");
 			if (!attacker.CanPerformAction)
-				throw new ClientException("This unit cannot perform any more actions this turn");
+				throw new GameException("This unit cannot perform any more actions this turn");
 			Combat outcome;
 			if (attacker.IsAirUnit())
 			{
@@ -122,7 +123,7 @@ namespace PanzerKontrol
 			{
 				int distance = attacker.Hex.GetDistance(defender.Hex);
 				if (distance > attacker.Stats.Range)
-					throw new ClientException("The target is out of range");
+					throw new GameException("The target is out of range");
 				outcome = new Combat(attacker, defender, true);
 			}
 			attacker.CanPerformAction = false;
@@ -139,17 +140,30 @@ namespace PanzerKontrol
 		public void DeployUnit(Unit unit, Position position)
 		{
 			if (unit.Deployed)
-				throw new ClientException("Tried to deploy a unit that has already been deployed");
+				throw new GameException("Tried to deploy a unit that has already been deployed");
 			Hex hex = Map.GetHex(position);
 			if (hex == null)
-				throw new ClientException("Encountered an invalid deployment position in a deployment request");
+				throw new GameException("Encountered an invalid deployment position in a deployment request");
 			if (hex.InitialDeploymentZone == null || hex.InitialDeploymentZone.Value != Identifier)
-				throw new ClientException("Tried to deploy a unit outside the deployment zone");
+				throw new GameException("Tried to deploy a unit outside the deployment zone");
 			if (hex.Owner == null || hex.Owner.Value != Identifier)
-				throw new ClientException("Tried to deploy a unit in a deployment zone that is currently not controlled by the player");
+				throw new GameException("Tried to deploy a unit in a deployment zone that is currently not controlled by the player");
 			if (hex.Unit != null)
-				throw new ClientException("Tried to deploy a unit on a hex that is already occupied");
+				throw new GameException("Tried to deploy a unit on a hex that is already occupied");
 			unit.MoveToHex(hex);
+		}
+
+		public void ReinforceUnit(Unit unit)
+		{
+			double maximumReinforcements = unit.IsInfantry() ? GameConstants.InfantryReinforcementsMaximum : GameConstants.MotorisedReinforcementsMaximum;
+			double newStrength = Math.Min(unit.Strength + maximumReinforcements, GameConstants.FullUnitStrength);
+			if (newStrength == unit.Strength)
+				throw new GameException("Reinforcing this unit has no effect");
+			int expenses = (int)Math.Round((newStrength - unit.Strength) * unit.Points * GameConstants.ReinforcementCostMitigation);
+			if (expenses > ReinforcementPoints)
+				throw new GameException("You do not have enough reinforcement points to reinforce this unit");
+			_ReinforcementPoints -= expenses;
+			unit.Strength = newStrength;
 		}
 
 		#endregion

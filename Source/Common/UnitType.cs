@@ -56,7 +56,7 @@ namespace PanzerKontrol
 		public UnitUpgrade GetUpgrade(int upgradeId)
 		{
 			if (upgradeId < 0 || upgradeId >= Upgrades.Count)
-				throw new ClientException("Invalid upgrade ID");
+				throw new ServerClientException("Invalid upgrade ID");
 			return Upgrades[upgradeId];
 		}
 	}

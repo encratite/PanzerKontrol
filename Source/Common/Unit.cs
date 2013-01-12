@@ -39,7 +39,7 @@ namespace PanzerKontrol
 			{
 				UnitUpgrade upgrade = Type.GetUpgrade(upgradeId);
 				if (SlotsOccupied.Contains(upgrade.Slot))
-					throw new ClientException("An upgrade slot was already occupied");
+					throw new ServerClientException("An upgrade slot was already occupied");
 				SlotsOccupied.Add(upgrade.Slot);
 				Upgrades.Add(upgrade);
 				points += upgrade.Points;
@@ -47,7 +47,7 @@ namespace PanzerKontrol
 			Points = points;
 
 			Hex = null;
-			Strength = 1.0;
+			Strength = GameConstants.FullUnitStrength;
 
 			Entrenched = false;
 
@@ -98,6 +98,11 @@ namespace PanzerKontrol
 			}
 		}
 
+		public bool IsInfantry()
+		{
+			return Stats.Flags.Contains(UnitFlag.Infantry);
+		}
+
 		public bool IsArtillery()
 		{
 			return Stats.Flags.Contains(UnitFlag.Artillery);
@@ -140,12 +145,12 @@ namespace PanzerKontrol
 
 		public void TakeAttritionDamage()
 		{
-			if (Stats.Flags.Contains(UnitFlag.Infantry))
+			if (IsInfantry())
 				Strength -= GameConstants.InfantryAttritionDamage;
 			else
 				Strength -= GameConstants.MotorisedAttritionDamage;
-			Strength = Math.Max(Strength, GameConstants.MinimumStrength);
-			// Units that have run out of supply are unable to perform actions
+			Strength = Math.Max(Strength, GameConstants.MinimumUnitStrength);
+			// Units that have run out of supplies are unable to perform actions
 			CanPerformAction = false;
 		}
 

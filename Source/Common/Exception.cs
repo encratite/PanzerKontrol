@@ -2,9 +2,17 @@
 
 namespace PanzerKontrol
 {
-	class ClientException : Exception
+	class GameException : Exception
 	{
-		public ClientException(string message) :
+		public GameException(string message) :
+			base(message)
+		{
+		}
+	}
+
+	class ServerClientException : Exception
+	{
+		public ServerClientException(string message) :
 			base(message)
 		{
 		}

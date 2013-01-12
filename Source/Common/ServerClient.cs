@@ -194,7 +194,7 @@ namespace PanzerKontrol
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
 			if(isMyTurn)
-				InGameState(PlayerStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.DeployUnit, ClientToServerMessageType.EndTurn);
+				InGameState(PlayerStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.EntrenchUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.DeployUnit, ClientToServerMessageType.EndTurn);
 			else
 				InGameState(PlayerStateType.OpponentTurn);
 		}
@@ -236,6 +236,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.MoveUnit] = OnMoveUnit;
 			MessageHandlerMap[ClientToServerMessageType.EntrenchUnit] = OnEntrenchUnit;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
+			MessageHandlerMap[ClientToServerMessageType.ReinforceUnit] = OnReinforceUnit;
 			MessageHandlerMap[ClientToServerMessageType.EndTurn] = OnEndTurn;
 			MessageHandlerMap[ClientToServerMessageType.Surrender] = OnSurrender;
 		}
@@ -272,6 +273,13 @@ namespace PanzerKontrol
 			return ExpectedMessageTypes.Contains(type);
 		}
 
+		void HandleException(Exception exception)
+		{
+			ErrorMessage error = new ErrorMessage(exception.Message);
+			QueueMessage(new ServerToClientMessage(error));
+			ShuttingDown = true;
+		}
+
 		void ReceiveMessages()
 		{
 			var enumerator = Serializer.DeserializeItems<ClientToServerMessage>(Stream, Server.Prefix, 0);
@@ -282,11 +290,13 @@ namespace PanzerKontrol
 					lock(Server)
 						ProcessMessage(message);
 				}
-				catch (ClientException exception)
+				catch (ServerClientException exception)
 				{
-					ErrorMessage error = new ErrorMessage(exception.Message);
-					QueueMessage(new ServerToClientMessage(error));
-					ShuttingDown = true;
+					HandleException(exception);
+				}
+				catch (GameException exception)
+				{
+					HandleException(exception);
 				}
 				if (ShuttingDown)
 					break;
@@ -341,7 +351,7 @@ namespace PanzerKontrol
 		{
 			List<Unit> units = new List<Unit>();
 			if (army.Units.Count == 0)
-				throw new ClientException("You cannot play a game with an empty base army");
+				throw new ServerClientException("You cannot play a game with an empty base army");
 
 			int pointsSpent = 0;
 			foreach (var unitConfiguration in army.Units)
@@ -352,7 +362,7 @@ namespace PanzerKontrol
 			}
 			int pointsAvailable = Game.GameConfiguration.Points;
 			if (pointsSpent > pointsAvailable)
-				throw new ClientException("You have spent too many points");
+				throw new ServerClientException("You have spent too many points");
 			int reinforcementPoints = (int)(GameConstants.ReinforcementPointsPenaltyFactor * (pointsAvailable - pointsSpent) + GameConstants.ReinforcementPointsBaseRatio * pointsAvailable);
 			PlayerState.InitialiseArmy(units, reinforcementPoints);
 		}
@@ -420,7 +430,7 @@ namespace PanzerKontrol
 		{
 			LoginRequest request = message.LoginRequest;
 			if (request == null)
-				throw new ClientException("Invalid login request");
+				throw new ServerClientException("Invalid login request");
 			LoginReply reply = Server.OnLoginRequest(request);
 			if (reply.Type == LoginReplyType.Success)
 			{
@@ -434,7 +444,7 @@ namespace PanzerKontrol
 		{
 			CreateGameRequest request = message.CreateGameRequest;
 			if (request == null)
-				throw new ClientException("Invalid game creation request");
+				throw new ServerClientException("Invalid game creation request");
 			// Defaults to false so lazy/afk players lose the first turn privilege
 			_RequestedFirstTurn = false;
 			InitialiseArmy(request.Army);
@@ -455,7 +465,7 @@ namespace PanzerKontrol
 		{
 			JoinGameRequest request = message.JoinGameRequest;
 			if (request == null)
-				throw new ClientException("Invalid join game request");
+				throw new ServerClientException("Invalid join game request");
 			// Defaults to false so lazy/afk players lose the first turn privilege
 			_RequestedFirstTurn = false;
 			InitialiseArmy(request.Army);
@@ -487,12 +497,12 @@ namespace PanzerKontrol
 			Map map = Game.Map;
 			InitialDeploymentSubmission deployment = message.InitialDeploymentSubmission;
 			if (deployment == null)
-				throw new ClientException("Invalid initial deployment");
+				throw new ServerClientException("Invalid initial deployment");
 			foreach (var unitPosition in deployment.Units)
 			{
 				Unit unit = PlayerState.GetUnit(unitPosition.UnitId);
 				if (unit == null)
-					throw new ClientException("Encountered an invalid unit ID in the initial deployment");
+					throw new ServerClientException("Encountered an invalid unit ID in the initial deployment");
 				PlayerState.InitialUnitDeployment(unit, unitPosition.Position);
 			}
 			_RequestedFirstTurn = deployment.RequestedFirstTurn;
@@ -509,50 +519,50 @@ namespace PanzerKontrol
 		{
 			MoveUnitRequest request = message.MoveUnitRequest;
 			if (request == null)
-				throw new ClientException("Invalid move unit request");
+				throw new ServerClientException("Invalid move unit request");
 			Unit unit = PlayerState.GetUnit(request.UnitId);
 			if (unit == null)
-				throw new ClientException("Encountered an invalid unit ID in a move request");
+				throw new ServerClientException("Encountered an invalid unit ID in a move request");
 			int movementPointsLeft;
 			List<Hex> captures;
 			PlayerState.MoveUnit(unit, request.NewPosition, out movementPointsLeft, out captures);
 			UnitMove move = new UnitMove(unit.Id, movementPointsLeft);
 			foreach (var hex in captures)
 				move.Captures.Add(hex.Position);
-			ServerToClientMessage confirmation = new ServerToClientMessage(move);
-			BroadcastMessage(confirmation);
+			ServerToClientMessage broadcast = new ServerToClientMessage(move);
+			BroadcastMessage(broadcast);
 		}
 
 		void OnEntrenchUnit(ClientToServerMessage message)
 		{
-			EntrenchUnit entrenchUnit = message.EntrenchUnit;
+			UnitEntrenched entrenchUnit = message.EntrenchUnit;
 			if (entrenchUnit == null)
-				throw new ClientException("Invalid entrench unit request");
+				throw new ServerClientException("Invalid entrench unit request");
 			Unit unit = PlayerState.GetUnit(entrenchUnit.UnitId);
 			if (unit == null)
-				throw new ClientException("Encountered an invalid unit ID in a move request");
+				throw new ServerClientException("Encountered an invalid unit ID in a move request");
 			PlayerState.EntrenchUnit(unit);
-			ServerToClientMessage confirmation = new ServerToClientMessage(entrenchUnit);
-			BroadcastMessage(confirmation);
+			ServerToClientMessage broadcast = new ServerToClientMessage(entrenchUnit);
+			BroadcastMessage(broadcast);
 		}
 
 		void OnAttackUnit(ClientToServerMessage message)
 		{
 			AttackUnitRequest request = message.AttackUnitRequest;
 			if (request == null)
-				throw new ClientException("Invalid attack unit request");
+				throw new ServerClientException("Invalid attack unit request");
 			Unit attacker = PlayerState.GetUnit(request.AttackerUnitId);
 			if (attacker == null)
-				throw new ClientException("Encountered an invalid attacking unit ID in an attack request");
+				throw new ServerClientException("Encountered an invalid attacking unit ID in an attack request");
 			Unit defender = Opponent.PlayerState.GetUnit(request.DefenderUnitId);
 			if (defender == null)
-				throw new ClientException("Encountered an invalid target unit ID in an attack request");
+				throw new ServerClientException("Encountered an invalid target unit ID in an attack request");
 			PlayerState.AttackUnit(attacker, defender);
 			UnitCasualties attackerCasualties = new UnitCasualties(attacker.Id, attacker.Strength);
 			UnitCasualties defenderCasualties = new UnitCasualties(defender.Id, defender.Strength);
 			UnitAttack casualties = new UnitAttack(attackerCasualties, defenderCasualties);
-			ServerToClientMessage casualtyMessage = new ServerToClientMessage(casualties);
-			BroadcastMessage(casualtyMessage);
+			ServerToClientMessage broadcast = new ServerToClientMessage(casualties);
+			BroadcastMessage(broadcast);
 			AnnihilationCheck();
 		}
 
@@ -560,13 +570,27 @@ namespace PanzerKontrol
 		{
 			UnitDeployment deployment = message.UnitDeployment;
 			if (deployment == null)
-				throw new ClientException("Invalid unit deployment");
+				throw new ServerClientException("Invalid unit deployment");
 			Unit unit = PlayerState.GetUnit(deployment.Unit.UnitId);
 			if (unit == null)
-				throw new ClientException("Encountered an invalid unit ID in a deployment request");
+				throw new ServerClientException("Encountered an invalid unit ID in a deployment request");
 			PlayerState.DeployUnit(unit, deployment.Unit.Position);
-			ServerToClientMessage confirmation = new ServerToClientMessage(deployment);
-			BroadcastMessage(confirmation);
+			ServerToClientMessage broadcast = new ServerToClientMessage(deployment);
+			BroadcastMessage(broadcast);
+		}
+
+		void OnReinforceUnit(ClientToServerMessage message)
+		{
+			ReinforceUnitRequest request = message.ReinforceUnitRequest;
+			if (request == null)
+				throw new ServerClientException("Invalid unit reinforcement request");
+			Unit unit = PlayerState.GetUnit(request.UnitId);
+			if (unit == null)
+				throw new ServerClientException("Encountered an invalid unit ID in a reinforcement request");
+			PlayerState.ReinforceUnit(unit);
+			UnitReinforced unitReinforced = new UnitReinforced(unit.Id, unit.Strength, PlayerState.ReinforcementPoints);
+			ServerToClientMessage broadcast = new ServerToClientMessage(unitReinforced);
+			BroadcastMessage(broadcast);
 		}
 
 		void OnEndTurn(ClientToServerMessage message)
