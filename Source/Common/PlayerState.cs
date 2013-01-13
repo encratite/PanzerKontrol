@@ -162,8 +162,17 @@ namespace PanzerKontrol
 			int expenses = (int)Math.Round((newStrength - unit.Strength) * unit.Points * GameConstants.ReinforcementCostMitigation);
 			if (expenses > ReinforcementPoints)
 				throw new GameException("You do not have enough reinforcement points to reinforce this unit");
+			if (unit.AttritionDuration > 0)
+				throw new GameException("Units that are out of supplies cannot be reinforced");
+			if (unit.MovementPoints != unit.Stats.Movement)
+				throw new GameException("A unit cannot be reinforced in the current turn once it has moved");
+			if (!unit.CanPerformAction)
+				throw new GameException("This unit cannot perform any more actions this turn");
 			_ReinforcementPoints -= expenses;
 			unit.Strength = newStrength;
+			// Reinforcing a unit uses up all its movement points and prevents it from performing any more actions in the current turn
+			unit.MovementPoints = 0;
+			unit.CanPerformAction = false;
 		}
 
 		#endregion
