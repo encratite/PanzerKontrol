@@ -170,10 +170,10 @@ namespace PanzerKontrol
 			QueueMessage(reply);
 		}
 
-		public void OnGameEnd(GameEnd end)
+		public void OnGameEnd(GameEndBroadcast broadcast)
 		{
 			LoggedInState();
-			ServerToClientMessage message = new ServerToClientMessage(end);
+			ServerToClientMessage message = new ServerToClientMessage(broadcast);
 			QueueMessage(message);
 		}
 
@@ -190,7 +190,7 @@ namespace PanzerKontrol
 		{
 			var attritionCasualties = attritionUnits.Select((Unit x) => new UnitCasualties(x.Id, x.Strength, !x.CanPerformAction)).ToList();
 			var identifier = isMyTurn ? Identifier : Opponent.Identifier;
-			NewTurn newTurn = new NewTurn(identifier, attritionCasualties);
+			NewTurnBroadcast newTurn = new NewTurnBroadcast(identifier, attritionCasualties);
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
 			if(isMyTurn)
@@ -232,7 +232,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.ViewPublicGamesRequest] = OnViewPublicGamesRequest;
 			MessageHandlerMap[ClientToServerMessageType.JoinGameRequest] = OnJoinGameRequest;
 			MessageHandlerMap[ClientToServerMessageType.CancelGameRequest] = OnCancelGameRequest;
-			MessageHandlerMap[ClientToServerMessageType.SubmitInitialDeployment] = OnSubmitInitialDeployment;
+			MessageHandlerMap[ClientToServerMessageType.InitialDeployment] = OnInitialDeployment;
 			MessageHandlerMap[ClientToServerMessageType.MoveUnit] = OnMoveUnit;
 			MessageHandlerMap[ClientToServerMessageType.EntrenchUnit] = OnEntrenchUnit;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
@@ -474,7 +474,7 @@ namespace PanzerKontrol
 			if (success)
 			{
 				_PlayerState = new PanzerKontrol.PlayerState(Game, faction, PlayerIdentifier.Player2);
-				InGameState(PlayerStateType.DeployingUnits, ClientToServerMessageType.SubmitInitialDeployment);
+				InGameState(PlayerStateType.DeployingUnits, ClientToServerMessageType.InitialDeployment);
 			}
 			else
 			{
@@ -492,10 +492,10 @@ namespace PanzerKontrol
 			QueueMessage(reply);
 		}
 
-		void OnSubmitInitialDeployment(ClientToServerMessage message)
+		void OnInitialDeployment(ClientToServerMessage message)
 		{
 			Map map = Game.Map;
-			InitialDeploymentSubmission deployment = message.InitialDeploymentSubmission;
+			InitialDeploymentRequest deployment = message.InitialDeploymentSubmission;
 			if (deployment == null)
 				throw new ServerClientException("Invalid initial deployment");
 			foreach (var unitPosition in deployment.Units)
@@ -526,7 +526,7 @@ namespace PanzerKontrol
 			int movementPointsLeft;
 			List<Hex> captures;
 			PlayerState.MoveUnit(unit, request.NewPosition, out movementPointsLeft, out captures);
-			UnitMove move = new UnitMove(unit.Id, movementPointsLeft);
+			UnitMoveBroadcast move = new UnitMoveBroadcast(unit.Id, movementPointsLeft);
 			foreach (var hex in captures)
 				move.Captures.Add(hex.Position);
 			ServerToClientMessage broadcast = new ServerToClientMessage(move);
@@ -560,7 +560,7 @@ namespace PanzerKontrol
 			PlayerState.AttackUnit(attacker, defender);
 			UnitCasualties attackerCasualties = new UnitCasualties(attacker.Id, attacker.Strength);
 			UnitCasualties defenderCasualties = new UnitCasualties(defender.Id, defender.Strength);
-			UnitAttack casualties = new UnitAttack(attackerCasualties, defenderCasualties);
+			UnitCombatBroadcast casualties = new UnitCombatBroadcast(attackerCasualties, defenderCasualties);
 			ServerToClientMessage broadcast = new ServerToClientMessage(casualties);
 			BroadcastMessage(broadcast);
 			AnnihilationCheck();
@@ -588,7 +588,7 @@ namespace PanzerKontrol
 			if (unit == null)
 				throw new ServerClientException("Encountered an invalid unit ID in a reinforcement request");
 			PlayerState.ReinforceUnit(unit);
-			UnitReinforced unitReinforced = new UnitReinforced(unit.Id, unit.Strength, PlayerState.ReinforcementPoints);
+			UnitReinforcementBroadcast unitReinforced = new UnitReinforcementBroadcast(unit.Id, unit.Strength, PlayerState.ReinforcementPoints);
 			ServerToClientMessage broadcast = new ServerToClientMessage(unitReinforced);
 			BroadcastMessage(broadcast);
 		}

@@ -209,7 +209,7 @@ namespace PanzerKontrol
 		public void OnGameEnd(ServerGame game, GameOutcomeType outcome, ServerClient winner = null)
 		{
 			ActiveGames.Remove(game);
-			game.EndGame(new GameEnd(outcome, winner));
+			game.EndGame(new GameEndBroadcast(outcome, winner));
 		}
 
 		#endregion

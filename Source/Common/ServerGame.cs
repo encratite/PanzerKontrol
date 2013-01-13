@@ -115,7 +115,7 @@ namespace PanzerKontrol
 			}
 		}
 
-		public void EndGame(GameEnd end)
+		public void EndGame(GameEndBroadcast end)
 		{
 			GameIsOver = true;
 			Owner.OnGameEnd(end);

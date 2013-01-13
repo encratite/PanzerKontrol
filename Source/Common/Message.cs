@@ -21,7 +21,7 @@ namespace PanzerKontrol
 		// Zero data message
 		CancelGameRequest,
 		// Submit the initial deployment plan
-		SubmitInitialDeployment,
+		InitialDeployment,
 		// Move a unit
 		MoveUnit,
 		// Have a unit entrench
@@ -135,7 +135,7 @@ namespace PanzerKontrol
 		public JoinGameRequest JoinGameRequest;
 
 		[ProtoMember(6, IsRequired = false)]
-		public InitialDeploymentSubmission InitialDeploymentSubmission;
+		public InitialDeploymentRequest InitialDeploymentSubmission;
 
 		[ProtoMember(7, IsRequired = false)]
 		public MoveUnitRequest MoveUnitRequest;
@@ -181,9 +181,9 @@ namespace PanzerKontrol
 			JoinGameRequest = request;
 		}
 
-		public ClientToServerMessage(InitialDeploymentSubmission deployment)
+		public ClientToServerMessage(InitialDeploymentRequest deployment)
 		{
-			Type = ClientToServerMessageType.SubmitInitialDeployment;
+			Type = ClientToServerMessageType.InitialDeployment;
 			InitialDeploymentSubmission = deployment;
 		}
 
@@ -243,25 +243,25 @@ namespace PanzerKontrol
 		public InitialDeployment InitialDeployment;
 
 		[ProtoMember(8, IsRequired = false)]
-		public NewTurn NewTurn;
+		public NewTurnBroadcast NewTurn;
 
 		[ProtoMember(9, IsRequired = false)]
-		public UnitMove UnitMove;
+		public UnitMoveBroadcast UnitMove;
 
 		[ProtoMember(10, IsRequired = false)]
 		public UnitEntrenched UnitEntrenched;
 
 		[ProtoMember(11, IsRequired = false)]
-		public UnitAttack UnitAttack;
+		public UnitCombatBroadcast UnitAttack;
 
 		[ProtoMember(12, IsRequired = false)]
 		public UnitDeployment UnitDeployment;
 
 		[ProtoMember(13, IsRequired = false)]
-		public UnitReinforced UnitReinforced;
+		public UnitReinforcementBroadcast UnitReinforced;
 
 		[ProtoMember(13, IsRequired = false)]
-		public GameEnd GameEnd;
+		public GameEndBroadcast GameEnd;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
 		{
@@ -304,13 +304,13 @@ namespace PanzerKontrol
 			InitialDeployment = deployment;
 		}
 
-		public ServerToClientMessage(NewTurn newTurn)
+		public ServerToClientMessage(NewTurnBroadcast newTurn)
 		{
 			Type = ServerToClientMessageType.NewTurn;
 			NewTurn = newTurn;
 		}
 
-		public ServerToClientMessage(UnitMove move)
+		public ServerToClientMessage(UnitMoveBroadcast move)
 		{
 			Type = ServerToClientMessageType.UnitMove;
 			UnitMove = move;
@@ -322,7 +322,7 @@ namespace PanzerKontrol
 			UnitEntrenched = unitEntrenched;
 		}
 
-		public ServerToClientMessage(UnitAttack attack)
+		public ServerToClientMessage(UnitCombatBroadcast attack)
 		{
 			Type = ServerToClientMessageType.UnitAttack;
 			UnitAttack = attack;
@@ -334,82 +334,33 @@ namespace PanzerKontrol
 			UnitDeployment = deployment;
 		}
 
-		public ServerToClientMessage(UnitReinforced unitReinforced)
+		public ServerToClientMessage(UnitReinforcementBroadcast unitReinforced)
 		{
 			Type = ServerToClientMessageType.UnitReinforced;
 			UnitReinforced = unitReinforced;
 		}
 
-		public ServerToClientMessage(GameEnd end)
+		public ServerToClientMessage(GameEndBroadcast end)
 		{
 			Type = ServerToClientMessageType.GameEnd;
 			GameEnd = end;
 		}
 	}
 
-	[ProtoContract]
-	public class ErrorMessage
+	class PositionComparer : IEqualityComparer<Position>
 	{
-		[ProtoMember(1)]
-		public string Message;
-
-		public ErrorMessage(string message)
+		public bool Equals(Position a, Position b)
 		{
-			Message = message;
+			return a.X == b.X && a.Y == b.Y;
+		}
+
+		public int GetHashCode(Position position)
+		{
+			return (position.X << 16) | position.Y;
 		}
 	}
 
-	[ProtoContract]
-	public class LoginRequest
-	{
-		[ProtoMember(1)]
-		public string Name;
-
-		[ProtoMember(2)]
-		public int ClientVersion;
-
-		public LoginRequest(string name, int version)
-		{
-			Name = name;
-			ClientVersion = version;
-		}
-	}
-
-	[ProtoContract]
-	public class LoginReply
-	{
-		[ProtoMember(1)]
-		public LoginReplyType Type;
-
-		[ProtoMember(2)]
-		public int ServerVersion;
-
-		public LoginReply(LoginReplyType type, int version)
-		{
-			Type = type;
-			ServerVersion = version;
-		}
-	}
-
-	[ProtoContract]
-	public class CreateGameRequest
-	{
-		[ProtoMember(1)]
-		public BaseArmy Army;
-
-		[ProtoMember(2)]
-		public bool IsPrivate;
-
-		[ProtoMember(3)]
-		public GameConfiguration GameConfiguration;
-
-		public CreateGameRequest(BaseArmy army, bool isPrivate, GameConfiguration gameConfiguration)
-		{
-			Army = army;
-			IsPrivate = isPrivate;
-			GameConfiguration = gameConfiguration;
-		}
-	}
+	#region Generic message types that are not used at the top level
 
 	[ProtoContract]
 	public class GameConfiguration
@@ -447,23 +398,6 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class CreateGameReply
-	{
-		[ProtoMember(1, IsRequired = false)]
-		public string PrivateKey;
-
-		public CreateGameReply()
-		{
-			PrivateKey = null;
-		}
-
-		public CreateGameReply(string privateKey)
-		{
-			PrivateKey = privateKey;
-		}
-	}
-
-	[ProtoContract]
 	public class PublicGameInformation
 	{
 		[ProtoMember(1)]
@@ -476,85 +410,6 @@ namespace PanzerKontrol
 		{
 			Owner = owner;
 			GameConfiguration = gameConfiguration;
-		}
-	}
-
-	[ProtoContract]
-	public class ViewPublicGamesReply
-	{
-		[ProtoMember(1)]
-		public List<PublicGameInformation> Games;
-
-		public ViewPublicGamesReply()
-		{
-			Games = new List<PublicGameInformation>();
-		}
-	}
-
-	[ProtoContract]
-	public class JoinGameRequest
-	{
-		[ProtoMember(1)]
-		public BaseArmy Army;
-
-		[ProtoMember(2)]
-		public bool IsPrivate;
-
-		// Public games are joined based on the name of the owner
-		[ProtoMember(3, IsRequired = false)]
-		public string Owner;
-
-		// Private games are joined using the private key that was shared
-		[ProtoMember(4, IsRequired = false)]
-		public string PrivateKey;
-
-		private JoinGameRequest(BaseArmy army, bool isPrivate, string owner, string privateKey)
-		{
-			Army = army;
-			IsPrivate = isPrivate;
-			Owner = owner;
-			PrivateKey = privateKey;
-		}
-
-		public static JoinGameRequest JoinPublicGame(BaseArmy army, string owner)
-		{
-			return new JoinGameRequest(army, false, owner, null);
-		}
-
-		public static JoinGameRequest JoinPrivateGame(BaseArmy army, string privateKey)
-		{
-			return new JoinGameRequest(army, false, null, privateKey);
-		}
-	}
-
-	[ProtoContract]
-	public class GameStart
-	{
-		[ProtoMember(1)]
-		public GameConfiguration GameConfiguration;
-
-		[ProtoMember(2)]
-		public BaseArmy MyArmy;
-
-		[ProtoMember(3)]
-		public BaseArmy EnemyArmy;
-
-		[ProtoMember(4)]
-		public string Opponent;
-
-		[ProtoMember(5)]
-		public int ReinforcementPoints;
-
-		public GameStart(GameConfiguration gameConfiguration, BaseArmy myArmy, BaseArmy enemyArmy, string opponent, int reinforcementPoints)
-		{
-			GameConfiguration = gameConfiguration;
-
-			MyArmy = myArmy;
-			EnemyArmy = enemyArmy;
-
-			Opponent = opponent;
-
-			ReinforcementPoints = reinforcementPoints;
 		}
 	}
 
@@ -615,19 +470,6 @@ namespace PanzerKontrol
 		}
 	}
 
-	class PositionComparer : IEqualityComparer<Position>
-	{
-		public bool Equals(Position a, Position b)
-		{
-			return a.X == b.X && a.Y == b.Y;
-		}
-
-		public int GetHashCode(Position position)
-		{
-			return (position.X << 16) | position.Y;
-		}
-	}
-
 	[ProtoContract]
 	public class Position
 	{
@@ -684,107 +526,6 @@ namespace PanzerKontrol
 	}
 
 	[ProtoContract]
-	public class InitialDeploymentSubmission
-	{
-		[ProtoMember(1)]
-		public bool RequestedFirstTurn;
-
-		[ProtoMember(2)]
-		public List<UnitPosition> Units;
-
-		public InitialDeploymentSubmission(bool requestedFirstTurn)
-		{
-			RequestedFirstTurn = requestedFirstTurn;
-			Units = new List<UnitPosition>();
-		}
-	}
-
-	[ProtoContract]
-	public class InitialDeployment
-	{
-		[ProtoMember(1)]
-		public List<UnitPosition> MyUnits;
-
-		[ProtoMember(2)]
-		public List<UnitPosition> EnemyUnits;
-
-		public InitialDeployment(List<UnitPosition> myUnits, List<UnitPosition> enemyUnits)
-		{
-			MyUnits = myUnits;
-			EnemyUnits = enemyUnits;
-		}
-	}
-
-	[ProtoContract]
-	public class NewTurn
-	{
-		[ProtoMember(1)]
-		public PlayerIdentifier ActivePlayer;
-
-		[ProtoMember(2)]
-		public List<UnitCasualties> AttritionCasualties;
-
-		public NewTurn(PlayerIdentifier activePlayer, List<UnitCasualties> attritionCasualties)
-		{
-			ActivePlayer = activePlayer;
-			AttritionCasualties = attritionCasualties;
-		}
-	}
-
-	[ProtoContract]
-	public class MoveUnitRequest
-	{
-		[ProtoMember(1)]
-		public int UnitId;
-
-		[ProtoMember(2)]
-		public Position NewPosition;
-
-		public MoveUnitRequest(int unitId, Position newPosition)
-		{
-			UnitId = unitId;
-			NewPosition = newPosition;
-		}
-	}
-
-	[ProtoContract]
-	public class UnitMove
-	{
-		// This is redundant, but whatever
-		[ProtoMember(1)]
-		public int UnitId;
-
-		[ProtoMember(2)]
-		public int RemainingMovementPoints;
-
-		[ProtoMember(3)]
-		public List<Position> Captures;
-
-		public UnitMove(int unitId, int remainingMovementPoints)
-		{
-			UnitId = unitId;
-			RemainingMovementPoints = remainingMovementPoints;
-			Captures = new List<Position>();
-		}
-	}
-
-	[ProtoContract]
-	public class AttackUnitRequest
-	{
-		[ProtoMember(1)]
-		public int AttackerUnitId;
-
-		[ProtoMember(2)]
-		public int DefenderUnitId;
-
-		public AttackUnitRequest(int attackerUnitId, int defenderUnitId)
-		{
-			AttackerUnitId = attackerUnitId;
-			DefenderUnitId = defenderUnitId;
-		}
-	}
-
-	[ProtoContract]
 	public class UnitCasualties
 	{
 		[ProtoMember(1)]
@@ -812,8 +553,234 @@ namespace PanzerKontrol
 		}
 	}
 
+	#endregion
+
+	#region Request message types, specific to client-to-server messages
+
 	[ProtoContract]
-	public class UnitAttack
+	public class LoginRequest
+	{
+		[ProtoMember(1)]
+		public string Name;
+
+		[ProtoMember(2)]
+		public int ClientVersion;
+
+		public LoginRequest(string name, int version)
+		{
+			Name = name;
+			ClientVersion = version;
+		}
+	}
+
+	[ProtoContract]
+	public class CreateGameRequest
+	{
+		[ProtoMember(1)]
+		public BaseArmy Army;
+
+		[ProtoMember(2)]
+		public bool IsPrivate;
+
+		[ProtoMember(3)]
+		public GameConfiguration GameConfiguration;
+
+		public CreateGameRequest(BaseArmy army, bool isPrivate, GameConfiguration gameConfiguration)
+		{
+			Army = army;
+			IsPrivate = isPrivate;
+			GameConfiguration = gameConfiguration;
+		}
+	}
+
+	[ProtoContract]
+	public class JoinGameRequest
+	{
+		[ProtoMember(1)]
+		public BaseArmy Army;
+
+		[ProtoMember(2)]
+		public bool IsPrivate;
+
+		// Public games are joined based on the name of the owner
+		[ProtoMember(3, IsRequired = false)]
+		public string Owner;
+
+		// Private games are joined using the private key that was shared
+		[ProtoMember(4, IsRequired = false)]
+		public string PrivateKey;
+
+		private JoinGameRequest(BaseArmy army, bool isPrivate, string owner, string privateKey)
+		{
+			Army = army;
+			IsPrivate = isPrivate;
+			Owner = owner;
+			PrivateKey = privateKey;
+		}
+
+		public static JoinGameRequest JoinPublicGame(BaseArmy army, string owner)
+		{
+			return new JoinGameRequest(army, false, owner, null);
+		}
+
+		public static JoinGameRequest JoinPrivateGame(BaseArmy army, string privateKey)
+		{
+			return new JoinGameRequest(army, false, null, privateKey);
+		}
+	}
+
+	[ProtoContract]
+	public class InitialDeploymentRequest
+	{
+		[ProtoMember(1)]
+		public bool RequestedFirstTurn;
+
+		[ProtoMember(2)]
+		public List<UnitPosition> Units;
+
+		public InitialDeploymentRequest(bool requestedFirstTurn)
+		{
+			RequestedFirstTurn = requestedFirstTurn;
+			Units = new List<UnitPosition>();
+		}
+	}
+
+	[ProtoContract]
+	public class MoveUnitRequest
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public Position NewPosition;
+
+		public MoveUnitRequest(int unitId, Position newPosition)
+		{
+			UnitId = unitId;
+			NewPosition = newPosition;
+		}
+	}
+
+	[ProtoContract]
+	public class AttackUnitRequest
+	{
+		[ProtoMember(1)]
+		public int AttackerUnitId;
+
+		[ProtoMember(2)]
+		public int DefenderUnitId;
+
+		public AttackUnitRequest(int attackerUnitId, int defenderUnitId)
+		{
+			AttackerUnitId = attackerUnitId;
+			DefenderUnitId = defenderUnitId;
+		}
+	}
+
+	[ProtoContract]
+	public class ReinforceUnitRequest
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		public ReinforceUnitRequest(int unitId)
+		{
+			UnitId = unitId;
+		}
+	}
+
+	#endregion
+
+	#region Reply message types, specific to server-to-client messages without broadcasts
+
+	[ProtoContract]
+	public class LoginReply
+	{
+		[ProtoMember(1)]
+		public LoginReplyType Type;
+
+		[ProtoMember(2)]
+		public int ServerVersion;
+
+		public LoginReply(LoginReplyType type, int version)
+		{
+			Type = type;
+			ServerVersion = version;
+		}
+	}
+
+	[ProtoContract]
+	public class CreateGameReply
+	{
+		[ProtoMember(1, IsRequired = false)]
+		public string PrivateKey;
+
+		public CreateGameReply()
+		{
+			PrivateKey = null;
+		}
+
+		public CreateGameReply(string privateKey)
+		{
+			PrivateKey = privateKey;
+		}
+	}
+
+	[ProtoContract]
+	public class ViewPublicGamesReply
+	{
+		[ProtoMember(1)]
+		public List<PublicGameInformation> Games;
+
+		public ViewPublicGamesReply()
+		{
+			Games = new List<PublicGameInformation>();
+		}
+	}
+
+	#endregion
+
+	#region Symmetrical broadcast message types, specific to server-to-client messages that are always broadcast to all players in a game
+
+	[ProtoContract]
+	public class NewTurnBroadcast
+	{
+		[ProtoMember(1)]
+		public PlayerIdentifier ActivePlayer;
+
+		[ProtoMember(2)]
+		public List<UnitCasualties> AttritionCasualties;
+
+		public NewTurnBroadcast(PlayerIdentifier activePlayer, List<UnitCasualties> attritionCasualties)
+		{
+			ActivePlayer = activePlayer;
+			AttritionCasualties = attritionCasualties;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitMoveBroadcast
+	{
+		// This is redundant, but whatever
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public int RemainingMovementPoints;
+
+		[ProtoMember(3)]
+		public List<Position> Captures;
+
+		public UnitMoveBroadcast(int unitId, int remainingMovementPoints)
+		{
+			UnitId = unitId;
+			RemainingMovementPoints = remainingMovementPoints;
+			Captures = new List<Position>();
+		}
+	}
+
+	[ProtoContract]
+	public class UnitCombatBroadcast
 	{
 		[ProtoMember(1)]
 		public UnitCasualties AttackerCasualties;
@@ -821,10 +788,115 @@ namespace PanzerKontrol
 		[ProtoMember(2)]
 		public UnitCasualties DefenderCasualties;
 
-		public UnitAttack(UnitCasualties attackerCasualties, UnitCasualties defenderCasualties)
+		public UnitCombatBroadcast(UnitCasualties attackerCasualties, UnitCasualties defenderCasualties)
 		{
 			AttackerCasualties = attackerCasualties;
 			DefenderCasualties = defenderCasualties;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitReinforcementBroadcast
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public double NewStrength;
+
+		[ProtoMember(3)]
+		public int ReinforcementPointsRemaining;
+
+		public UnitReinforcementBroadcast(int unitId, double newStrength, int reinforcementPointsRemaining)
+		{
+			UnitId = unitId;
+			NewStrength = newStrength;
+			ReinforcementPointsRemaining = reinforcementPointsRemaining;
+		}
+	}
+
+	[ProtoContract]
+	public class GameEndBroadcast
+	{
+		[ProtoMember(1)]
+		public GameOutcomeType Outcome;
+
+		// There isn't always a winner
+		[ProtoMember(2, IsRequired = false)]
+		public PlayerIdentifier? Winner;
+
+		public GameEndBroadcast(GameOutcomeType outcome, ServerClient winner = null)
+		{
+			Outcome = outcome;
+			if (winner != null)
+				Winner = winner.Identifier;
+		}
+	}
+
+	#endregion
+
+	#region Semi-symmetrical broadcast types, specific to server-to-client messages that are always broadcast to all players in a game but with some fields that require relative interpretation
+
+	[ProtoContract]
+	public class GameStart
+	{
+		[ProtoMember(1)]
+		public GameConfiguration GameConfiguration;
+
+		[ProtoMember(2)]
+		public BaseArmy MyArmy;
+
+		[ProtoMember(3)]
+		public BaseArmy EnemyArmy;
+
+		[ProtoMember(4)]
+		public string Opponent;
+
+		[ProtoMember(5)]
+		public int ReinforcementPoints;
+
+		public GameStart(GameConfiguration gameConfiguration, BaseArmy myArmy, BaseArmy enemyArmy, string opponent, int reinforcementPoints)
+		{
+			GameConfiguration = gameConfiguration;
+
+			MyArmy = myArmy;
+			EnemyArmy = enemyArmy;
+
+			Opponent = opponent;
+
+			ReinforcementPoints = reinforcementPoints;
+		}
+	}
+
+	[ProtoContract]
+	public class InitialDeployment
+	{
+		[ProtoMember(1)]
+		public List<UnitPosition> MyUnits;
+
+		[ProtoMember(2)]
+		public List<UnitPosition> EnemyUnits;
+
+		public InitialDeployment(List<UnitPosition> myUnits, List<UnitPosition> enemyUnits)
+		{
+			MyUnits = myUnits;
+			EnemyUnits = enemyUnits;
+		}
+	}
+
+	#endregion
+
+	#region Special message types that are used at the top level in both client-to-server and server-to-client communication
+
+	[ProtoContract]
+	public class ErrorMessage
+	{
+		[ProtoMember(1)]
+		public string Message;
+
+		public ErrorMessage(string message)
+		{
+			Message = message;
 		}
 	}
 
@@ -852,53 +924,5 @@ namespace PanzerKontrol
 		}
 	}
 
-	[ProtoContract]
-	public class ReinforceUnitRequest
-	{
-		[ProtoMember(1)]
-		public int UnitId;
-
-		public ReinforceUnitRequest(int unitId)
-		{
-			UnitId = unitId;
-		}
-	}
-
-	[ProtoContract]
-	public class UnitReinforced
-	{
-		[ProtoMember(1)]
-		public int UnitId;
-
-		[ProtoMember(2)]
-		public double NewStrength;
-
-		[ProtoMember(3)]
-		public int ReinforcementPointsRemaining;
-
-		public UnitReinforced(int unitId, double newStrength, int reinforcementPointsRemaining)
-		{
-			UnitId = unitId;
-			NewStrength = newStrength;
-			ReinforcementPointsRemaining = reinforcementPointsRemaining;
-		}
-	}
-
-	[ProtoContract]
-	public class GameEnd
-	{
-		[ProtoMember(1)]
-		public GameOutcomeType Outcome;
-
-		// There isn't always a winner
-		[ProtoMember(2, IsRequired = false)]
-		public PlayerIdentifier? Winner;
-
-		public GameEnd(GameOutcomeType outcome, ServerClient winner = null)
-		{
-			Outcome = outcome;
-			if (winner != null)
-				Winner = winner.Identifier;
-		}
-	}
+	#endregion
 }
