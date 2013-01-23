@@ -32,6 +32,8 @@ namespace PanzerKontrol
 		DeployUnit,
 		// Reinforce a unit that has suffered casualties
 		ReinforceUnit,
+		// Purchase a new unit
+		PurchaseUnit,
 		// End the current turn
 		// Zero data message
 		EndTurn,
@@ -78,6 +80,8 @@ namespace PanzerKontrol
 		UnitDeployed,
 		// A unit was reinforced
 		UnitReinforced,
+		// A unit was purchased
+		UnitPurchased,
 		// A game ended
 		GameEnd,
 	}
@@ -152,6 +156,9 @@ namespace PanzerKontrol
 		[ProtoMember(11, IsRequired = false)]
 		public ReinforceUnitRequest ReinforceUnitRequest;
 
+		[ProtoMember(12, IsRequired = false)]
+		public PurchaseUnitRequest PurchaseUnitRequest;
+
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
 			Type = type;
@@ -216,6 +223,12 @@ namespace PanzerKontrol
 			Type = ClientToServerMessageType.ReinforceUnit;
 			ReinforceUnitRequest = request;
 		}
+
+		public ClientToServerMessage(PurchaseUnitRequest request)
+		{
+			Type = ClientToServerMessageType.PurchaseUnit;
+			PurchaseUnitRequest = request;
+		}
 	}
 
 	[ProtoContract]
@@ -260,7 +273,10 @@ namespace PanzerKontrol
 		[ProtoMember(13, IsRequired = false)]
 		public UnitReinforcementBroadcast UnitReinforced;
 
-		[ProtoMember(13, IsRequired = false)]
+		[ProtoMember(14, IsRequired = false)]
+		public UnitPurchasedBroadcast UnitPurchased;
+
+		[ProtoMember(15, IsRequired = false)]
 		public GameEndBroadcast GameEnd;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
@@ -338,6 +354,12 @@ namespace PanzerKontrol
 		{
 			Type = ServerToClientMessageType.UnitReinforced;
 			UnitReinforced = unitReinforced;
+		}
+
+		public ServerToClientMessage(UnitPurchasedBroadcast unitPurchased)
+		{
+			Type = ServerToClientMessageType.UnitPurchased;
+			UnitPurchased = unitPurchased;
 		}
 
 		public ServerToClientMessage(GameEndBroadcast end)
@@ -689,6 +711,18 @@ namespace PanzerKontrol
 		}
 	}
 
+	[ProtoContract]
+	public class PurchaseUnitRequest
+	{
+		[ProtoMember(1)]
+		public UnitConfiguration Unit;
+
+		public PurchaseUnitRequest(UnitConfiguration unit)
+		{
+			Unit = unit;
+		}
+	}
+
 	#endregion
 
 	#region Reply message types, specific to server-to-client messages without broadcasts
@@ -812,6 +846,26 @@ namespace PanzerKontrol
 			UnitId = unitId;
 			NewStrength = newStrength;
 			ReinforcementPointsRemaining = reinforcementPointsRemaining;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitPurchasedBroadcast
+	{
+		[ProtoMember(1)]
+		public PlayerIdentifier Owner;
+
+		[ProtoMember(2)]
+		public int ReinforcementPointsRemaining;
+
+		[ProtoMember(3)]
+		public UnitConfiguration Unit;
+
+		public UnitPurchasedBroadcast(PlayerIdentifier owner, int reinforcementPointsRemaining, UnitConfiguration unit)
+		{
+			Owner = owner;
+			ReinforcementPointsRemaining = reinforcementPointsRemaining;
+			Unit = unit;
 		}
 	}
 

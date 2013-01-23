@@ -22,7 +22,7 @@ namespace PanzerKontrol
 		public readonly Game Game;
 
 		// The faction chosen by this player, for the current lobby or game
-		Faction Faction;
+		public readonly Faction Faction;
 
 		// A numeric identifier used in both the messaging system but also to indicate ownership of hexes in the map data
 		// This justifies its existence in the non-multiplayer specific game state
@@ -270,6 +270,14 @@ namespace PanzerKontrol
 					attritionUnits.Add(unit);
 				}
 			}
+		}
+
+		public void PurchaseUnit(Unit unit)
+		{
+			if (unit.Points > ReinforcementPoints)
+				throw new GameException("Not enough reinforcement points remaining to purchase this unit");
+			_ReinforcementPoints -= unit.Points;
+			Units.Add(unit);
 		}
 
 		#endregion

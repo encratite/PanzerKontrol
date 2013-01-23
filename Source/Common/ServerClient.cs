@@ -237,6 +237,7 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.EntrenchUnit] = OnEntrenchUnit;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
 			MessageHandlerMap[ClientToServerMessageType.ReinforceUnit] = OnReinforceUnit;
+			MessageHandlerMap[ClientToServerMessageType.PurchaseUnit] = OnPurchaseUnit;
 			MessageHandlerMap[ClientToServerMessageType.EndTurn] = OnEndTurn;
 			MessageHandlerMap[ClientToServerMessageType.Surrender] = OnSurrender;
 		}
@@ -356,6 +357,8 @@ namespace PanzerKontrol
 			int pointsSpent = 0;
 			foreach (var unitConfiguration in army.Units)
 			{
+				if (unitConfiguration.FactionId != PlayerState.Faction.Id)
+					throw new ServerClientException("Tried to deploy an army with units from another faction");
 				Unit unit = new Unit(PlayerState, Game.GetUnitId(), unitConfiguration, Server);
 				pointsSpent += unit.Points;
 				units.Add(unit);
@@ -590,6 +593,23 @@ namespace PanzerKontrol
 			PlayerState.ReinforceUnit(unit);
 			UnitReinforcementBroadcast unitReinforced = new UnitReinforcementBroadcast(unit.Id, unit.Strength, PlayerState.ReinforcementPoints);
 			ServerToClientMessage broadcast = new ServerToClientMessage(unitReinforced);
+			BroadcastMessage(broadcast);
+		}
+
+		void OnPurchaseUnit(ClientToServerMessage message)
+		{
+			PurchaseUnitRequest request = message.PurchaseUnitRequest;
+			if (request == null)
+				throw new ServerClientException("Invalid purchase unit request");
+			if (request.Unit.FactionId != PlayerState.Faction.Id)
+				throw new ServerClientException("Tried to purchase a unit from another faction");
+			Unit unit = new Unit(PlayerState, Game.GetUnitId(), request.Unit, Server);
+			PlayerState.PurchaseUnit(unit);
+			// Update the unit ID prior to broadcasting the purchase information
+			UnitConfiguration unitConfiguration = request.Unit;
+			unitConfiguration.UnitId = unit.Id;
+			UnitPurchasedBroadcast unitPurchased = new UnitPurchasedBroadcast(Identifier, PlayerState.ReinforcementPoints, request.Unit);
+			ServerToClientMessage broadcast = new ServerToClientMessage(unitPurchased);
 			BroadcastMessage(broadcast);
 		}
 

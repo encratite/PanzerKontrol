@@ -39,7 +39,7 @@ namespace PanzerKontrol
 			{
 				UnitUpgrade upgrade = Type.GetUpgrade(upgradeId);
 				if (SlotsOccupied.Contains(upgrade.Slot))
-					throw new ServerClientException("An upgrade slot was already occupied");
+					throw new GameException("An upgrade slot was already occupied");
 				SlotsOccupied.Add(upgrade.Slot);
 				Upgrades.Add(upgrade);
 				points += upgrade.Points;
