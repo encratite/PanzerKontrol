@@ -194,7 +194,7 @@ namespace PanzerKontrol
 			ServerToClientMessage message = new ServerToClientMessage(newTurn);
 			QueueMessage(message);
 			if(isMyTurn)
-				InGameState(PlayerStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.EntrenchUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.DeployUnit, ClientToServerMessageType.EndTurn);
+				InGameState(PlayerStateType.MyTurn, ClientToServerMessageType.MoveUnit, ClientToServerMessageType.EntrenchUnit, ClientToServerMessageType.AttackUnit, ClientToServerMessageType.DeployUnit, ClientToServerMessageType.ReinforceUnit, ClientToServerMessageType.PurchaseUnit, ClientToServerMessageType.UpgradeUnit, ClientToServerMessageType.EndTurn);
 			else
 				InGameState(PlayerStateType.OpponentTurn);
 		}
@@ -205,9 +205,9 @@ namespace PanzerKontrol
 			QueueMessage(new ServerToClientMessage(deployment));
 		}
 
-		public bool IsDeploying()
+		public bool HasDeployed()
 		{
-			return _PlayerState.State == PlayerStateType.DeployingUnits;
+			return _PlayerState.State == PlayerStateType.HasDeployedUnits;
 		}
 
 		public bool IsMyTurn()
@@ -236,8 +236,10 @@ namespace PanzerKontrol
 			MessageHandlerMap[ClientToServerMessageType.MoveUnit] = OnMoveUnit;
 			MessageHandlerMap[ClientToServerMessageType.EntrenchUnit] = OnEntrenchUnit;
 			MessageHandlerMap[ClientToServerMessageType.AttackUnit] = OnAttackUnit;
+			MessageHandlerMap[ClientToServerMessageType.DeployUnit] = OnDeployUnit;
 			MessageHandlerMap[ClientToServerMessageType.ReinforceUnit] = OnReinforceUnit;
 			MessageHandlerMap[ClientToServerMessageType.PurchaseUnit] = OnPurchaseUnit;
+			MessageHandlerMap[ClientToServerMessageType.UpgradeUnit] = OnUpgradeUnit;
 			MessageHandlerMap[ClientToServerMessageType.EndTurn] = OnEndTurn;
 			MessageHandlerMap[ClientToServerMessageType.Surrender] = OnSurrender;
 		}
@@ -501,6 +503,8 @@ namespace PanzerKontrol
 			InitialDeploymentRequest deployment = message.InitialDeploymentSubmission;
 			if (deployment == null)
 				throw new ServerClientException("Invalid initial deployment");
+			// Reset the deployment state/position of all units to enable players to re-submit their initial deployment
+			PlayerState.ResetUnitDeploymentState();
 			foreach (var unitPosition in deployment.Units)
 			{
 				Unit unit = PlayerState.GetUnit(unitPosition.UnitId);
@@ -510,7 +514,7 @@ namespace PanzerKontrol
 			}
 			_RequestedFirstTurn = deployment.RequestedFirstTurn;
 			PlayerState.State = PlayerStateType.HasDeployedUnits;
-			if (!Opponent.IsDeploying())
+			if (Opponent.HasDeployed())
 			{
 				// The opponent has already submitted their deployment
 				// Both players are ready, start the game
@@ -591,7 +595,7 @@ namespace PanzerKontrol
 			if (unit == null)
 				throw new ServerClientException("Encountered an invalid unit ID in a reinforcement request");
 			PlayerState.ReinforceUnit(unit);
-			UnitReinforcementBroadcast unitReinforced = new UnitReinforcementBroadcast(unit.Id, unit.Strength, PlayerState.ReinforcementPoints);
+			UnitReinforcementBroadcast unitReinforced = new UnitReinforcementBroadcast(new ReinforcementState(PlayerState), unit.Id, unit.Strength);
 			ServerToClientMessage broadcast = new ServerToClientMessage(unitReinforced);
 			BroadcastMessage(broadcast);
 		}
@@ -600,7 +604,7 @@ namespace PanzerKontrol
 		{
 			PurchaseUnitRequest request = message.PurchaseUnitRequest;
 			if (request == null)
-				throw new ServerClientException("Invalid purchase unit request");
+				throw new ServerClientException("Invalid purchase request");
 			if (request.Unit.FactionId != PlayerState.Faction.Id)
 				throw new ServerClientException("Tried to purchase a unit from another faction");
 			Unit unit = new Unit(PlayerState, Game.GetUnitId(), request.Unit, Server);
@@ -608,8 +612,22 @@ namespace PanzerKontrol
 			// Update the unit ID prior to broadcasting the purchase information
 			UnitConfiguration unitConfiguration = request.Unit;
 			unitConfiguration.UnitId = unit.Id;
-			UnitPurchasedBroadcast unitPurchased = new UnitPurchasedBroadcast(Identifier, PlayerState.ReinforcementPoints, request.Unit);
+			UnitPurchasedBroadcast unitPurchased = new UnitPurchasedBroadcast(new ReinforcementState(PlayerState), request.Unit);
 			ServerToClientMessage broadcast = new ServerToClientMessage(unitPurchased);
+			BroadcastMessage(broadcast);
+		}
+
+		void OnUpgradeUnit(ClientToServerMessage message)
+		{
+			UpgradeUnitRequest request = message.UpgradeUnitRequest;
+			if (request == null)
+				throw new ServerClientException("Invalid upgrade unit request");
+			Unit unit = PlayerState.GetUnit(request.UnitId);
+			if (unit == null)
+				throw new ServerClientException("Encountered an invalid unit ID in an upgrade request");
+			PlayerState.UpgradeUnit(unit, unit.GetUpgrade(request.UpgradeId));
+			UnitUpgradedBroadcast unitUpgraded = new UnitUpgradedBroadcast(new ReinforcementState(PlayerState), unit.Id);
+			ServerToClientMessage broadcast = new ServerToClientMessage(unitUpgraded);
 			BroadcastMessage(broadcast);
 		}
 

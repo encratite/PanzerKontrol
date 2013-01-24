@@ -186,7 +186,7 @@ namespace PanzerKontrol
 
 		void OnDeploymentTimerExpiration()
 		{
-			if (Owner.IsDeploying() || _Opponent.IsDeploying())
+			if (!Owner.HasDeployed() || !Opponent.HasDeployed())
 			{
 				// One of the players had not deployed their army yet
 				// This means that the timer is responsible for starting the game

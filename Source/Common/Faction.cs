@@ -39,7 +39,7 @@ namespace PanzerKontrol
 		public UnitType GetUnitType(int unitTypeId)
 		{
 			if (unitTypeId < 0 || unitTypeId >= Units.Count)
-				throw new ServerClientException("Invalid unit type specified");
+				throw new GameException("Invalid unit type specified");
 			return Units[unitTypeId];
 		}
 	}

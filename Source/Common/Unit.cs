@@ -9,8 +9,9 @@ namespace PanzerKontrol
 		public readonly int Id;
 		public readonly Faction Faction;
 		public readonly UnitType Type;
+		HashSet<int> UpgradeSlotsOccupied;
 		public readonly List<UnitUpgrade> Upgrades;
-		public readonly int Points;
+		int _Points;
 
 		public UnitStats Stats;
 
@@ -26,6 +27,14 @@ namespace PanzerKontrol
 		// The number of small turns a unit has been out of supply
 		public int AttritionDuration;
 
+		public int Points
+		{
+			get
+			{
+				return _Points;
+			}
+		}
+
 		public Unit(PlayerState owner, int id, UnitConfiguration configuration, Server server)
 		{
 			Owner = owner;
@@ -33,18 +42,10 @@ namespace PanzerKontrol
 			Faction = server.GetFaction(configuration.FactionId);
 			Type = Faction.GetUnitType(configuration.UnitTypeId);
 			Upgrades = new List<UnitUpgrade>();
-			int points = Type.Points;
-			HashSet<int> SlotsOccupied = new HashSet<int>();
-			foreach (var upgradeId in configuration.Upgrades)
-			{
-				UnitUpgrade upgrade = Type.GetUpgrade(upgradeId);
-				if (SlotsOccupied.Contains(upgrade.Slot))
-					throw new GameException("An upgrade slot was already occupied");
-				SlotsOccupied.Add(upgrade.Slot);
-				Upgrades.Add(upgrade);
-				points += upgrade.Points;
-			}
-			Points = points;
+			_Points = Type.Points;
+			UpgradeSlotsOccupied = new HashSet<int>();
+			foreach (var upgradeId in configuration.UpgradeIds)
+				AddUpgrade(GetUpgrade(upgradeId));
 
 			Hex = null;
 			Strength = GameConstants.FullUnitStrength;
@@ -58,6 +59,20 @@ namespace PanzerKontrol
 
 			// Only air units are automatically "deployed" since they don't need to be placed on the map
 			Deployed = Stats.Flags.Contains(UnitFlag.Air);
+		}
+
+		public UnitUpgrade GetUpgrade(int upgradeId)
+		{
+			return Type.GetUpgrade(upgradeId);
+		}
+
+		public void AddUpgrade(UnitUpgrade upgrade)
+		{
+			if (UpgradeSlotsOccupied.Contains(upgrade.Slot))
+				throw new GameException("An upgrade slot was already occupied");
+			UpgradeSlotsOccupied.Add(upgrade.Slot);
+			Upgrades.Add(upgrade);
+			_Points += upgrade.Points;
 		}
 
 		public void ResetUnitForNewTurn()

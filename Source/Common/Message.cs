@@ -4,6 +4,8 @@ using ProtoBuf;
 
 namespace PanzerKontrol
 {
+	#region Message enumerations
+
 	public enum ClientToServerMessageType
 	{
 		// A fatal error occurred
@@ -34,6 +36,8 @@ namespace PanzerKontrol
 		ReinforceUnit,
 		// Purchase a new unit
 		PurchaseUnit,
+		// Purchase an upgrade for a unit
+		UpgradeUnit,
 		// End the current turn
 		// Zero data message
 		EndTurn,
@@ -82,6 +86,8 @@ namespace PanzerKontrol
 		UnitReinforced,
 		// A unit was purchased
 		UnitPurchased,
+		// A unit was upgraded
+		UnitUpgraded,
 		// A game ended
 		GameEnd,
 	}
@@ -119,6 +125,8 @@ namespace PanzerKontrol
 		// The maximum number of turns has been played and both players controlled the same number of hexes at the end
 		Draw,
 	}
+
+	#endregion
 
 	[ProtoContract]
 	public class ClientToServerMessage
@@ -158,6 +166,9 @@ namespace PanzerKontrol
 
 		[ProtoMember(12, IsRequired = false)]
 		public PurchaseUnitRequest PurchaseUnitRequest;
+
+		[ProtoMember(13, IsRequired = false)]
+		public UpgradeUnitRequest UpgradeUnitRequest;
 
 		public ClientToServerMessage(ClientToServerMessageType type)
 		{
@@ -229,6 +240,12 @@ namespace PanzerKontrol
 			Type = ClientToServerMessageType.PurchaseUnit;
 			PurchaseUnitRequest = request;
 		}
+
+		public ClientToServerMessage(UpgradeUnitRequest request)
+		{
+			Type = ClientToServerMessageType.UpgradeUnit;
+			UpgradeUnitRequest = request;
+		}
 	}
 
 	[ProtoContract]
@@ -277,6 +294,9 @@ namespace PanzerKontrol
 		public UnitPurchasedBroadcast UnitPurchased;
 
 		[ProtoMember(15, IsRequired = false)]
+		public UnitUpgradedBroadcast UnitUpgraded;
+
+		[ProtoMember(16, IsRequired = false)]
 		public GameEndBroadcast GameEnd;
 
 		public ServerToClientMessage(ServerToClientMessageType type)
@@ -360,6 +380,12 @@ namespace PanzerKontrol
 		{
 			Type = ServerToClientMessageType.UnitPurchased;
 			UnitPurchased = unitPurchased;
+		}
+
+		public ServerToClientMessage(UnitUpgradedBroadcast unitUpgraded)
+		{
+			Type = ServerToClientMessageType.UnitUpgraded;
+			UnitUpgraded = unitUpgraded;
 		}
 
 		public ServerToClientMessage(GameEndBroadcast end)
@@ -451,21 +477,21 @@ namespace PanzerKontrol
 		public int UnitTypeId;
 
 		[ProtoMember(4)]
-		public List<int> Upgrades;
+		public List<int> UpgradeIds;
 
 		public UnitConfiguration(int factionId, int unitTypeId)
 		{
 			UnitId = null;
 			FactionId = factionId;
 			UnitTypeId = unitTypeId;
-			Upgrades = new List<int>();
+			UpgradeIds = new List<int>();
 		}
 
 		public UnitConfiguration(int factionId, int unitId, int unitTypeId)
 		{
 			UnitId = unitId;
 			UnitTypeId = unitTypeId;
-			Upgrades = new List<int>();
+			UpgradeIds = new List<int>();
 		}
 	}
 
@@ -486,7 +512,7 @@ namespace PanzerKontrol
 			{
 				UnitConfiguration unitConfiguration = new UnitConfiguration(FactionId, unit.Type.Id.Value);
 				foreach (var upgrade in unit.Upgrades)
-					unitConfiguration.Upgrades.Add(upgrade.Id.Value);
+					unitConfiguration.UpgradeIds.Add(upgrade.Id.Value);
 				Units.Add(unitConfiguration);
 			}
 		}
@@ -572,6 +598,22 @@ namespace PanzerKontrol
 			UnitId = unitId;
 			NewStrength = newStrength;
 			Exhausted = exhausted;
+		}
+	}
+
+	[ProtoContract]
+	public class ReinforcementState
+	{
+		[ProtoMember(1)]
+		public PlayerIdentifier Player;
+
+		[ProtoMember(2)]
+		public int ReinforcementPointsRemaining;
+
+		public ReinforcementState(PlayerState playerState)
+		{
+			Player = playerState.Identifier;
+			ReinforcementPointsRemaining = playerState.ReinforcementPoints;
 		}
 	}
 
@@ -723,6 +765,22 @@ namespace PanzerKontrol
 		}
 	}
 
+	[ProtoContract]
+	public class UpgradeUnitRequest
+	{
+		[ProtoMember(1)]
+		public int UnitId;
+
+		[ProtoMember(2)]
+		public int UpgradeId;
+
+		public UpgradeUnitRequest(int unitId, int upgradeId)
+		{
+			UnitId = unitId;
+			UpgradeId = upgradeId;
+		}
+	}
+
 	#endregion
 
 	#region Reply message types, specific to server-to-client messages without broadcasts
@@ -833,19 +891,19 @@ namespace PanzerKontrol
 	public class UnitReinforcementBroadcast
 	{
 		[ProtoMember(1)]
-		public int UnitId;
+		public ReinforcementState ReinforcementState;
 
 		[ProtoMember(2)]
-		public double NewStrength;
+		public int UnitId;
 
 		[ProtoMember(3)]
-		public int ReinforcementPointsRemaining;
+		public double NewStrength;
 
-		public UnitReinforcementBroadcast(int unitId, double newStrength, int reinforcementPointsRemaining)
+		public UnitReinforcementBroadcast(ReinforcementState reinforcementState, int unitId, double newStrength)
 		{
+			ReinforcementState = reinforcementState;
 			UnitId = unitId;
 			NewStrength = newStrength;
-			ReinforcementPointsRemaining = reinforcementPointsRemaining;
 		}
 	}
 
@@ -853,19 +911,31 @@ namespace PanzerKontrol
 	public class UnitPurchasedBroadcast
 	{
 		[ProtoMember(1)]
-		public PlayerIdentifier Owner;
+		public ReinforcementState ReinforcementState;
 
 		[ProtoMember(2)]
-		public int ReinforcementPointsRemaining;
-
-		[ProtoMember(3)]
 		public UnitConfiguration Unit;
 
-		public UnitPurchasedBroadcast(PlayerIdentifier owner, int reinforcementPointsRemaining, UnitConfiguration unit)
+		public UnitPurchasedBroadcast(ReinforcementState reinforcementState, UnitConfiguration unit)
 		{
-			Owner = owner;
-			ReinforcementPointsRemaining = reinforcementPointsRemaining;
+			ReinforcementState = reinforcementState;
 			Unit = unit;
+		}
+	}
+
+	[ProtoContract]
+	public class UnitUpgradedBroadcast
+	{
+		[ProtoMember(1)]
+		public ReinforcementState ReinforcementState;
+
+		[ProtoMember(2)]
+		public int UnitId;
+
+		public UnitUpgradedBroadcast(ReinforcementState reinforcementState, int unitId)
+		{
+			ReinforcementState = reinforcementState;
+			UnitId = unitId;
 		}
 	}
 

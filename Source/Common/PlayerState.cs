@@ -175,9 +175,27 @@ namespace PanzerKontrol
 			unit.CanPerformAction = false;
 		}
 
+		public void UpgradeUnit(Unit unit, UnitUpgrade unitUpgrade)
+		{
+			int points = unitUpgrade.Points;
+			if (points > ReinforcementPoints)
+				throw new GameException("Not enough reinforcement points left to purchase this upgrade");
+			unit.AddUpgrade(unitUpgrade);
+			_ReinforcementPoints -= points;
+		}
+
 		#endregion
 
 		#region Public utility functions
+
+		public void ResetUnitDeploymentState()
+		{
+			foreach (var unit in Units)
+			{
+				unit.Deployed = false;
+				unit.Hex = null;
+			}
+		}
 
 		public void SetTurnStates()
 		{
